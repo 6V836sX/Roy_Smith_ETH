@@ -1,0 +1,2 @@
+Exercises on Least-Squares and Convex Optimisation
+These exercises are provided to give you some exam question practice.   They are taken from various other courses and so do not exactly match the level and style of the examination questions.   In general they are harder than the exam and were originally intended to be worked on over a 1 week period.  More detail is provided on the individual exercises.

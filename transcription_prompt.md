@@ -1,0 +1,13 @@
+This is a university lecture transcript for ENEL445 Applied Engineering Optimisation, covering Roy Smith's lectures on least-squares regression, statistical estimation, convex optimisation, linear matrix inequalities, and model predictive control.
+
+Preserve the original spoken language. Do not translate. Use clear punctuation suitable for lecture transcripts and subtitles. Preserve mathematical notation, acronyms, technical terms, names, and formula symbols accurately.
+
+Important names and historical terms: Roy Smith, ETH Zurich, UC Santa Barbara, NASA, Giuseppe Piazzi, Franz Xaver von Zach, Karl Friedrich Gauss, Adrien-Marie Legendre, Heinrich Olbers, Goettingen / Göttingen Observatory, Ceres, Pallas, Vesta, Uranus, Titus-Bode Law, ecliptic plane, ephemeris, Chebyshev functions.
+
+Least-squares terms: least squares, linear least-squares, regression, regressor matrix, parameter vector, basis functions, polynomial fitting, Chebyshev basis, normal equations, overdetermined, underdetermined, equation error, residual, epsilon, Gaussian noise, zero mean, independent and identically distributed, covariance, variance, bias, mean square error, MSE, BLUE, best linear unbiased estimator, weighted least squares, correlated noise, regularised least squares, regularisation, validation, cross-validation, LASSO, elastic net, one-norm, two-norm, infinity norm, sparsity.
+
+Convex optimisation terms: convex set, convex function, cone, conic combination, hyperplane, halfspace, polyhedron, ellipsoid, positive semidefinite cone, positive definite, semidefinite programming, SDP, linear program, LP, quadratic program, QP, second-order cone program, SOCP, quadratically constrained quadratic program, QCQP, generalized inequality, epigraph, Cauchy-Schwarz inequality, Schur complement, S-procedure, CVX, YALMIP, OSQP, linear matrix inequality, LMI, Lyapunov equation, state feedback, linear quadratic regulator, LQR.
+
+MPC terms: model predictive control, MPC, moving horizon, prediction horizon, finite horizon, terminal cost, terminal constraint, terminal set, invariant set, hard constraints, soft constraints, disturbance forecast, feedback, feedforward, recursive feasibility, closed-loop stability, explicit MPC, parametric optimisation, KKT conditions, Lagrangian, actuation limits.
+
+Common symbols and formulas to preserve: y = Phi theta + epsilon, Y = Phi theta + epsilon, theta, theta hat, theta star, Phi, phi, epsilon, ||y - Phi theta||_2^2, Phi^T Phi theta = Phi^T y, (Phi^T Phi)^(-1) Phi^T y, E{epsilon} = 0, E{epsilon epsilon^T} = sigma^2 I, R, cov(theta hat), x_{k+1} = A x_k + B u_k + F w_k, x^T P x, X >= 0, X > 0, A^T P A - P, A + BK.
