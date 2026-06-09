@@ -1,0 +1,930 @@
+---
+title: "ENEL445 Roy Smith Optimisation Block"
+subtitle: "Learning Guide: Least Squares, Convex Optimisation, LMIs, and MPC"
+format:
+  pdf:
+    pdf-engine: xelatex
+    toc: true
+    toc-depth: 1
+    toc-title: "Contents"
+    number-sections: true
+    colorlinks: true
+lang: zh
+documentclass: ctexart
+geometry: margin=0.8in
+---
+
+# Source Materials
+
+本学习指导基于本章 Roy Smith 相关课件、练习和 6 节转录内容整理。主线不是逐字复述 lecture，而是按考试复习逻辑重构：
+
+- `Least-Squares Problems and Methods/Lecture 6 Least squares regression part 1.pdf`
+- `Least-Squares Problems and Methods/Lecture 7 Least squares regression part 2.pdf`
+- `Convex Optimisation, LMIs, and MPC/Lecture-8-Convex-optimisation-part-1.pdf`
+- `Convex Optimisation, LMIs, and MPC/Lecture-9-Convex-optimisation-part-2.pdf`
+- `Convex Optimisation, LMIs, and MPC/Lecture-10-Convex-optimisation-part-3-model-predictive-control-(MPC).pdf`
+- `exercises/LS_exercises.pdf`
+- `exercises/Statistics_exercises.pdf`
+- `exercises/Convex_Opt_exercises.pdf`
+- `transcribe/20260504_Lecture_6_least_squares_regression_part_1.md`
+- `transcribe/20260505_Lecture_7_least_squares_statistics_BLUE.md`
+- `transcribe/20260506_Least_squares_regularisation_validation.md`
+- `transcribe/20260511_Lecture_8_convex_sets_cones_ellipsoid_method.md`
+- `transcribe/20260512_Lecture_9_LMI_SDP_control_design.md`
+- `transcribe/20260513_Lecture_10_model_predictive_control_MPC.md`
+
+# Study Strategy
+
+这组材料是混合型章节：前半部分是 least squares 的计算与统计解释，后半部分是 convex optimisation、LMI 和 MPC 的建模框架。复习时不要按日期机械背，而要按下面的问题链组织：
+
+```text
+真实工程问题
+-> 数据/系统模型
+-> 变量、约束、目标函数
+-> 是否是 least-squares 或 convex problem
+-> 可用公式、solver 或 iterative method
+-> 考试题型和易错点
+```
+
+最重要的三类能力：
+
+1. 会把问题写成 optimisation form。
+2. 会解释公式背后的统计或几何意义。
+3. 会判断一个问题属于 LS、LP、QP、SOCP、SDP/LMI 或 MPC 中哪一类。
+
+复习优先级：
+
+| Priority | Topics |
+|---|---|
+| Must know | LS formulation, normal equations, BLUE, bias/variance/MSE, regularised LS, convexity definition, LP/QP/SOCP/SDP/LMI classification, MPC formulation |
+| Should know | nonlinear LS linearisation, ellipsoid method idea, Schur complement, stability/state-feedback LMI ideas, explicit MPC |
+| Recognise only | S-procedure details in convex exercise problem 3, deep implementation details of CVX/YALMIP |
+
+# Mindmap-based Learning Path
+
+学习顺序建议如下：
+
+1. **Least squares as optimisation**: 先理解 $y = \Phi\theta + \epsilon$、residual、normal equations。
+2. **Least squares as statistics**: 再理解 $\hat\theta$ 是随机变量，所以要看 bias、variance、MSE。
+3. **Regularisation**: 之后看为什么最小 training residual 不等于最好 prediction。
+4. **Convex foundations**: 学 convex set、cone、PSD cone、ellipsoid。
+5. **Problem classes**: 把 LP、QP、SOCP、QCQP、SDP/LMI 放在同一张分类图里。
+6. **LMI tools**: 用 Schur complement 和 PSD cone 理解 matrix constraints。
+7. **MPC**: 把前面 optimisation framework 用到 control：finite horizon、constraints、replanning。
+
+# Least Squares: Core Formulation
+
+## What Problem Does LS Solve?
+
+Least squares 解决的是：模型无法完全通过所有数据点时，如何选择参数使 residual 最小。
+
+线性模型写成：
+
+$$
+y = \Phi\theta + \epsilon
+$$
+
+其中：
+
+- $y \in \mathbb{R}^N$ 是观测输出；
+- $\Phi \in \mathbb{R}^{N \times d}$ 是 regressor/design matrix；
+- $\theta \in \mathbb{R}^d$ 是待估参数；
+- $\epsilon$ 是误差或 residual。
+
+标准 LS 问题：
+
+$$
+\min_\theta \|y - \Phi\theta\|_2^2
+$$
+
+等价 constrained form：
+
+$$
+\begin{aligned}
+\min_{\theta,\epsilon}\quad & \|\epsilon\|_2^2 \\
+\text{subject to}\quad & y - \Phi\theta = \epsilon
+\end{aligned}
+$$
+
+考试中常见任务：
+
+- 给出数据和模型，写出 $\Phi$、$y$、$\theta$；
+- 写出 LS optimisation problem；
+- 推出 normal equations；
+- 判断能不能使用 closed-form inverse。
+
+## Normal Equations
+
+令
+
+$$
+J(\theta) = \|y - \Phi\theta\|_2^2
+$$
+
+对 $\theta$ 求导并设为 0：
+
+$$
+\Phi^T\Phi\theta = \Phi^T y
+$$
+
+如果 $\Phi^T\Phi$ 可逆：
+
+$$
+\hat\theta = (\Phi^T\Phi)^{-1}\Phi^T y
+$$
+
+注意：
+
+- normal equations 总是 consistent；
+- 但 inverse form 需要 $\Phi$ full column rank；
+- 如果 $\Phi^T\Phi$ condition number 很大，解会对噪声敏感。
+
+## Geometric Interpretation
+
+LS 的几何意义是：把 $y$ 投影到 $\Phi$ 的 column space 上。残差
+
+$$
+r = y - \Phi\hat\theta
+$$
+
+与 column space 正交，因此：
+
+$$
+\Phi^T r = 0
+$$
+
+也就是：
+
+$$
+\Phi^T(y - \Phi\hat\theta) = 0
+$$
+
+这正是 normal equations。
+
+记忆方式：**LS 不是让每个点都正确，而是让误差向量无法再沿模型空间方向减少。**
+
+# Nonlinear Least Squares and Gauss/Ceres
+
+Lecture 6 用 Gauss 预测 Ceres 轨道说明：least squares 不只是 line fitting，也可以处理 nonlinear model。
+
+非线性模型：
+
+$$
+y_{\text{obs}} = H(\theta, t) + \epsilon
+$$
+
+目标：
+
+$$
+\min_\theta \frac{1}{2}\epsilon^T\epsilon
+$$
+
+其中：
+
+$$
+\epsilon = y_{\text{obs}} - H(\theta,t)
+$$
+
+非线性 LS 的基本做法：
+
+1. 从 nominal parameter $\theta_i$ 开始。
+2. 对 $H(\theta)$ 做 Taylor linearisation：
+
+$$
+H(\theta) \approx H(\theta_i) + H_\theta(\theta - \theta_i)
+$$
+
+3. 定义：
+
+$$
+\delta y = y_{\text{obs}} - H(\theta_i), \qquad \delta\theta = \theta - \theta_i
+$$
+
+4. 解线性 LS：
+
+$$
+\min_{\delta\theta} \|\delta y - H_\theta\delta\theta\|_2^2
+$$
+
+5. normal equations：
+
+$$
+H_\theta^T H_\theta \delta\theta = H_\theta^T \delta y
+$$
+
+6. 更新：
+
+$$
+\theta_{i+1} = \theta_i + \delta\theta
+$$
+
+考试理解重点：
+
+- 三个观测点给 Gauss 一个 nominal orbit，但完整 22 个观测点用于 LS refinement；
+- nonlinear LS 每一步只是 local quadratic/linear approximation；
+- 不能把一次 linearised solution 当成 global exact solution。
+
+# Statistical Properties of Least Squares
+
+## Why LS Estimate Is Random
+
+如果
+
+$$
+y = \Phi\theta_0 + \epsilon
+$$
+
+而 $\epsilon$ 是随机噪声，那么
+
+$$
+\hat\theta = (\Phi^T\Phi)^{-1}\Phi^T y
+$$
+
+也是随机变量。
+
+因此考试会关心：
+
+- $\hat\theta$ 是否 unbiased；
+- variance/covariance 有多大；
+- MSE 是否最小；
+- correlated noise 时如何调整。
+
+## Bias, Variance, and MSE
+
+Bias:
+
+$$
+\text{Bias}(\hat\theta) = E[\hat\theta] - \theta_0
+$$
+
+Variance:
+
+$$
+\text{Var}(\hat\theta) = E[(\hat\theta - E[\hat\theta])^2]
+$$
+
+Mean square error:
+
+$$
+\text{MSE} = E[(\hat\theta - \theta_0)^2]
+$$
+
+核心关系：
+
+$$
+\text{MSE} = \text{bias}^2 + \text{variance}
+$$
+
+易错点：unbiased 不等于 minimum MSE。Unbiased 只是 bias 为 0，但 MSE 还包括 variance。
+
+## BLUE
+
+BLUE = Best Linear Unbiased Estimator。
+
+如果噪声 zero mean 且 covariance 为 $R$：
+
+$$
+E[\epsilon\epsilon^T] = R
+$$
+
+则 BLUE：
+
+$$
+\hat\theta_{\text{BLUE}}
+= (\Phi^T R^{-1}\Phi)^{-1}\Phi^T R^{-1}y
+$$
+
+其 covariance：
+
+$$
+\text{Cov}(\hat\theta_{\text{BLUE}})
+= (\Phi^T R^{-1}\Phi)^{-1}
+$$
+
+当 $R = \sigma^2 I$ 时，BLUE 退化为普通 LS。
+
+考试题型：
+
+- 证明 $Z^T\Phi = I$ 是 linear estimator $\hat\theta = Z^T y$ unbiased 的条件；
+- 推导 $\text{Cov}(\hat\theta) = Z^T R Z$；
+- 写出 BLUE；
+- 解释为什么 low variance measurement 权重更大。
+
+# Regularisation and Validation
+
+## Why Regularisation Is Needed
+
+普通 LS 给出 best linear unbiased estimate，但未必最小化 MSE。Regularisation 的作用：
+
+- 降低 variance；
+- 改善 ill-conditioned problem；
+- 用一点 bias 换更好的 prediction。
+
+Regularised LS：
+
+$$
+\min_\theta \|y - \Phi\theta\|_2^2 + \eta\|\theta\|_2^2
+$$
+
+解为：
+
+$$
+\hat\theta = (\Phi^T\Phi + \eta I)^{-1}\Phi^T y
+$$
+
+当 $\eta = 0$，回到 ordinary LS。随着 $\eta$ 增大：
+
+- solution 被 shrink；
+- variance 下降；
+- bias 上升；
+- conditioning 变好。
+
+## Bias-variance Tradeoff
+
+Regularisation 的核心不是让 training error 最小，而是让 expected prediction error 更好。
+
+记忆方式：
+
+```text
+eta small  -> flexible estimate, low bias, high variance
+eta large  -> shrunk estimate, higher bias, lower variance
+best eta   -> balance point for MSE/prediction
+```
+
+## Validation
+
+选择 $\eta$ 时不能只看 fitting data residual。正确思路：
+
+1. 把 data 分成 fitting/training set 和 validation set。
+2. 对不同 $\eta$ 用 fitting set 拟合。
+3. 用 validation set 测试 prediction error。
+4. 选择 validation error 最小的 $\eta$。
+
+考试可能问：
+
+- 为什么 validation data 不能参与 fitting；
+- 为什么 best training fit 不一定 best prediction；
+- regularisation 如何连接到 minimum MSE。
+
+# Convex Sets and Convex Optimisation
+
+## Convex Set
+
+集合 $C$ convex，如果：
+
+$$
+x_1, x_2 \in C,\quad \gamma \in [0,1]
+\quad \Rightarrow \quad
+\gamma x_1 + (1-\gamma)x_2 \in C
+$$
+
+直觉：任意两点连线都在集合里。
+
+重要例子：
+
+- hyperplane: $\{x \mid a^T x = b\}$；
+- halfspace: $\{x \mid a^T x \le b\}$；
+- norm ball: $\{x \mid \|x-x_c\| \le r\}$；
+- polyhedron: linear inequalities/equalities 的交集；
+- ellipsoid:
+
+$$
+\{x \mid (x-x_c)^T P^{-1}(x-x_c) \le 1\}
+$$
+
+重要性质：convex sets 的 intersection 仍然 convex。
+
+## Cones and PSD Cone
+
+Cone:
+
+$$
+x \in C,\ \gamma \ge 0 \Rightarrow \gamma x \in C
+$$
+
+Convex cone 还要求 conic combination 也在集合内。
+
+Positive semidefinite cone:
+
+$$
+S_+^n = \{X \in S^n \mid X \succeq 0\}
+$$
+
+PSD 的等价理解：
+
+$$
+z^T X z \ge 0 \quad \text{for all } z
+$$
+
+或所有 eigenvalues 非负。
+
+易错点：
+
+- positive semidefinite: eigenvalues $\ge 0$；
+- positive definite: eigenvalues $> 0$；
+- cone 不自动 convex。
+
+## Convex Optimisation Problem
+
+标准形式：
+
+$$
+\begin{aligned}
+\min_x\quad & f_0(x) \\
+\text{subject to}\quad & f_i(x) \le 0,\quad i=1,\ldots,m \\
+& A x = b
+\end{aligned}
+$$
+
+其中：
+
+- $f_0$ 和 $f_i$ convex；
+- equality constraints 必须 affine。
+
+为什么重要：convex problem 的 local information 可以支持 global solution，solver 更可靠。
+
+# Problem Classes: LP, QP, SOCP, QCQP, SDP
+
+## Linear Program
+
+LP:
+
+$$
+\begin{aligned}
+\min_x\quad & c^T x + d \\
+\text{subject to}\quad & Gx \le h \\
+& Ax = b
+\end{aligned}
+$$
+
+特征：
+
+- linear cost；
+- linear constraints；
+- feasible region 是 polytope/polyhedron。
+
+例子：diet problem、logistics、Chebyshev center。
+
+## Quadratic Program
+
+QP:
+
+$$
+\begin{aligned}
+\min_x\quad & \frac{1}{2}x^T P x + c^T x + d \\
+\text{subject to}\quad & Gx \le h \\
+& Ax = b
+\end{aligned}
+$$
+
+特征：
+
+- quadratic cost；
+- linear constraints。
+
+例子：
+
+- constrained least squares；
+- portfolio optimisation；
+- simple MPC。
+
+## Second-order Cone Problem
+
+SOCP 典型 constraint：
+
+$$
+\|A_i x + b_i\|_2 \le c_i^T x + d_i
+$$
+
+特征：
+
+- linear objective 常见；
+- feasible region 是 second-order cones 的 intersection；
+- QP 有时可以 reformulate 成 SOCP。
+
+## QCQP
+
+QCQP:
+
+$$
+\begin{aligned}
+\min_x\quad & \frac{1}{2}x^T P_0x + q_0^Tx + r_0 \\
+\text{subject to}\quad &
+\frac{1}{2}x^T P_i x + q_i^T x + r_i \le 0
+\end{aligned}
+$$
+
+如果 $P_i$ 满足相应 convexity 条件，feasible region 可以理解为 ellipsoids 的 intersection。
+
+## SDP and LMI
+
+Semidefinite program 的核心是 matrix-valued affine constraint：
+
+$$
+x_1F_1 + \cdots + x_NF_N + G \preceq 0
+$$
+
+这就是 Linear Matrix Inequality。
+
+考试分类技巧：
+
+```text
+linear cost + linear constraints -> LP
+quadratic cost + linear constraints -> QP
+norm cone constraints -> SOCP
+quadratic constraints -> QCQP
+PSD matrix constraints -> SDP/LMI
+finite horizon dynamic optimisation -> MPC, often QP
+```
+
+# LMI and Schur Complement
+
+## What Is an LMI?
+
+LMI 是这样的约束：
+
+$$
+F(x) = F_0 + x_1F_1 + \cdots + x_nF_n \succeq 0
+$$
+
+其中矩阵对变量是 affine 的。
+
+它重要是因为很多看起来 nonlinear 的 constraint 可以写成 PSD matrix constraint。
+
+## Schur Complement
+
+典型形式：
+
+$$
+\begin{bmatrix}
+Q & S \\
+S^T & R
+\end{bmatrix} \succ 0
+$$
+
+在 $R \succ 0$ 时，等价于：
+
+$$
+Q - S R^{-1}S^T \succ 0
+$$
+
+考试中 Schur complement 常用于：
+
+- 把 norm constraint 写成 LMI；
+- 把 quadratic inequality 写成 LMI；
+- 处理 stability 和 controller synthesis 中的 matrix inequalities。
+
+易错点：使用 Schur complement 时必须检查 block 的 definiteness 条件。
+
+## Stability LMIs
+
+Continuous-time system:
+
+$$
+\frac{d}{dt}x(t) = A x(t)
+$$
+
+stable iff exists $P \succ 0$ such that:
+
+$$
+A^T P + P A \prec 0
+$$
+
+Discrete-time system:
+
+$$
+x_{k+1} = A x_k
+$$
+
+stable iff exists $P \succ 0$ such that:
+
+$$
+A^T P A - P \prec 0
+$$
+
+State feedback:
+
+$$
+u_k = Kx_k
+$$
+
+closed-loop:
+
+$$
+x_{k+1} = (A + BK)x_k
+$$
+
+控制设计中常用变量替换，例如 $V = KY$，把对 $K$ 和 Lyapunov matrix 的非线性耦合变成 LMI。
+
+# Model Predictive Control
+
+## Core Idea
+
+MPC 的基本循环：
+
+1. measure or estimate current state；
+2. optimise future state/input trajectory over horizon $M$；
+3. apply only the first input；
+4. move one time step and repeat。
+
+一句话记忆：**plan a full future, execute the first move, then replan.**
+
+## Mathematical Formulation
+
+Dynamics:
+
+$$
+x_{k+1} = A x_k + B u_k + F w_k
+$$
+
+Finite horizon cost:
+
+$$
+J(u,x) =
+\sum_{i=0}^{M-1}
+\left(x_i^T Q x_i + u_i^T R u_i\right)
++ x_M^T Q_{\text{terminal}} x_M
+$$
+
+Typical MPC problem:
+
+$$
+\begin{aligned}
+\min_{x,u}\quad & J(u,x) \\
+\text{subject to}\quad
+& x_{k+1} = A x_k + B u_k + F w_k \\
+& u_{\text{lb}} \le u_k \le u_{\text{ub}} \\
+& x_k \in X_{\text{operating}} \\
+& x_M \in X_{\text{terminal}}
+\end{aligned}
+$$
+
+重要理解：
+
+- dynamics 是 constraints；
+- decision variables 通常包括 future inputs 和 future states；
+- disturbance forecast 可以作为 feedforward information；
+- repeated measurement/re-estimation 提供 feedback。
+
+## Hard, Soft, and Terminal Constraints
+
+Hard constraints:
+
+- 必须满足；
+- 例子：actuator limits、safety limits。
+
+Soft constraints:
+
+- 想满足，但允许违反；
+- 通过 penalty cost 处理；
+- 例子：building temperature comfort band。
+
+Terminal constraints:
+
+- 规定 horizon 末端状态；
+- 用于 recursive feasibility 和 closed-loop stability；
+- 常见选择是 invariant terminal set。
+
+## Explicit MPC
+
+Online MPC 每个 time step 求解 optimisation。Explicit MPC 先离线解 parametric optimisation，把 state space 切成 regions：
+
+- 每个 region 有一个对应的 affine feedback law；
+- online 时只判断当前 state 落在哪个 region；
+- 很快，但 regions 数量可能指数增长。
+
+适用场景：
+
+- low-dimensional system；
+- extremely high-speed control；
+- embedded controller。
+
+不适合：
+
+- 高维系统；
+- long horizon；
+- constraints 很多导致 regions 爆炸。
+
+# Tutorial and Exercise Route
+
+## LS Exercises
+
+重点题型：
+
+1. BLUE proof
+   - unbiased condition: $Z^T\Phi = I$；
+   - covariance: $\text{Cov}(\hat\theta) = Z^T R Z$；
+   - BLUE estimator:
+
+$$
+\hat\theta_Z =
+(\Phi^T R^{-1}\Phi)^{-1}\Phi^T R^{-1}Y
+$$
+
+2. Polynomial and basis-function fitting
+   - 根据 basis functions 建立 design matrix；
+   - 判断 $X^TX$ 是否 nonsingular；
+   - radial basis functions 与 kernel matrix。
+
+3. Conic section fitting
+   - 建立 parameter vector；
+   - 固定 scaling，例如令 $f=1$；
+   - 判断 ellipse/parabola/hyperbola。
+
+## Statistics Exercises
+
+重点题型：
+
+- true/false 判断：
+  - regularised estimate 通常 biased；
+  - inverse variance estimate unbiased；
+  - inverse variance weighting 是 BLUE；
+  - regularised estimate 可以有更低 MSE。
+- 计算：
+  - ordinary LS estimate；
+  - covariance matrix；
+  - non-identically distributed noise 下的 BLUE。
+
+## Convex Optimisation Exercises
+
+重点题型：
+
+- prove convexity:
+  - $C = \{x \mid Ax \le b\}$；
+  - intersection of convex sets；
+  - norm cone $\{(r,x) \mid \|x\| \le r\}$。
+- formulate as LP:
+  - $\min \|Ax-b\|_\infty$；
+  - $\min \|Ax-b\|_1$；
+  - use epigraph variables and linear inequalities。
+
+Lower priority:
+
+- S-procedure minimum-volume ellipsoid problem is beyond examination detail, but the idea that ellipsoid containment can become an SDP is useful.
+
+# Exam Templates and Common Mistakes
+
+## Template: Form a Least-squares Problem
+
+1. Identify output vector $y$.
+2. Choose parameter vector $\theta$.
+3. Build each row of $\Phi$ from the model and data.
+4. Write residual $r = y - \Phi\theta$.
+5. Minimise $\|r\|_2^2$.
+6. If full column rank, use $(\Phi^T\Phi)^{-1}\Phi^T y$.
+
+Common mistakes:
+
+- using $\Phi\Phi^T$ instead of $\Phi^T\Phi$；
+- forgetting the dimensions of $\theta$；
+- treating noisy $x$ and noisy $y$ as ordinary LS without comment。
+
+## Template: Answer a BLUE Question
+
+1. Start from $\hat\theta = Z^T y$.
+2. Use $y = \Phi\theta + \epsilon$.
+3. For unbiasedness:
+
+$$
+E[\hat\theta] = Z^T\Phi\theta = \theta
+\Rightarrow Z^T\Phi = I
+$$
+
+4. Covariance:
+
+$$
+\text{Cov}(\hat\theta) = Z^T R Z
+$$
+
+5. State the BLUE:
+
+$$
+\hat\theta =
+(\Phi^T R^{-1}\Phi)^{-1}\Phi^T R^{-1}y
+$$
+
+Common mistakes:
+
+- assuming $R = I$ when the question gives correlated noise；
+- saying BLUE minimises MSE rather than variance among unbiased linear estimators。
+
+## Template: Explain Regularisation
+
+Use this structure:
+
+```text
+Regularisation adds a penalty term to the fitting objective.
+It shrinks the estimate, which increases bias but decreases variance.
+This can reduce MSE and improve prediction, especially when the problem is ill-conditioned.
+The hyperparameter eta is usually selected by validation or cross-validation.
+```
+
+## Template: Prove Convexity of a Set
+
+1. Take arbitrary $x_1, x_2$ in the set.
+2. Let $x_\gamma = \gamma x_1 + (1-\gamma)x_2$, with $\gamma \in [0,1]$.
+3. Show $x_\gamma$ also satisfies the set condition.
+4. Conclude the set is convex.
+
+For $C = \{x \mid Ax \le b\}$:
+
+$$
+A(\gamma x_1 + (1-\gamma)x_2)
+= \gamma A x_1 + (1-\gamma)A x_2
+\le \gamma b + (1-\gamma)b
+= b
+$$
+
+## Template: Formulate MPC
+
+1. State current state $x_0$.
+2. Define decision variables:
+   - $u_0,\ldots,u_{M-1}$；
+   - $x_1,\ldots,x_M$。
+3. Write dynamics constraints.
+4. Add hard constraints.
+5. Add soft constraints as penalties if needed.
+6. Add terminal cost or terminal constraint.
+7. Solve, apply only $u_0$, then replan.
+
+Common mistakes:
+
+- forgetting that only the first input is applied；
+- treating forecasts as feedback；
+- omitting state estimation even though state is usually estimated, not directly measured；
+- writing terminal constraints without explaining their role。
+
+# Self Check
+
+You should be able to answer these without notes:
+
+1. What are the normal equations and where do they come from?
+2. Why is the LS residual orthogonal to the column space of $\Phi$?
+3. What is the difference between ordinary LS, weighted LS, and BLUE?
+4. Why does minimum variance among unbiased estimators not imply minimum MSE?
+5. How does regularisation change bias and variance?
+6. What is a convex set?
+7. Why are affine equality constraints allowed in convex optimisation?
+8. What is the difference between LP, QP, SOCP, QCQP, and SDP?
+9. What is an LMI?
+10. What does the Schur complement help with?
+11. How do you write an MPC optimisation problem?
+12. Why does MPC apply only the first input?
+13. What is explicit MPC, and why does it not scale well?
+
+# Minimum Memory List
+
+- LS problem:
+
+$$
+\min_\theta \|y - \Phi\theta\|_2^2
+$$
+
+- Normal equations:
+
+$$
+\Phi^T\Phi\theta = \Phi^T y
+$$
+
+- Ordinary LS:
+
+$$
+\hat\theta = (\Phi^T\Phi)^{-1}\Phi^T y
+$$
+
+- BLUE:
+
+$$
+\hat\theta =
+(\Phi^T R^{-1}\Phi)^{-1}\Phi^T R^{-1}y
+$$
+
+- MSE:
+
+$$
+\text{MSE} = \text{bias}^2 + \text{variance}
+$$
+
+- Regularised LS:
+
+$$
+\hat\theta = (\Phi^T\Phi + \eta I)^{-1}\Phi^T y
+$$
+
+- Convex set:
+
+$$
+\gamma x_1 + (1-\gamma)x_2 \in C
+$$
+
+- PSD:
+
+$$
+X \succeq 0 \Leftrightarrow z^T X z \ge 0\quad \forall z
+$$
+
+- MPC loop:
+
+```text
+estimate state -> optimise horizon -> apply first input -> re-estimate -> repeat
+```
