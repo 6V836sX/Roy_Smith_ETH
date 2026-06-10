@@ -437,10 +437,10 @@
  But that expected value might not be the true system.
  If you've got bias,
  that expected value is not the true system here.
- MSC, you kind of want to know,
+ MSE, you kind of want to know,
  what's the mean square error in that?
  And so one important thing, which is maybe not obvious,
- that MSC is an expectation.
+ that MSE is an expectation.
  That's if you repeated, say, the experiment,
  what sort of variance are you going to get
  in terms of the error the next time?

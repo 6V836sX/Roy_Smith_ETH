@@ -12,6 +12,10 @@ format:
 lang: zh
 documentclass: ctexart
 geometry: margin=0.8in
+header-includes:
+  - \usepackage{tikz}
+  - \usepackage{pgfplots}
+  - \pgfplotsset{compat=1.18}
 ---
 
 # Source Materials
@@ -33,6 +37,13 @@ geometry: margin=0.8in
 - `transcribe/20260512_Lecture_9_LMI_SDP_control_design.md`
 - `transcribe/20260513_Lecture_10_model_predictive_control_MPC.md`
 
+补充理解 $\Phi$ 的 cross-course reading：
+
+- `DATA423/Lectures/FeatureEngineering-2024.pdf`
+- `DATA423/Lectures/FeatureExtraction-2024.pdf`
+- `DATA423/Lectures/FeatureSelection-2024.pdf`
+- `DATA423/Lectures/10_Model Selection-2025.pdf`
+
 # Study Strategy
 
 这组材料是混合型章节：前半部分是 least squares 的计算与统计解释，后半部分是 convex optimisation、LMI 和 MPC 的建模框架。复习时不要按日期机械背，而要按下面的问题链组织：
@@ -51,6 +62,122 @@ geometry: margin=0.8in
 1. 会把问题写成 optimisation form。
 2. 会解释公式背后的统计或几何意义。
 3. 会判断一个问题属于 LS、LP、QP、SOCP、SDP/LMI 或 MPC 中哪一类。
+
+## Roy's Warning: From Model-Based to Data-Driven Optimisation
+
+Roy 在 Anscombe dataset 之后强调了一个更大的变化：optimisation problem 在最近几十年里越来越多地从 model-based workflow 走向 data-driven workflow。
+
+传统工程 optimisation 更常见的是：
+
+```text
+known process / engineering model
+-> decision variables
+-> constraints
+-> objective function
+-> solver
+```
+
+例如 refinery scheduling、production planning、power dispatch、transport logistics、control design。这些问题的重点通常是：系统模型、约束和目标大致已知，工程师需要把它们写成 optimisation formulation。
+
+现在越来越多问题变成：
+
+```text
+raw data
+-> fit statistical / ML model
+-> use fitted model inside optimisation
+-> make decisions
+```
+
+例如：
+
+- demand forecasting $\rightarrow$ inventory optimisation；
+- load forecasting $\rightarrow$ power dispatch；
+- price prediction $\rightarrow$ bidding strategy；
+- traffic prediction $\rightarrow$ routing；
+- learned surrogate model $\rightarrow$ design optimisation；
+- customer model $\rightarrow$ recommendation or pricing optimisation。
+
+这带来一个额外风险：如果前面的 fitted model 错了，后面的 solver 仍然会非常认真地优化一个错误的 objective、constraint 或 parameter estimate。
+
+所以 Anscombe dataset 的意义不只是“画图好看”。它提醒我们：
+
+> data-driven optimisation requires data diagnostics before optimisation.
+
+旧式 model-based optimisation 的主要风险是：
+
+```text
+wrong formulation
+missing constraints
+bad scaling
+solver or numerical issues
+```
+
+data-driven optimisation 额外增加了：
+
+```text
+wrong fitted model
+biased training data
+insufficient features
+outlier-driven fit
+poor extrapolation
+unvalidated learned objective or constraint
+```
+
+Roy 进一步指出，现代 data-driven optimisation 的数据经常来自 population，很多时候 literally 是人的 population：customers、drivers、patients、students、users、households、market participants。这样的数据天然带有 noise 和 stochastic variation。
+
+原因不是单一的 measurement error，而是多种不确定性叠加：
+
+- 不同个体有不同偏好和行为习惯；
+- 同一个人在不同时间也可能行为不同；
+- 有很多未观测变量；
+- survey、sensor、transaction logs 会有记录误差；
+- sample 只是 population 的一部分；
+- 行为模式会随时间、政策、价格、天气、社会事件改变；
+- model 总会遗漏某些解释因素。
+
+所以 population data 更像：
+
+$$
+y = \text{systematic signal} + \text{random variation}
+$$
+
+在 least-squares 形式里就是：
+
+$$
+y = \Phi\theta + \epsilon
+$$
+
+这里的 $\epsilon$ 不只是仪器测量误差，也包括 unmodelled behaviour、sampling variation、omitted variables 和 genuinely random shocks。
+
+因此现代 optimisation 常常变成：
+
+```text
+noisy / stochastic data
+-> estimate model and uncertainty
+-> validate model
+-> optimise under uncertainty
+```
+
+这就是为什么 Roy 说我们需要能处理 noisy data 或 stochastic data 的 optimisation methods。它们不是在假装数据干净，而是在承认：
+
+> optimisation decisions may depend on quantities estimated from noisy data.
+
+对应到本章工具：
+
+| Tool | What uncertainty issue it addresses |
+|---|---|
+| residual analysis | checks whether unexplained variation looks structured or random |
+| weighted LS | handles unequal noise variance |
+| BLUE | handles covariance structure and minimum-variance unbiased estimation |
+| validation | tests whether fitted structure predicts unseen data |
+| regularisation | reduces variance and instability when fitting noisy data |
+| stochastic / robust optimisation | later-stage tools when uncertainty enters decisions directly |
+
+因此本章 least-squares 的 $\Phi$、rank、residual、validation、regularisation 不只是统计工具。它们是在回答：
+
+```text
+Can I trust the data-derived model that I am about to optimise over?
+```
 
 复习优先级：
 
@@ -72,6 +199,44 @@ geometry: margin=0.8in
 6. **LMI tools**: 用 Schur complement 和 PSD cone 理解 matrix constraints。
 7. **MPC**: 把前面 optimisation framework 用到 control：finite horizon、constraints、replanning。
 
+## Tomorrow's Reading Route for Lectures 6--7
+
+如果明天直接用这份 guide 复习 least squares，不建议从头到尾等权阅读。建议按下面路线走：
+
+```text
+Pass 1: Core mechanics
+    model y = Phi theta + epsilon
+    -> build Phi
+    -> normal equations
+    -> geometric projection
+    -> basis functions and nonlinear LS
+
+Pass 2: Statistical meaning
+    theta_hat is random
+    -> unbiasedness
+    -> variance / MSE / consistency
+    -> BLUE and inverse-variance weighting
+    -> correlated-noise BLUE
+
+Pass 3: Prediction and practice
+    bias-variance tradeoff
+    -> regularisation
+    -> validation
+    -> do the Lecture 6--7 practice set
+```
+
+For exam preparation, the high-frequency least-squares items are:
+
+| Priority | You should be able to do |
+|---|---|
+| Very high | build $\Phi$, derive normal equations, explain projection/residual orthogonality |
+| Very high | prove OLS unbiased under $E[\epsilon]=0$ and fixed $\Phi$ |
+| Very high | derive inverse-variance weights and explain BLUE |
+| High | handle correlated noise using $(\Phi^TR^{-1}\Phi)^{-1}\Phi^TR^{-1}y$ |
+| High | explain MSE = bias$^2$ + variance and why regularisation can reduce MSE |
+| Medium | explain nonlinear LS / Gauss-Newton as repeated linearised LS |
+| Medium | discuss rank, condition number, pseudo-inverse, and why normal equations may be numerically poor |
+
 # Least Squares: Core Formulation
 
 ## What Problem Does LS Solve?
@@ -90,6 +255,14 @@ $$
 - $\Phi \in \mathbb{R}^{N \times d}$ 是 regressor/design matrix；
 - $\theta \in \mathbb{R}^d$ 是待估参数；
 - $\epsilon$ 是误差或 residual。
+
+这里默认的是 ordinary LS assumption：误差被建模为加在 $y$ 上，而 $\Phi$ 被当作 known / fixed。如果 $\Phi$ 也有 measurement error，例如
+
+$$
+y=(\Phi+\Delta\Phi)\theta+\epsilon,
+$$
+
+那就进入 errors-in-variables / total least-squares 的问题，不再是普通 OLS 的标准设定。
 
 标准 LS 问题：
 
@@ -113,6 +286,696 @@ $$
 - 推出 normal equations；
 - 判断能不能使用 closed-form inverse。
 
+## Understanding $\Phi$: Regressor Structure, Rank, and Real Data
+
+$\Phi$ 是 least-squares 里最重要的对象之一。它不是凭空捏造的矩阵，而是把“我们认为哪些变量能解释 $y$”这件事写成矩阵形式。
+
+可以先记住一句话：
+
+> $\Phi$ 的每一行对应一个 observation，每一列对应一个 regressor / feature / basis function。
+
+如果有 $N$ 个观测、$d$ 个待估参数，那么：
+
+$$
+\Phi \in \mathbb{R}^{N\times d}
+$$
+
+一般写成：
+
+$$
+\Phi =
+\begin{bmatrix}
+\phi_1^T \\
+\phi_2^T \\
+\vdots \\
+\phi_N^T
+\end{bmatrix}
+$$
+
+其中第 $j$ 行
+
+$$
+\phi_j^T =
+\begin{bmatrix}
+\phi_{j1} & \phi_{j2} & \cdots & \phi_{jd}
+\end{bmatrix}
+$$
+
+表示第 $j$ 个 observation 下所有 regressors 的取值。预测值是：
+
+$$
+\hat y_j = \phi_j^T\theta
+$$
+
+把所有 observation 叠起来，就是：
+
+$$
+\hat y = \Phi\theta
+$$
+
+### 1. How $\Phi$ Represents the Regressor Structure
+
+假设我们想拟合：
+
+$$
+y \approx \theta_1 + \theta_2x
+$$
+
+对数据点 $x_1,\ldots,x_N$，regressor matrix 是：
+
+$$
+\Phi =
+\begin{bmatrix}
+1 & x_1 \\
+1 & x_2 \\
+\vdots & \vdots \\
+1 & x_N
+\end{bmatrix},
+\quad
+\theta =
+\begin{bmatrix}
+\theta_1\\
+\theta_2
+\end{bmatrix}
+$$
+
+如果改成二次多项式：
+
+$$
+y \approx \theta_1+\theta_2x+\theta_3x^2
+$$
+
+则：
+
+$$
+\Phi =
+\begin{bmatrix}
+1 & x_1 & x_1^2 \\
+1 & x_2 & x_2^2 \\
+\vdots & \vdots & \vdots \\
+1 & x_N & x_N^2
+\end{bmatrix}
+$$
+
+如果用一般 basis functions：
+
+$$
+f(x)=\sum_{i=1}^d h_i(x)\theta_i
+$$
+
+那么：
+
+$$
+\Phi_{ji}=h_i(x_j)
+$$
+
+也就是说，$\Phi$ 的第 $i$ 列就是第 $i$ 个 basis function 在所有数据点上的取值。
+
+因此，选择 $\Phi$ 本质上就是选择 model structure：
+
+| Model choice | Columns of $\Phi$ |
+|---|---|
+| constant + line | $1,\ x$ |
+| polynomial | $1,\ x,\ x^2,\ldots$ |
+| Chebyshev basis | $T_0(x),\ T_1(x),\ T_2(x),\ldots$ |
+| conic fitting | $x^2,\ xy,\ y^2,\ x,\ y,\ 1$ |
+| physical linear model | measured inputs, sensitivities, known coefficients |
+
+### 2. Rank, Lose Rank, and Linear Dependence
+
+Rank tells us how many independent columns $\Phi$ really has.
+
+如果：
+
+$$
+\operatorname{rank}(\Phi)=d
+$$
+
+则 $\Phi$ 有 full column rank，所有 columns 都提供了独立信息。此时：
+
+$$
+\Phi^T\Phi
+$$
+
+通常可逆，closed-form LS solution 才能写成：
+
+$$
+\hat\theta = (\Phi^T\Phi)^{-1}\Phi^Ty
+$$
+
+如果 $\Phi$ lose rank，意思是某些 columns 可以由其他 columns 线性组合出来。例如：
+
+$$
+\phi_3 = 2\phi_2
+$$
+
+那么第 3 列没有提供新的方向。模型里虽然写了两个参数 $\theta_2,\theta_3$，但数据无法区分它们的贡献，因为：
+
+$$
+\theta_2\phi_2+\theta_3\phi_3
+= \theta_2\phi_2+2\theta_3\phi_2
+= (\theta_2+2\theta_3)\phi_2
+$$
+
+这会导致参数不唯一：很多组 $\theta_2,\theta_3$ 可以给出同样的 prediction。
+
+常见导致 lose rank 的原因：
+
+- 两个 regressors 完全重复；
+- 一个 column 是另一个 column 的倍数；
+- intercept 和 dummy variables 同时设置不当；
+- 数据点太少，$N<d$；
+- 某个变量在数据中没有变化，例如所有 $x_j$ 都一样；
+- 工程系统里某些输入总是一起变化，导致无法分辨单独贡献。
+
+### 3. Condition Number: Not Singular, But Almost Singular
+
+Rank 讨论的是“是否精确线性相关”。Condition number 讨论的是“是否接近线性相关”。
+
+对 $\Phi$，condition number 可以直观理解为：
+
+$$
+\kappa(\Phi)
+= \frac{\text{largest stretching direction}}{\text{smallest stretching direction}}
+$$
+
+用 singular values 写就是：
+
+$$
+\kappa(\Phi)=\frac{\sigma_{\max}(\Phi)}{\sigma_{\min}(\Phi)}
+$$
+
+如果 $\sigma_{\min}(\Phi)$ 很小，说明有些 column direction 几乎可以由其他 columns 解释。矩阵还没有完全 lose rank，但已经非常接近。
+
+直观解释：
+
+- $\kappa(\Phi)$ 小：不同 regressors 提供的方向比较独立，估计较稳定；
+- $\kappa(\Phi)$ 大：某些 regressors 几乎重复，参数估计会对 noise 很敏感；
+- $\sigma_{\min}(\Phi)=0$：真的 lose rank，某些参数方向不可辨识。
+
+Normal equation 会形成：
+
+$$
+\Phi^T\Phi
+$$
+
+这会进一步放大 conditioning 问题：
+
+$$
+\kappa(\Phi^T\Phi)=\kappa(\Phi)^2
+$$
+
+这就是为什么 lecture 里强调：closed-form 解适合理论，但实践中直接 invert $\Phi^T\Phi$ 可能数值不稳。
+
+### 4. Is $\Phi$ Symmetric?
+
+通常 $\Phi$ 本身不是 symmetric。
+
+首先，$\Phi$ 往往不是 square matrix：
+
+$$
+\Phi \in \mathbb{R}^{N\times d}
+$$
+
+通常 $N$ 是数据点数量，$d$ 是参数数量，两者不一定相等。所以大多数情况下，问 $\Phi$ 是否 symmetric 没有意义。
+
+真正 symmetric 的对象是：
+
+$$
+\Phi^T\Phi
+$$
+
+因为：
+
+$$
+(\Phi^T\Phi)^T
+= \Phi^T(\Phi^T)^T
+= \Phi^T\Phi
+$$
+
+所以 $\Phi^T\Phi$ 一定是 symmetric。
+
+而且它还是 positive semidefinite：
+
+$$
+z^T\Phi^T\Phi z
+= (\Phi z)^T(\Phi z)
+= \|\Phi z\|_2^2
+\ge 0
+$$
+
+如果 $\Phi$ full column rank，那么对所有 $z\neq 0$：
+
+$$
+\Phi z \neq 0
+$$
+
+因此：
+
+$$
+z^T\Phi^T\Phi z > 0
+$$
+
+这时 $\Phi^T\Phi$ 是 positive definite，也就可逆。
+
+所以关键关系是：
+
+$$
+\Phi\ \text{full column rank}
+\quad\Longleftrightarrow\quad
+\Phi^T\Phi\ \text{positive definite}
+\quad\Longrightarrow\quad
+(\Phi^T\Phi)^{-1}\ \text{exists}
+$$
+
+### 5. Where Does $\Phi$ Come From in Real Problems?
+
+$\Phi$ 来自 model design，不是从空气里随便写出来。常见来源有四类。
+
+第一类：来自你选择的 mathematical basis。
+
+例如 polynomial fitting 里，选择：
+
+$$
+1,\ x,\ x^2
+$$
+
+就决定了 $\Phi$ 的列是：
+
+$$
+\begin{bmatrix}
+1
+\end{bmatrix},
+\quad
+\begin{bmatrix}
+x_1\\
+x_2\\
+\vdots
+\end{bmatrix},
+\quad
+\begin{bmatrix}
+x_1^2\\
+x_2^2\\
+\vdots
+\end{bmatrix}
+$$
+
+第二类：来自 physical model。
+
+例如一个线性化工程模型可能写成：
+
+$$
+y \approx a u_1 + b u_2 + c
+$$
+
+其中 $u_1,u_2$ 是测到的输入。那么：
+
+$$
+\Phi =
+\begin{bmatrix}
+u_{1,1} & u_{2,1} & 1\\
+u_{1,2} & u_{2,2} & 1\\
+\vdots & \vdots & \vdots\\
+u_{1,N} & u_{2,N} & 1
+\end{bmatrix},
+\quad
+\theta =
+\begin{bmatrix}
+a\\
+b\\
+c
+\end{bmatrix}
+$$
+
+第三类：来自 linearisation。
+
+如果原模型是 nonlinear：
+
+$$
+y = H(\theta)
+$$
+
+在 nominal point $\theta_i$ 附近线性化：
+
+$$
+H(\theta)
+\approx
+H(\theta_i) + H_\theta(\theta-\theta_i)
+$$
+
+这里的 Jacobian：
+
+$$
+H_\theta
+$$
+
+就扮演了 local regressor matrix 的角色。
+
+第四类：来自 power-system / DCOPF 这类结构模型。
+
+例如 DC power flow 中，line flow 可能近似写成：
+
+$$
+f \approx \mathrm{PTDF}\, p
+$$
+
+如果我们用一些 observed injections、loads、binding constraints 或 sensitivity quantities 去解释 price、flow 或 dispatch，那么 $\Phi$ 的列就来自这些物理量或优化模型导出的 sensitivity。
+
+这时 $\Phi$ 不是任意矩阵，而是由：
+
+- 网络拓扑；
+- line reactance / admittance；
+- PTDF 或 sensitivity matrix；
+- load / generation observations；
+- constraint status；
+- 线性化假设；
+- 数据采样方式；
+
+共同决定。
+
+因此建模时要问：
+
+```text
+Which physical or statistical mechanism makes these columns relevant to y?
+Are these columns independently informative?
+Are any columns nearly duplicated or badly scaled?
+Is Phi measured accurately enough to treat it as fixed?
+```
+
+这也把前面讨论的 errors-in-variables 联系起来：如果 $\Phi$ 的来源本身有测量误差或模型误差，那么普通 OLS 的“误差只放在 $y$ 上”假设就会变弱。
+
+### 6. Connecting $\Phi$ to Feature Engineering, Extraction, Selection, and Model Selection
+
+First-pass reading note: 这一节主要是帮你把 DATA423 的 feature workflow 和 Roy 的 $\Phi$ 串起来。明天如果时间紧，先确保你会 build $\Phi$、判断 rank/condition、推 normal equations；这一节可以第二遍读，用来加深直觉。
+
+DATA423 里的 feature engineering、feature extraction、feature selection 和 model selection 可以和 least-squares 里的 $\Phi$ 完全串起来。它们都在回答同一个问题：
+
+> 我们到底应该把哪些 columns 放进 $\Phi$？
+
+可以把流程理解成：
+
+```text
+raw measurements
+-> feature engineering / extraction
+-> candidate Phi matrices
+-> feature selection
+-> model selection
+-> final fitted model
+```
+
+在 LS 语言里：
+
+$$
+y \approx \Phi\theta
+$$
+
+所以任何关于 features 的决定，最后都会变成对 $\Phi$ 的列的决定。
+
+#### Feature Engineering: Designing Candidate Columns
+
+Feature engineering 是把原始变量变成更适合建模的变量。放到 $\Phi$ 里，就是构造 candidate columns。
+
+例如原始变量是：
+
+$$
+x_1,\quad x_2
+$$
+
+最简单的 $\Phi$ 可以是：
+
+$$
+\Phi =
+\begin{bmatrix}
+1 & x_{1,1} & x_{2,1}\\
+1 & x_{1,2} & x_{2,2}\\
+\vdots & \vdots & \vdots\\
+1 & x_{1,N} & x_{2,N}
+\end{bmatrix}
+$$
+
+如果我们认为有 interaction：
+
+$$
+x_1x_2
+$$
+
+就加一列：
+
+$$
+\Phi =
+\begin{bmatrix}
+1 & x_{1,1} & x_{2,1} & x_{1,1}x_{2,1}\\
+1 & x_{1,2} & x_{2,2} & x_{1,2}x_{2,2}\\
+\vdots & \vdots & \vdots & \vdots\\
+1 & x_{1,N} & x_{2,N} & x_{1,N}x_{2,N}
+\end{bmatrix}
+$$
+
+模型变成：
+
+$$
+y
+\approx
+\theta_0
++\theta_1x_1
++\theta_2x_2
++\theta_3x_1x_2
+$$
+
+这仍然是 linear least-squares，因为它对参数 $\theta$ 是线性的。
+
+常见 feature engineering 操作在 $\Phi$ 中的含义：
+
+| Feature engineering idea | What happens to $\Phi$ |
+|---|---|
+| add intercept | add a column of ones |
+| polynomial term $x^2$ | add a column $x_j^2$ |
+| interaction $x_1x_2$ | add a column $x_{1,j}x_{2,j}$ |
+| log transform $\log x$ | replace/add a column $\log(x_j)$ |
+| standardise variable | rescale a column of $\Phi$ |
+| one-hot encode category | add indicator columns |
+| cyclic time feature | add $\sin$ and $\cos$ columns |
+
+所以 feature engineering 的直觉是：
+
+> 用 domain knowledge 决定哪些 transformations 可能让 $y$ 更容易由 $\Phi\theta$ 解释。
+
+#### Feature Extraction: Creating a New Representation
+
+Feature extraction 是从原始变量中创造新的变量。它通常更强调“从已有变量中提取更有信息量的表示”。
+
+假设原始数据矩阵是：
+
+$$
+X \in \mathbb{R}^{N\times p}
+$$
+
+Feature extraction 可以看成构造一个变换：
+
+$$
+Z = g(X)
+$$
+
+然后用：
+
+$$
+\Phi = Z
+$$
+
+或者：
+
+$$
+\Phi = [\mathbf{1},\ X,\ Z]
+$$
+
+例如 PCA 会把原始变量变成 principal components：
+
+$$
+Z = XW
+$$
+
+其中 $W$ 是 learned projection matrix。此时 $\Phi$ 的列不再是原始变量，而是 latent directions：
+
+$$
+\Phi =
+\begin{bmatrix}
+z_{1,1} & z_{1,2} & \cdots & z_{1,k}\\
+z_{2,1} & z_{2,2} & \cdots & z_{2,k}\\
+\vdots & \vdots & & \vdots\\
+z_{N,1} & z_{N,2} & \cdots & z_{N,k}
+\end{bmatrix}
+$$
+
+这解释了 latent variables 的概念：这些 variables 不是直接测量的，而是从 raw variables 中推断出来的。
+
+Feature extraction 常见目的：
+
+- 让原始变量变得更适合某类模型；
+- 把非线性或周期性结构显式表达出来；
+- 降低维度；
+- 把多个相关变量压缩成少数 latent variables；
+- 改善 $\Phi$ 的 conditioning。
+
+例如 cyclic time feature：
+
+$$
+\text{month}_{\sin}
+= \sin\left(\frac{2\pi(m-1)}{12}\right)
+$$
+
+$$
+\text{month}_{\cos}
+= \cos\left(\frac{2\pi(m-1)}{12}\right)
+$$
+
+这比直接把 month 写成 1 到 12 更合理，因为 December 和 January 在周期上很近。
+
+#### Feature Selection: Removing Columns from $\Phi$
+
+Feature selection 是决定哪些 columns 应该保留，哪些应该删除。
+
+如果候选矩阵是：
+
+$$
+\Phi_{\text{candidate}}
+=
+\begin{bmatrix}
+| & | & | & |\\
+\phi_1 & \phi_2 & \phi_3 & \phi_4\\
+| & | & | & |
+\end{bmatrix}
+$$
+
+feature selection 可能选择：
+
+$$
+\Phi_{\text{selected}}
+=
+\begin{bmatrix}
+| & |\\
+\phi_1 & \phi_3\\
+| & |
+\end{bmatrix}
+$$
+
+也就是删除不重要、重复、噪声大或导致 overfitting 的 columns。
+
+为什么这和 LS 很相关？
+
+- 多余 columns 会增加 variance；
+- 无关 columns 会让模型学到 spurious pattern；
+- 相关 columns 会让 $\Phi$ ill-conditioned；
+- 太多 columns 会增加 overfitting 风险；
+- 透明模型需要较少且有意义的 columns。
+
+几类 feature selection 方法可以翻译成 $\Phi$ 语言：
+
+| Feature selection type | $\Phi$ interpretation |
+|---|---|
+| manual selection | 人根据 domain knowledge 删除/保留 columns |
+| filter method | 先给 columns 排名，再取 top columns |
+| wrapper method | 尝试不同 column subsets，用模型表现选 |
+| embedded method | 模型训练时自动决定哪些 columns 有用 |
+| LASSO / ElasticNet | 通过 penalty 让部分 coefficients 变小或变成 0 |
+
+LASSO 的直觉特别容易和 $\Phi$ 连接：
+
+$$
+\min_\theta
+\|y-\Phi\theta\|_2^2
++\lambda\|\theta\|_1
+$$
+
+如果某个 coefficient：
+
+$$
+\theta_i = 0
+$$
+
+那么 $\Phi$ 的第 $i$ 列虽然还在数据里，但模型实际没有使用它。
+
+#### Model Selection: Choosing Between Candidate $\Phi$ Designs
+
+Feature engineering、extraction 和 selection 会产生很多可能的 $\Phi$：
+
+$$
+\Phi_1,\quad \Phi_2,\quad \Phi_3,\quad \ldots
+$$
+
+例如：
+
+$$
+\Phi_1 = [1,\ x_1,\ x_2]
+$$
+
+$$
+\Phi_2 = [1,\ x_1,\ x_2,\ x_1x_2]
+$$
+
+$$
+\Phi_3 = [1,\ x_1,\ x_2,\ x_1^2,\ x_2^2,\ x_1x_2]
+$$
+
+$$
+\Phi_4 = [1,\ T_1(x),\ T_2(x),\ T_3(x)]
+$$
+
+Model selection 就是在这些 candidate models 之间选择：
+
+$$
+\mathcal{M}_1,\quad \mathcal{M}_2,\quad \mathcal{M}_3,\ldots
+$$
+
+在 regression 里，常用指标包括：
+
+- RMSE；
+- MAE；
+- $R^2$；
+- validation error；
+- cross-validation error；
+- AIC / BIC when appropriate.
+
+一个重要原则是：不要只看 training residual。
+
+如果只看：
+
+$$
+\|y_{\text{train}}-\Phi_{\text{train}}\hat\theta\|_2^2
+$$
+
+更复杂的 $\Phi$ 通常会更好，因为 columns 更多、模型更灵活。但这不代表它在 unseen data 上更好。
+
+所以要看 validation/test performance：
+
+$$
+\|y_{\text{valid}}-\Phi_{\text{valid}}\hat\theta\|_2^2
+$$
+
+这正好连接 Roy Smith 后面讲的 regularisation / validation：最小 training error 不等于最好 prediction。
+
+#### One Unified View
+
+可以把这些概念压缩成一张表：
+
+| Concept | Question | Effect on $\Phi$ |
+|---|---|---|
+| feature engineering | raw variables 应该如何变形？ | add/transform columns |
+| feature extraction | 能否从 raw variables 中提取更好的表示？ | create new columns $Z=g(X)$ |
+| feature selection | 哪些 columns 应该保留？ | remove or downweight columns |
+| model selection | 哪个 candidate $\Phi$ 泛化最好？ | choose between $\Phi_1,\Phi_2,\ldots$ |
+| regularisation | 如何控制复杂度和 instability？ | penalise coefficients linked to columns |
+
+所以你可以把 $\Phi$ 想成一个“建模决策的账本”：
+
+```text
+每一列都是一个假设:
+this feature/basis/interaction/latent variable helps explain y.
+```
+
+如果 $\Phi$ 构造得好，LS 会在这些 columns 的 span 里找到合理 projection。如果 $\Phi$ 构造得差，LS 仍然会给你一个最小 residual 的解，但那个解可能没有解释力、泛化差、数值不稳，或者参数不可辨识。
+
+实践中，我们通常会在拟合前对 candidate $\Phi$ 做一些 EDA，例如检查 variance、correlation、VIF、rank 和 condition number。这部分不是 Roy Smith 这组课的考试主线，但它能帮助你把 DATA423 的 feature workflow 和这里的 $\Phi$ 融合起来。详细流程放在 Appendix: Practical EDA for Candidate $\Phi$。
+
 ## Normal Equations
 
 令
@@ -121,7 +984,214 @@ $$
 J(\theta) = \|y - \Phi\theta\|_2^2
 $$
 
-对 $\theta$ 求导并设为 0：
+其中维度通常是：
+
+$$
+y \in \mathbb{R}^{N},\quad
+\Phi \in \mathbb{R}^{N\times d},\quad
+\theta \in \mathbb{R}^{d}
+$$
+
+所以：
+
+$$
+\Phi\theta \in \mathbb{R}^{N},\quad
+y-\Phi\theta \in \mathbb{R}^{N}
+$$
+
+目标函数是 residual 的平方长度：
+
+$$
+J(\theta)
+= (y-\Phi\theta)^T(y-\Phi\theta)
+= \|y-\Phi\theta\|_2^2
+$$
+
+有时 lecture 写成：
+
+$$
+J(\theta)
+= (\Phi\theta-y)^T(\Phi\theta-y)
+= \|\epsilon\|_2^2
+$$
+
+这两个完全等价，因为：
+
+$$
+\Phi\theta-y = -(y-\Phi\theta)
+$$
+
+平方长度不受负号影响。
+
+### Matrix Expansion Rules
+
+推导 normal equations 时，最常用的是下面几条规则。
+
+第一，矩阵乘法展开和普通代数很像，但顺序不能乱：
+
+$$
+(a-b)^T(a-b)
+= a^Ta - a^Tb - b^Ta + b^Tb
+$$
+
+令
+
+$$
+a=\Phi\theta,\quad b=y
+$$
+
+则：
+
+$$
+\begin{aligned}
+J(\theta)
+&= (\Phi\theta-y)^T(\Phi\theta-y)\\
+&= (\Phi\theta)^T(\Phi\theta)
+   -(\Phi\theta)^Ty
+   -y^T(\Phi\theta)
+   +y^Ty
+\end{aligned}
+$$
+
+第二，转置乘积要反过来：
+
+$$
+(AB)^T = B^TA^T
+$$
+
+所以：
+
+$$
+(\Phi\theta)^T = \theta^T\Phi^T
+$$
+
+于是第一项变成：
+
+$$
+(\Phi\theta)^T(\Phi\theta)
+= \theta^T\Phi^T\Phi\theta
+$$
+
+第三，中间两项其实是同一个 scalar。因为
+
+$$
+(\Phi\theta)^Ty
+$$
+
+是 $1\times 1$ 标量，而标量等于自己的转置：
+
+$$
+(\Phi\theta)^Ty
+= \left((\Phi\theta)^Ty\right)^T
+= y^T(\Phi\theta)
+$$
+
+并且：
+
+$$
+(\Phi\theta)^Ty
+= \theta^T\Phi^Ty
+$$
+
+所以：
+
+$$
+-(\Phi\theta)^Ty-y^T(\Phi\theta)
+= -2\theta^T\Phi^Ty
+$$
+
+完整展开为：
+
+$$
+J(\theta)
+= \theta^T\Phi^T\Phi\theta
+-2\theta^T\Phi^Ty
++y^Ty
+$$
+
+这就是截图里那一步：
+
+$$
+(\Phi\theta-y)^T(\Phi\theta-y)
+=
+\theta^T\Phi^T\Phi\theta
+-2(\Phi\theta)^Ty
++y^Ty
+$$
+
+也可以把中间项写成 $-2\theta^T\Phi^Ty$，因为 $(\Phi\theta)^Ty=\theta^T\Phi^Ty$。
+
+### Differentiation Rules
+
+接着对 $\theta$ 求导。常用规则是：
+
+$$
+\frac{\partial}{\partial x}(x^TAx)
+= (A+A^T)x
+$$
+
+如果 $A$ 是 symmetric，则：
+
+$$
+\frac{\partial}{\partial x}(x^TAx)
+= 2Ax
+$$
+
+在这里：
+
+$$
+A=\Phi^T\Phi
+$$
+
+而
+
+$$
+(\Phi^T\Phi)^T
+= \Phi^T\Phi
+$$
+
+所以 $\Phi^T\Phi$ 是 symmetric。
+
+另外：
+
+$$
+\frac{\partial}{\partial x}(x^Tb)=b
+$$
+
+以及不含 $x$ 的常数项求导为 0。
+
+因此：
+
+$$
+\begin{aligned}
+\frac{\partial J}{\partial \theta}
+&=
+\frac{\partial}{\partial \theta}
+\left(
+\theta^T\Phi^T\Phi\theta
+-2\theta^T\Phi^Ty
++y^Ty
+\right)\\
+&=
+2\Phi^T\Phi\theta
+-2\Phi^Ty
++0
+\end{aligned}
+$$
+
+令 gradient 为 0：
+
+$$
+2\Phi^T\Phi\theta - 2\Phi^Ty = 0
+$$
+
+两边除以 2：
+
+$$
+\Phi^T\Phi\theta - \Phi^Ty = 0
+$$
+
+所以：
 
 $$
 \Phi^T\Phi\theta = \Phi^T y
@@ -133,11 +1203,126 @@ $$
 \hat\theta = (\Phi^T\Phi)^{-1}\Phi^T y
 $$
 
-注意：
+### Why the Closed Form Is Not Always How We Compute It
+
+这个公式是 least-squares 的 theoretical solution。它很适合：
+
+- 证明 theorem；
+- 理解 estimator 的结构；
+- 在小规模、well-conditioned 的例子里手算或教学；
+- 帮助看清楚 $\Phi^T\Phi$、rank、variance 等概念。
+
+但在实际计算中，不一定应该直接写：
+
+$$
+\hat\theta = (\Phi^T\Phi)^{-1}\Phi^T y
+$$
+
+原因是 normal equation 先形成了：
+
+$$
+\Phi^T\Phi
+$$
+
+这一步会把 singular values 大致平方。直观上：
+
+```text
+small numbers become smaller
+large numbers become larger
+```
+
+如果 $\Phi$ 本来 scaling 就不好，或者不同列的量级差很多，那么 $\Phi^T\Phi$ 会更 ill-conditioned。
+
+用 condition number 表示，通常有近似关系：
+
+$$
+\kappa(\Phi^T\Phi) = \kappa(\Phi)^2
+$$
+
+所以如果 $\Phi$ 的 condition number 已经大，normal equation 会把数值问题放大。
+
+接着公式还要求：
+
+$$
+(\Phi^T\Phi)^{-1}
+$$
+
+这意味着小的 singular values 在 inverse 里会变成很大的数。于是 tiny numerical errors 或 noisy data 可能被放大，最后影响 $\hat\theta$。
+
+这就是 lecture 里说的：
+
+```text
+squared things
+small numbers get smaller
+big numbers get bigger
+then inverted
+small numbers may get very big
+```
+
+从实践角度，通常更稳的做法是：
+
+- 不显式计算 inverse；
+- 用 QR decomposition 或 SVD 解 least-squares；
+- 在 MATLAB 里用 backslash，例如 `theta = Phi \ y`；
+- 在 Python/NumPy 里用 `lstsq`，而不是手写 inverse；
+- 如果问题 ill-conditioned，考虑 scaling、regularisation 或 SVD truncation。
+
+如果是 under-determined case，也就是参数数量比有效数据约束更多：
+
+$$
+d > N
+$$
+
+或者 $\Phi$ 没有 full column rank，那么：
+
+$$
+\Phi^T\Phi
+$$
+
+不可逆或接近不可逆。此时 closed-form inverse 不再是可靠计算方式，甚至不存在。后面讲 regularisation、minimum-norm solution、pseudo-inverse 或 SVD 时，就是在处理这类问题。
+
+Pseudo-inverse 小提示：
+
+如果 $\Phi$ 不是 full column rank，不能直接用普通 inverse，但可以用 Moore-Penrose pseudo-inverse：
+
+$$
+\hat\theta = \Phi^+ y
+$$
+
+其中 $\Phi^+$ 可以通过 SVD 定义。若：
+
+$$
+\Phi = U\Sigma V^T
+$$
+
+则：
+
+$$
+\Phi^+ = V\Sigma^+U^T
+$$
+
+$\Sigma^+$ 的做法是：把非零 singular values 取倒数，零 singular values 保持为零。
+
+直觉：
+
+- ordinary inverse 只适用于 square 且 nonsingular 的矩阵；
+- pseudo-inverse 可以处理 rectangular、under-determined 或 rank-deficient 的 LS 问题；
+- 在有多个 exact/least-squares solutions 时，pseudo-inverse 通常给出 minimum-norm solution；
+- 如果 singular values 很小，pseudo-inverse 仍可能放大 noise，所以实践中常和 SVD truncation 或 regularisation 一起考虑。
+
+所以 Roy 说 rank deficient 时可以用 pseudo-inverse，意思是：normal-equation inverse 不存在时，仍然可以用 SVD-based generalized inverse 找到一个合理的 LS 解。
+
+所以可以把 normal-equation 解记成：
+
+> theoretical solution: useful for understanding and proofs, but not always the numerical algorithm.
+
+注意事项总结：
 
 - normal equations 总是 consistent；
 - 但 inverse form 需要 $\Phi$ full column rank；
-- 如果 $\Phi^T\Phi$ condition number 很大，解会对噪声敏感。
+- 如果 $\Phi^T\Phi$ condition number 很大，解会对噪声敏感；
+- 实际计算时避免显式求 inverse，优先使用 QR、SVD 或 solver 提供的 least-squares routine；
+- under-determined 或 rank-deficient 时，要转向 pseudo-inverse、regularisation 或其他约束。
 
 ## Geometric Interpretation
 
@@ -162,6 +1347,234 @@ $$
 这正是 normal equations。
 
 记忆方式：**LS 不是让每个点都正确，而是让误差向量无法再沿模型空间方向减少。**
+
+## Linear Function Parametrisation and Basis Functions
+
+Lecture 6 里说的 linear least-squares 不等于“只能拟合直线”。更准确的说法是：
+
+> 模型对参数 $\theta$ 是 linear combination，但每个 basis function $h_i(x)$ 可以是非线性的。
+
+一般写成：
+
+$$
+y = f(x) = \sum_{i=1}^d h_i(x)\theta_i
+$$
+
+这里 $h_i(x)$ 是 basis functions，$\theta_i$ 是要估计的系数。只要模型对 $\theta_i$ 是线性的，就仍然可以放进 linear least-squares 框架。
+
+对数据点 $x_1,\ldots,x_N$，design matrix 是：
+
+$$
+\Phi =
+\begin{bmatrix}
+h_1(x_1) & h_2(x_1) & \cdots & h_d(x_1) \\
+h_1(x_2) & h_2(x_2) & \cdots & h_d(x_2) \\
+\vdots & \vdots & & \vdots \\
+h_1(x_N) & h_2(x_N) & \cdots & h_d(x_N)
+\end{bmatrix}
+$$
+
+于是：
+
+$$
+y \approx \Phi\theta
+$$
+
+重点是：**非线性可以在 $h_i(x)$ 里，linear 只要求 $\theta$ 是线性出现的。**
+
+### Power Basis
+
+最直接的多项式 basis 是 powers of $x$：
+
+$$
+h_1(x)=1,\quad h_2(x)=x,\quad h_3(x)=x^2,\quad h_4(x)=x^3,\ldots
+$$
+
+因此三次多项式可以写成：
+
+$$
+f(x)=\theta_1+\theta_2x+\theta_3x^2+\theta_4x^3
+$$
+
+这不是关于 $x$ 的线性函数，但它仍然是关于参数 $\theta$ 的线性组合。
+
+### Chebyshev Basis
+
+Chebyshev polynomials 是另一组多项式 basis。它们在区间 $[-1,1]$ 上特别常用，因为数值性质通常比普通 powers of $x$ 更稳定。
+
+前几项是：
+
+$$
+T_0(x)=1
+$$
+
+$$
+T_1(x)=x
+$$
+
+$$
+T_2(x)=2x^2-1
+$$
+
+递推关系是：
+
+$$
+T_{i+1}(x)=2xT_i(x)-T_{i-1}(x)
+$$
+
+所以也可以写：
+
+$$
+f(x)=\theta_1T_0(x)+\theta_2T_1(x)+\theta_3T_2(x)+\cdots
+$$
+
+它和 power basis 的区别不是“能不能用 LS”，而是 $\Phi$ 的列长什么样、这些列之间是否容易数值相关、拟合曲线在区间上如何摆动。
+
+```{=latex}
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+  width=0.47\textwidth,
+  height=0.32\textwidth,
+  title={Power basis on $[-1,1]$},
+  xmin=-1, xmax=1,
+  ymin=-1.2, ymax=1.2,
+  axis lines=middle,
+  xlabel={$x$},
+  ylabel={$h_i(x)$},
+  legend style={font=\scriptsize, at={(0.03,0.97)}, anchor=north west},
+  domain=-1:1,
+  samples=160
+]
+\addplot[blue, thick] {1};
+\addlegendentry{$1$}
+\addplot[red, thick] {x};
+\addlegendentry{$x$}
+\addplot[teal, thick] {x^2};
+\addlegendentry{$x^2$}
+\addplot[orange, thick] {x^3};
+\addlegendentry{$x^3$}
+\end{axis}
+\end{tikzpicture}
+\hfill
+\begin{tikzpicture}
+\begin{axis}[
+  width=0.47\textwidth,
+  height=0.32\textwidth,
+  title={Chebyshev basis on $[-1,1]$},
+  xmin=-1, xmax=1,
+  ymin=-1.2, ymax=1.2,
+  axis lines=middle,
+  xlabel={$x$},
+  ylabel={$T_i(x)$},
+  legend style={font=\scriptsize, at={(0.03,0.97)}, anchor=north west},
+  domain=-1:1,
+  samples=200
+]
+\addplot[blue, thick] {1};
+\addlegendentry{$T_0=1$}
+\addplot[red, thick] {x};
+\addlegendentry{$T_1=x$}
+\addplot[teal, thick] {2*x^2 - 1};
+\addlegendentry{$T_2$}
+\addplot[orange, thick] {4*x^3 - 3*x};
+\addlegendentry{$T_3$}
+\addplot[purple, thick] {8*x^4 - 8*x^2 + 1};
+\addlegendentry{$T_4$}
+\end{axis}
+\end{tikzpicture}
+\caption{Power basis 和 Chebyshev basis 都可以形成 $\Phi$ 的列，但它们产生的曲线形状和数值性质不同。}
+\end{figure}
+```
+
+### Why Polynomial Bases Are Not Good for Orbits
+
+多项式 basis 很适合局部拟合曲线，但不适合作为行星或彗星轨道的自然模型。原因是：行星和彗星在经典二体问题下走的是圆锥曲线，而不是一般多项式图像。
+
+圆锥曲线的一般隐式形式是：
+
+$$
+Ax^2+Bxy+Cy^2+Dx+Ey+F=0
+$$
+
+这个式子对 $x,y$ 是二次的，但对参数
+
+$$
+\theta =
+\begin{bmatrix}
+A & B & C & D & E & F
+\end{bmatrix}^T
+$$
+
+仍然是线性的。把 basis functions 写出来：
+
+$$
+h(x,y)=
+\begin{bmatrix}
+x^2 & xy & y^2 & x & y & 1
+\end{bmatrix}
+$$
+
+则每个观测点满足：
+
+$$
+h(x_j,y_j)\theta \approx 0
+$$
+
+所以“用圆锥曲线拟合轨道”仍然保留了 linear combination 的思想，只是 basis functions 从
+
+$$
+1,\ x,\ x^2,\ldots
+$$
+
+变成了
+
+$$
+x^2,\ xy,\ y^2,\ x,\ y,\ 1
+$$
+
+小心一点：如果直接最小化 $\| \Phi\theta \|^2$，会得到 trivial solution $\theta=0$。实际 conic fitting 通常需要加 normalization 或 constraint，例如固定某个系数、令 $\|\theta\|=1$，或加入与 ellipse/parabola/hyperbola 类型相关的约束。这里要抓住的主线是：**basis function 改变了可表达的几何形状。**
+
+```{=latex}
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+  width=0.82\textwidth,
+  height=0.46\textwidth,
+  axis equal image,
+  xmin=-3.2, xmax=3.2,
+  ymin=-2.2, ymax=2.2,
+  axis lines=middle,
+  xlabel={$x$},
+  ylabel={$y$},
+  legend style={font=\scriptsize, at={(0.02,0.98)}, anchor=north west},
+  samples=220
+]
+\addplot[blue, thick, domain=0:360, samples=240] ({cos(x)}, {sin(x)});
+\addlegendentry{circle: $x^2+y^2=1$}
+\addplot[teal, thick, domain=0:360, samples=240] ({2*cos(x)}, {0.9*sin(x)});
+\addlegendentry{ellipse: $\frac{x^2}{4}+\frac{y^2}{0.81}=1$}
+\addplot[orange, thick, domain=-2.4:2.4] {0.35*x^2-1.1};
+\addlegendentry{parabola: $y=0.35x^2-1.1$}
+\addplot[purple, thick, domain=1.08:3.0, samples=160] {0.8*sqrt((x/1.05)^2 - 1)};
+\addlegendentry{hyperbola: $\frac{x^2}{1.05^2}-\frac{y^2}{0.8^2}=1$}
+\addplot[purple, thick, domain=1.08:3.0, samples=160] {-0.8*sqrt((x/1.05)^2 - 1)};
+\addplot[purple, thick, domain=-3.0:-1.08, samples=160] {0.8*sqrt((x/1.05)^2 - 1)};
+\addplot[purple, thick, domain=-3.0:-1.08, samples=160] {-0.8*sqrt((x/1.05)^2 - 1)};
+\end{axis}
+\end{tikzpicture}
+\caption{圆、椭圆、抛物线、双曲线都是圆锥曲线。它们不是普通的一元多项式图像，但可以由二次隐式 basis functions 表示。}
+\end{figure}
+```
+
+从图像直觉上看：
+
+- power basis 让函数图像以 $y=f(x)$ 的形式上下弯曲；
+- Chebyshev basis 也是多项式，但在 $[-1,1]$ 上有更规整的振荡结构；
+- conic basis 不一定把曲线写成单值函数 $y=f(x)$，因此可以表达闭合轨道形状，例如 circle 和 ellipse；
+- 对 Ceres/planet orbit 这类问题，conic section 比普通 polynomial 更符合物理几何。
 
 # Nonlinear Least Squares and Gauss/Ceres
 
@@ -218,29 +1631,310 @@ $$
 \theta_{i+1} = \theta_i + \delta\theta
 $$
 
+## Why This Is a Gradient / Gauss-Newton Update
+
+Roy 说 Gauss 做的事情“basically solving the gradient update step”，意思不是普通 gradient descent 那种简单更新：
+
+$$
+\theta_{i+1}=\theta_i-\alpha \nabla J(\theta_i)
+$$
+
+而是更接近 **Gauss-Newton**：
+
+> 在当前点附近把 nonlinear model 线性化，然后解一个 local least-squares problem，得到一个更聪明的 step $\delta\theta$。
+
+原始 nonlinear cost 是：
+
+$$
+J(\theta)
+=
+\frac{1}{2}\|y_{\text{obs}}-H(\theta)\|_2^2
+$$
+
+定义 residual：
+
+$$
+r(\theta)=y_{\text{obs}}-H(\theta)
+$$
+
+在当前估计 $\theta_i$ 处：
+
+$$
+r_i = r(\theta_i)=y_{\text{obs}}-H(\theta_i)
+$$
+
+对模型做一阶 Taylor expansion：
+
+$$
+H(\theta_i+\delta\theta)
+\approx
+H(\theta_i)+H_\theta\delta\theta
+$$
+
+因此 residual 近似为：
+
+$$
+r(\theta_i+\delta\theta)
+=
+y_{\text{obs}}-H(\theta_i+\delta\theta)
+\approx
+y_{\text{obs}}-H(\theta_i)-H_\theta\delta\theta
+$$
+
+也就是：
+
+$$
+r(\theta_i+\delta\theta)
+\approx
+r_i-H_\theta\delta\theta
+$$
+
+于是 nonlinear cost 在当前点附近被近似成一个 quadratic cost：
+
+$$
+J_{\text{quad}}(\delta\theta)
+=
+\frac{1}{2}\|r_i-H_\theta\delta\theta\|_2^2
+$$
+
+这就是 Roy 说的：linearise the nonlinear model，然后因为 error squared，所以得到 quadratic approximation to the cost function。
+
+现在问题变成：
+
+$$
+\min_{\delta\theta}
+\frac{1}{2}\|r_i-H_\theta\delta\theta\|_2^2
+$$
+
+这就是一个 ordinary linear least-squares problem，只不过 unknown 不是 $\theta$，而是 update step：
+
+$$
+\delta\theta
+$$
+
+对应关系是：
+
+| Ordinary LS | Gauss-Newton local LS |
+|---|---|
+| $y$ | $r_i$ or $\delta y$ |
+| $\Phi$ | $H_\theta$ |
+| $\theta$ | $\delta\theta$ |
+| $\min_\theta \|y-\Phi\theta\|^2$ | $\min_{\delta\theta}\|r_i-H_\theta\delta\theta\|^2$ |
+
+对 $J_{\text{quad}}$ 求导：
+
+$$
+\nabla_{\delta\theta}J_{\text{quad}}
+=
+-H_\theta^T(r_i-H_\theta\delta\theta)
+$$
+
+令 gradient 为 0：
+
+$$
+-H_\theta^T(r_i-H_\theta\delta\theta)=0
+$$
+
+所以：
+
+$$
+H_\theta^T H_\theta\delta\theta
+=
+H_\theta^T r_i
+$$
+
+这就是 local normal equations。
+
+如果 $H_\theta^T H_\theta$ 可逆：
+
+$$
+\delta\theta
+=
+(H_\theta^T H_\theta)^{-1}H_\theta^T r_i
+$$
+
+然后更新：
+
+$$
+\theta_{i+1}
+=
+\theta_i+\delta\theta
+$$
+
+再在新的 $\theta_{i+1}$ 处重新计算：
+
+$$
+H(\theta_{i+1}),\quad
+H_\theta(\theta_{i+1}),\quad
+r(\theta_{i+1})
+$$
+
+然后重复。
+
+所以 Gauss 的迭代可以写成：
+
+```text
+start with theta_i
+-> linearise nonlinear model around theta_i
+-> solve a linear LS problem for delta theta
+-> update theta_{i+1} = theta_i + delta theta
+-> repeat until residual/update is small
+```
+
+### Gradient Descent vs Gauss-Newton
+
+普通 gradient descent 只用 gradient direction：
+
+$$
+\theta_{i+1}
+=
+\theta_i-\alpha\nabla J(\theta_i)
+$$
+
+它需要选择 step size $\alpha$，而且只知道“往哪里下降”。
+
+Gauss-Newton 更进一步：它用 Jacobian $H_\theta$ 构造一个 local quadratic approximation：
+
+$$
+J(\theta_i+\delta\theta)
+\approx
+J_{\text{quad}}(\delta\theta)
+$$
+
+然后直接最小化这个 local quadratic model，得到 step $\delta\theta$。
+
+所以它不是“随便走一步”，而是：
+
+> choose the step that would solve the linearised least-squares problem.
+
+这就是 Roy 说 least squares is solving the gradient update step 的意思：每一次 nonlinear optimisation 的 update step，本身就是一个 linear least-squares solve。
+
+### Why This Matters for Ceres
+
+Gauss 的 Ceres problem 是 nonlinear，因为 orbital elements 和 observations 的关系不是线性的。直接一次 LS 不能解决完整问题。
+
+但在当前 orbit estimate 附近，小范围内可以线性化：
+
+$$
+\text{change in predicted observations}
+\approx
+H_\theta\delta\theta
+$$
+
+于是每次 iteration 都是：
+
+$$
+\text{observation mismatch}
+\approx
+\text{Jacobian}\times \text{parameter update}
+$$
+
+也就是：
+
+$$
+\delta y \approx H_\theta\delta\theta
+$$
+
+通过 LS 找到最能减少 mismatch 的 $\delta\theta$，再更新 orbit estimate。重复很多次后，得到高精度 orbit。
+
+这就是：
+
+```text
+nonlinear orbit estimation
+-> repeated linear least-squares updates
+-> Gauss-Newton style iteration
+```
+
 考试理解重点：
 
 - 三个观测点给 Gauss 一个 nominal orbit，但完整 22 个观测点用于 LS refinement；
 - nonlinear LS 每一步只是 local quadratic/linear approximation；
+- LS solve 给出的不是最终答案本身，而是当前 iteration 的 update step；
 - 不能把一次 linearised solution 当成 global exact solution。
 
 # Statistical Properties of Least Squares
 
 ## Why LS Estimate Is Random
 
-如果
+Roy 在 Lecture 7 这里做了一个重要转向：least squares 不再只是 deterministic optimisation，而是 statistical estimation。
+
+Deterministic view 是：
+
+```text
+given y and Phi
+solve for theta_hat
+```
+
+也就是：
+
+$$
+\hat\theta
+=
+\arg\min_\theta \|y-\Phi\theta\|_2^2
+$$
+
+但实际 measurement data 有误差。Gauss 测 Ceres 的角度时，观测本身就有有限精度；现代 data-driven optimisation 里的 population data 也有 stochastic variation。
+
+所以更合理的 model 是：
 
 $$
 y = \Phi\theta_0 + \epsilon
 $$
 
-而 $\epsilon$ 是随机噪声，那么
+其中：
+
+- $\theta_0$ 是 underlying true parameter；
+- $\epsilon$ 是 measurement noise / random error；
+- $y$ 因为包含 $\epsilon$，所以是 random；
+- $\Phi$ 在 standard LS 中先当作 fixed design matrix。
+
+如果 $\epsilon$ 是随机噪声，那么
 
 $$
 \hat\theta = (\Phi^T\Phi)^{-1}\Phi^T y
 $$
 
 也是随机变量。
+
+直接代入：
+
+$$
+\begin{aligned}
+\hat\theta
+&=
+(\Phi^T\Phi)^{-1}\Phi^T(\Phi\theta_0+\epsilon)\\
+&=
+(\Phi^T\Phi)^{-1}\Phi^T\Phi\theta_0
++
+(\Phi^T\Phi)^{-1}\Phi^T\epsilon\\
+&=
+\theta_0
++
+(\Phi^T\Phi)^{-1}\Phi^T\epsilon
+\end{aligned}
+$$
+
+所以：
+
+$$
+\hat\theta-\theta_0
+=
+(\Phi^T\Phi)^{-1}\Phi^T\epsilon
+$$
+
+这说明 $\hat\theta$ 的误差完全由 measurement noise 通过 LS estimator 传播而来。
+
+如果重复同一个 experiment，即使 $\Phi$ 不变，新的 measurement noise 会产生新的 $y$，因此会产生新的 $\hat\theta$。
+
+这就是 Roy 说：
+
+```text
+theta_hat is a statistical quantity
+```
+
+的意思。
+
+把 $\hat\theta$ 当作 random variable 后，我们才有理由问：
 
 因此考试会关心：
 
@@ -251,11 +1945,168 @@ $$
 
 ## Bias, Variance, and MSE
 
+Roy 这里强调：MSE 是一个 expectation。它不是某一次 experiment 算出来的单个 squared error，而是在理论上对同一个 data-generating mechanism 下的 repeated sampling / measurement noise 取平均。
+
+实践中，我们当然不会只停留在“想象”。因为真实 data-generating distribution $P$ 不知道，也不能无限重复实验，所以通常用 train/validation/test split、cross-validation 或 bootstrap 去估计这个 expectation。
+
+单次实验中你看到的是：
+
+$$
+(\hat\theta-\theta_0)^2
+$$
+
+但 MSE 是：
+
+$$
+E[(\hat\theta-\theta_0)^2]
+$$
+
+这个 expectation 是对 measurement noise / random sampling / repeated experiments 的分布取的。也就是说，MSE 问的是：
+
+```text
+on average, how far is my estimator from the true parameter?
+```
+
+如果关心 prediction error，实践中常用 held-out test set 估计：
+
+$$
+\widehat{\text{MSE}}_{\text{test}}
+=
+\frac{1}{n_{\text{test}}}
+\sum_{i\in\text{test}}
+(y_i-\hat y_i)^2
+$$
+
+Cross-validation 则反复切分数据，计算多个 validation errors，再取平均：
+
+$$
+\widehat{\text{CV}}
+=
+\frac{1}{K}
+\sum_{k=1}^{K}
+\widehat{\text{MSE}}_{\text{valid},k}
+$$
+
+所以要区分：
+
+```text
+theoretical MSE
+-> expectation under the data-generating process
+
+estimated MSE
+-> finite-data approximation using validation/test/CV/bootstrap
+```
+
+这里要区分三件事：
+
+- $\theta_0$ 是 true parameter，通常固定但未知；
+- $\hat\theta$ 是 estimator，是由 noisy data 算出来的 random variable；
+- MSE 是 $\hat\theta$ 围绕 $\theta_0$ 的 expected squared error。
+
 Bias:
 
 $$
 \text{Bias}(\hat\theta) = E[\hat\theta] - \theta_0
 $$
+
+所以 unbiased 的意思是：
+
+$$
+E[\hat\theta]=\theta_0
+$$
+
+也就是重复实验很多次后，估计值的平均会落在 true parameter 上。它比较的是 estimator 的 expectation 和 true parameter，不是某一次 $\hat\theta$ 和 $\theta_0$ 是否相等。
+
+### Derivation: Why Ordinary LS Is Unbiased
+
+这里的前提是 ordinary least squares 的标准统计模型：
+
+$$
+y=\Phi\theta_0+\epsilon
+$$
+
+其中：
+
+- $\theta_0$ 是 true but unknown parameter；
+- $\Phi$ 被当作 fixed / known design matrix；
+- error 加在 $y$ 上；
+- $E[\epsilon]=0$；
+- $\Phi$ full column rank，所以 $\Phi^T\Phi$ 可逆。
+
+OLS estimator 是：
+
+$$
+\hat\theta
+=
+(\Phi^T\Phi)^{-1}\Phi^T y
+$$
+
+把 true data-generating model 代进去：
+
+$$
+\begin{aligned}
+\hat\theta
+&=
+(\Phi^T\Phi)^{-1}\Phi^T(\Phi\theta_0+\epsilon)\\
+&=
+(\Phi^T\Phi)^{-1}\Phi^T\Phi\theta_0
++
+(\Phi^T\Phi)^{-1}\Phi^T\epsilon\\
+&=
+\theta_0
++
+(\Phi^T\Phi)^{-1}\Phi^T\epsilon .
+\end{aligned}
+$$
+
+现在对 repeated experiments 取 expectation：
+
+$$
+\begin{aligned}
+E[\hat\theta]
+&=
+E\left[
+\theta_0
++
+(\Phi^T\Phi)^{-1}\Phi^T\epsilon
+\right]\\
+&=
+\theta_0
++
+(\Phi^T\Phi)^{-1}\Phi^T E[\epsilon]\\
+&=
+\theta_0
++
+(\Phi^T\Phi)^{-1}\Phi^T 0\\
+&=
+\theta_0 .
+\end{aligned}
+$$
+
+所以：
+
+$$
+\text{Bias}(\hat\theta)
+=
+E[\hat\theta]-\theta_0
+=0.
+$$
+
+这就是 ordinary LS unbiased 的推导。
+
+需要注意：unbiasedness 不是说每一次估计都会等于真值，而是说在同一个 data collection mechanism 下重复很多次，$\hat\theta$ 的长期平均值等于 $\theta_0$。
+
+如果 $E[\epsilon]\neq 0$，则：
+
+$$
+E[\hat\theta]
+=
+\theta_0
++
+(\Phi^T\Phi)^{-1}\Phi^T E[\epsilon],
+$$
+
+此时 estimator 一般会 biased。类似地，如果 $\Phi$ 本身有 measurement error，或者 $\epsilon$ 和 $\Phi$ 相关，那么 ordinary LS 的 unbiasedness 推导也会断掉；这就是 errors-in-variables / instrumental variables 要处理的问题之一。
 
 Variance:
 
@@ -263,11 +2114,17 @@ $$
 \text{Var}(\hat\theta) = E[(\hat\theta - E[\hat\theta])^2]
 $$
 
+Variance 衡量的是 $\hat\theta$ 在重复实验中围绕自己的平均值 $E[\hat\theta]$ 波动多大。
+
 Mean square error:
 
 $$
 \text{MSE} = E[(\hat\theta - \theta_0)^2]
 $$
+
+MSE 衡量的是 $\hat\theta$ 在重复实验中围绕 true parameter $\theta_0$ 的 squared error 平均有多大。Validation/test MSE 则是用 held-out data 估计 prediction error；它更接近 DATA423 model selection 里的实践问题。
+
+注意：MSE 本身是一个 expectation，因此在理论上是一个确定的 quantity，不是 random variable。它包含 variance 部分，但不能简单说“MSE 具有 variance”。如果我们用有限 validation set、test set 或 repeated resampling 去估计 MSE，那么那个 estimated MSE 才会因为样本有限而有 sampling variability。
 
 核心关系：
 
@@ -275,7 +2132,188 @@ $$
 \text{MSE} = \text{bias}^2 + \text{variance}
 $$
 
+### Derivation: Why MSE = Bias Squared + Variance
+
+先看 scalar estimator 的情况。令：
+
+$$
+\mu_{\hat\theta}=E[\hat\theta]
+$$
+
+MSE 定义为：
+
+$$
+\text{MSE}
+=
+E[(\hat\theta-\theta_0)^2]
+$$
+
+在括号里加减同一个量 $E[\hat\theta]$：
+
+$$
+\hat\theta-\theta_0
+=
+(\hat\theta-E[\hat\theta])+(E[\hat\theta]-\theta_0)
+$$
+
+所以：
+
+$$
+\begin{aligned}
+\text{MSE}
+&=
+E\left[
+\left(
+(\hat\theta-E[\hat\theta])+(E[\hat\theta]-\theta_0)
+\right)^2
+\right]\\
+&=
+E[(\hat\theta-E[\hat\theta])^2]
++2(E[\hat\theta]-\theta_0)E[\hat\theta-E[\hat\theta]]
++(E[\hat\theta]-\theta_0)^2
+\end{aligned}
+$$
+
+中间项为 0，因为：
+
+$$
+E[\hat\theta-E[\hat\theta]]
+=
+E[\hat\theta]-E[\hat\theta]
+=0
+$$
+
+因此：
+
+$$
+\text{MSE}
+=
+E[(\hat\theta-E[\hat\theta])^2]
++(E[\hat\theta]-\theta_0)^2
+$$
+
+也就是：
+
+$$
+\text{MSE}
+=
+\text{Var}(\hat\theta)
++\text{Bias}(\hat\theta)^2
+$$
+
+这就是 Roy 提到的 result。
+
+向量参数时，常见写法是看 squared norm：
+
+$$
+\text{MSE}
+=
+E[\|\hat\theta-\theta_0\|_2^2]
+$$
+
+对应分解为：
+
+$$
+\text{MSE}
+=
+\operatorname{tr}(\operatorname{Cov}(\hat\theta))
++\|\operatorname{Bias}(\hat\theta)\|_2^2
+$$
+
+所以同样的直觉仍然成立：
+
+```text
+total expected squared error
+= variance part
++ systematic bias part
+```
+
 易错点：unbiased 不等于 minimum MSE。Unbiased 只是 bias 为 0，但 MSE 还包括 variance。
+
+## Statistical Consistency
+
+Roy 这里提醒：consistency 有两个不同意思。
+
+前面讲 normal equations 时，consistent 是线性代数里的意思：
+
+```text
+the equation has at least one solution
+```
+
+例如 normal equations：
+
+$$
+\Phi^T\Phi\theta=\Phi^Ty
+$$
+
+总是 algebraically consistent，因为右边 $\Phi^Ty$ 一定在 $\Phi^T\Phi$ 的 range 里。
+
+但在 statistics 里，consistency 是 estimator 的性质。它问的是：
+
+```text
+as sample size grows, does the estimator concentrate around the true value?
+```
+
+如果 $\hat\theta_N$ 是用 $N$ 个 observations 算出来的 estimator，那么 consistency 通常写成：
+
+$$
+\hat\theta_N \xrightarrow{p} \theta_0
+$$
+
+意思是对任意 fixed tolerance $\delta>0$：
+
+$$
+P\left(\|\hat\theta_N-\theta_0\|>\delta\right)
+\to 0
+\quad
+\text{as } N\to\infty.
+$$
+
+用 Roy 的话说：
+
+```text
+as you take more and more data,
+the probability of making a big error goes to zero.
+```
+
+也就是说，$\hat\theta_N$ 的 distribution 会越来越集中在 true parameter $\theta_0$ 附近。不是说每个 finite-sample estimate 都等于 $\theta_0$，而是说随着 data 增加，large error 的概率消失。
+
+### Relation to Bias and Variance
+
+Unbiasedness 和 consistency 不是同一个概念。
+
+Unbiasedness 是 finite-sample expectation statement：
+
+$$
+E[\hat\theta_N]=\theta_0.
+$$
+
+Consistency 是 large-sample probability statement：
+
+$$
+P(\|\hat\theta_N-\theta_0\|>\delta)\to 0.
+$$
+
+一个 estimator 可以 finite-sample biased，但仍然 consistent，只要 bias 随 $N$ 增加消失，variance 也收缩。Regularised estimators 就经常要从这个角度看：finite sample 里可能 biased，但如果 regularisation 随 data size 合理减小，仍可能 consistent。
+
+对 ordinary LS，在标准条件下，如果：
+
+- $E[\epsilon]=0$；
+- regressors 和 error 没有 problematic correlation；
+- $\Phi^T\Phi$ 随着 $N$ 增加提供越来越多 information；
+- 没有 rank deficiency 持续存在；
+
+那么更多 data 会让 estimator distribution 收缩，$\hat\theta_N$ 会越来越接近 $\theta_0$。
+
+### One-line Distinction
+
+```text
+algebraic consistency:
+    an equation has a solution
+
+statistical consistency:
+    an estimator converges to the true value as data increases
+```
 
 ## BLUE
 
@@ -302,6 +2340,754 @@ $$
 $$
 
 当 $R = \sigma^2 I$ 时，BLUE 退化为普通 LS。
+
+## Variance and Signal-to-Noise Ratio
+
+Roy 说 estimator variance 本质上是在告诉你 inverse signal-to-noise ratio。可以从最简单的一参数模型看出来。
+
+假设：
+
+$$
+y=\phi\theta+\epsilon
+$$
+
+其中：
+
+$$
+\phi =
+\begin{bmatrix}
+\phi_1\\
+\phi_2\\
+\vdots\\
+\phi_N
+\end{bmatrix},
+\qquad
+E[\epsilon]=0,
+\qquad
+\text{Cov}(\epsilon)=\sigma^2 I.
+$$
+
+OLS estimator 是：
+
+$$
+\hat\theta
+=
+(\phi^T\phi)^{-1}\phi^T y
+$$
+
+把 true model 代入：
+
+$$
+\begin{aligned}
+\hat\theta
+&=
+(\phi^T\phi)^{-1}\phi^T(\phi\theta+\epsilon)\\
+&=
+(\phi^T\phi)^{-1}\phi^T\phi\theta
++
+(\phi^T\phi)^{-1}\phi^T\epsilon\\
+&=
+\theta
++
+(\phi^T\phi)^{-1}\phi^T\epsilon .
+\end{aligned}
+$$
+
+所以估计误差是：
+
+$$
+\hat\theta-\theta
+=
+(\phi^T\phi)^{-1}\phi^T\epsilon .
+$$
+
+现在计算 variance。使用规则：
+
+$$
+\text{Var}(A\epsilon)=A\text{Cov}(\epsilon)A^T
+$$
+
+这里：
+
+$$
+A=(\phi^T\phi)^{-1}\phi^T
+$$
+
+因此：
+
+$$
+\begin{aligned}
+\text{Var}(\hat\theta)
+&=
+(\phi^T\phi)^{-1}\phi^T
+(\sigma^2 I)
+\phi(\phi^T\phi)^{-1}\\
+&=
+\sigma^2
+(\phi^T\phi)^{-1}
+\phi^T\phi
+(\phi^T\phi)^{-1}\\
+&=
+\sigma^2(\phi^T\phi)^{-1}.
+\end{aligned}
+$$
+
+因为这里是 scalar one-regressor case：
+
+$$
+\phi^T\phi
+=
+\sum_{i=1}^N \phi_i^2
+$$
+
+所以：
+
+$$
+\text{Var}(\hat\theta)
+=
+\frac{\sigma^2}{\sum_{i=1}^N \phi_i^2}.
+$$
+
+这就是 signal-to-noise ratio 的直觉：
+
+```text
+noise power      = sigma^2
+regressor signal = sum phi_i^2
+estimator variance = noise power / regressor signal
+```
+
+因此：
+
+$$
+\text{Var}(\hat\theta)
+\propto
+\frac{1}{\text{SNR}}.
+$$
+
+如果 $\phi$ 的 magnitude 大、variation 充分，那么：
+
+$$
+\sum_i \phi_i^2 \text{ large}
+\quad\Rightarrow\quad
+\text{Var}(\hat\theta) \text{ small}.
+$$
+
+如果 $\phi$ 很小、变化不足，或者所有 observation 都集中在很窄的范围内，那么：
+
+$$
+\sum_i \phi_i^2 \text{ small}
+\quad\Rightarrow\quad
+\text{Var}(\hat\theta) \text{ large}.
+$$
+
+直觉上，如果你想估计 slope，但 input/regressor 几乎不动，那么一点点 output noise 就会让 slope estimate 大幅摆动。反过来，如果 regressor 覆盖范围很大，signal 很强，同样的 noise 对 estimate 的影响就小很多。
+
+对多参数模型：
+
+$$
+\text{Cov}(\hat\theta)
+=
+\sigma^2(\Phi^T\Phi)^{-1}
+$$
+
+扮演同样角色。$\Phi^T\Phi$ 描述 regressor signal 在不同 parameter directions 上有多强；如果某些方向 signal weak 或 columns nearly dependent，那么 $(\Phi^T\Phi)^{-1}$ 会很大，estimate variance 也会很大。
+
+## Worked Exercise: Inverse-variance Weighting
+
+Roy 说 “things that have small variance are valuable estimates”，对应的标准推导就是 inverse-variance weighting。这个很可能作为 BLUE 的基础推导题出现。
+
+假设我们有 $n$ 个 independent unbiased estimates：
+
+$$
+\hat\theta_1,\ldots,\hat\theta_n
+$$
+
+其中：
+
+$$
+E[\hat\theta_i]=\theta,
+\qquad
+\text{Var}(\hat\theta_i)=\sigma_i^2.
+$$
+
+我们把它们线性组合：
+
+$$
+\hat\theta_w
+=
+\sum_{i=1}^n w_i\hat\theta_i.
+$$
+
+### Step 1: Unbiasedness Constraint
+
+先计算 expectation：
+
+$$
+\begin{aligned}
+E[\hat\theta_w]
+&=
+E\left[\sum_{i=1}^n w_i\hat\theta_i\right]\\
+&=
+\sum_{i=1}^n w_iE[\hat\theta_i]\\
+&=
+\sum_{i=1}^n w_i\theta\\
+&=
+\theta\sum_{i=1}^n w_i.
+\end{aligned}
+$$
+
+如果希望 $\hat\theta_w$ unbiased，就要：
+
+$$
+E[\hat\theta_w]=\theta.
+$$
+
+因此：
+
+$$
+\theta\sum_{i=1}^n w_i=\theta
+$$
+
+所以 constraint 是：
+
+$$
+\sum_{i=1}^n w_i=1.
+$$
+
+### Step 2: Variance of the Weighted Estimate
+
+因为 estimates independent：
+
+$$
+\text{Var}\left(\sum_{i=1}^n w_i\hat\theta_i\right)
+=
+\sum_{i=1}^n w_i^2\text{Var}(\hat\theta_i).
+$$
+
+所以：
+
+$$
+\text{Var}(\hat\theta_w)
+=
+\sum_{i=1}^n w_i^2\sigma_i^2.
+$$
+
+BLUE 的问题就是：
+
+$$
+\min_{w_1,\ldots,w_n}
+\sum_{i=1}^n w_i^2\sigma_i^2
+\quad
+\text{subject to}
+\quad
+\sum_{i=1}^n w_i=1.
+$$
+
+### Step 3: Lagrangian
+
+写 Lagrangian：
+
+$$
+L(w,\lambda)
+=
+\sum_{i=1}^n w_i^2\sigma_i^2
++
+\lambda\left(\sum_{i=1}^n w_i-1\right).
+$$
+
+对 $w_i$ 求偏导：
+
+$$
+\frac{\partial L}{\partial w_i}
+=
+2w_i\sigma_i^2+\lambda.
+$$
+
+令一阶条件为 0：
+
+$$
+2w_i\sigma_i^2+\lambda=0.
+$$
+
+所以：
+
+$$
+w_i
+=
+-\frac{\lambda}{2\sigma_i^2}.
+$$
+
+现在令：
+
+$$
+c=-\frac{\lambda}{2}.
+$$
+
+那么：
+
+$$
+w_i=\frac{c}{\sigma_i^2}.
+$$
+
+这一步说明，optimal weight 一定和 $1/\sigma_i^2$ 成比例：
+
+$$
+w_i \propto \frac{1}{\sigma_i^2}.
+$$
+
+### Step 4: Use the Constraint to Find $c$
+
+我们还不知道 $c$。用 unbiasedness constraint：
+
+$$
+\sum_{i=1}^n w_i=1.
+$$
+
+代入：
+
+$$
+w_i=\frac{c}{\sigma_i^2}
+$$
+
+得到：
+
+$$
+\sum_{i=1}^n \frac{c}{\sigma_i^2}=1.
+$$
+
+因为 $c$ 对所有 $i$ 都相同，所以可以提出来：
+
+$$
+c\sum_{i=1}^n \frac{1}{\sigma_i^2}=1.
+$$
+
+因此：
+
+$$
+c
+=
+\frac{1}{\sum_{j=1}^n 1/\sigma_j^2}.
+$$
+
+把 $c$ 放回：
+
+$$
+w_i=\frac{c}{\sigma_i^2}
+$$
+
+得到：
+
+$$
+w_i
+=
+\frac{1}{\sigma_i^2}
+\frac{1}{\sum_{j=1}^n 1/\sigma_j^2}.
+$$
+
+也就是：
+
+$$
+w_i
+=
+\frac{1/\sigma_i^2}{\sum_{j=1}^n 1/\sigma_j^2}.
+$$
+
+这就是 inverse-variance weighting。
+
+### Step 5: Interpretation
+
+如果 $\sigma_i^2$ 很大：
+
+$$
+\frac{1}{\sigma_i^2}
+\text{ is small}
+\quad\Rightarrow\quad
+w_i \text{ is small}.
+$$
+
+如果 $\sigma_i^2$ 很小：
+
+$$
+\frac{1}{\sigma_i^2}
+\text{ is large}
+\quad\Rightarrow\quad
+w_i \text{ is large}.
+$$
+
+所以：
+
+```text
+high variance estimate -> unreliable -> small weight
+low variance estimate  -> valuable   -> large weight
+```
+
+注意，不是把 high-variance estimates 扔掉，而是降低它们的权重。它们仍然包含信息，只是信息质量较低。
+
+## Why Least Squares Does the Weighting in One Shot
+
+Roy 接着说：我们可以先对每个 measurement 单独算一个 slope estimate，再用 inverse-variance weighting 平均；但 least squares 可以一次性做到同样的事。
+
+这句话的背景是一个 scalar gain model：
+
+$$
+y_i=x_i g+\epsilon_i,
+\qquad
+\epsilon_i\sim(0,\sigma^2).
+$$
+
+如果只用第 $i$ 个 measurement，可以得到一个单点 slope estimate：
+
+$$
+\hat g_i=\frac{y_i}{x_i}.
+$$
+
+因为：
+
+$$
+y_i=x_i g+\epsilon_i
+$$
+
+所以：
+
+$$
+\hat g_i
+=
+\frac{x_i g+\epsilon_i}{x_i}
+=
+g+\frac{\epsilon_i}{x_i}.
+$$
+
+因此：
+
+$$
+\text{Var}(\hat g_i)
+=
+\text{Var}\left(\frac{\epsilon_i}{x_i}\right)
+=
+\frac{\sigma^2}{x_i^2}.
+$$
+
+这说明：
+
+```text
+large |x_i| -> small slope-estimate variance -> more informative
+small |x_i| -> large slope-estimate variance -> less informative
+```
+
+如果手工做 inverse-variance weighting，权重是：
+
+$$
+w_i
+=
+\frac{1/\text{Var}(\hat g_i)}
+{\sum_j1/\text{Var}(\hat g_j)}.
+$$
+
+代入：
+
+$$
+\text{Var}(\hat g_i)=\frac{\sigma^2}{x_i^2}
+$$
+
+得到：
+
+$$
+\begin{aligned}
+w_i
+&=
+\frac{1/(\sigma^2/x_i^2)}
+{\sum_j1/(\sigma^2/x_j^2)}\\
+&=
+\frac{x_i^2/\sigma^2}
+{\sum_j x_j^2/\sigma^2}\\
+&=
+\frac{x_i^2}{\sum_jx_j^2}.
+\end{aligned}
+$$
+
+所以手工 BLUE estimate 是：
+
+$$
+\begin{aligned}
+\hat g_{\text{BLUE}}
+&=
+\sum_i w_i\hat g_i\\
+&=
+\sum_i
+\frac{x_i^2}{\sum_jx_j^2}
+\frac{y_i}{x_i}\\
+&=
+\frac{\sum_i x_i y_i}{\sum_jx_j^2}.
+\end{aligned}
+$$
+
+现在看 ordinary least squares。把所有 observations 写成：
+
+$$
+y=xg+\epsilon
+$$
+
+其中：
+
+$$
+x=
+\begin{bmatrix}
+x_1\\
+x_2\\
+\vdots\\
+x_N
+\end{bmatrix}.
+$$
+
+OLS 直接给：
+
+$$
+\hat g_{\text{LS}}
+=
+(x^Tx)^{-1}x^Ty.
+$$
+
+因为：
+
+$$
+x^Tx=\sum_i x_i^2,
+\qquad
+x^Ty=\sum_i x_i y_i,
+$$
+
+所以：
+
+$$
+\hat g_{\text{LS}}
+=
+\frac{\sum_i x_i y_i}{\sum_i x_i^2}.
+$$
+
+这和手工 inverse-variance weighted average 完全一样：
+
+$$
+\hat g_{\text{LS}}
+=
+\hat g_{\text{BLUE}}.
+$$
+
+这就是 Roy 说 LS “does it in one shot” 的意思：
+
+```text
+manual route:
+    individual slope estimates
+    -> compute each variance
+    -> inverse-variance weights
+    -> weighted average
+
+least-squares route:
+    write y = xg + epsilon
+    -> solve normal equation
+    -> same weighted average appears automatically
+```
+
+### What Does "Automatically" Mean?
+
+这里的 automatically 不是说 LS 神奇地知道所有 noise variance，而是说：
+
+> under the standard homoskedastic noise assumption, the algebra of LS already gives each observation influence proportional to its information content.
+
+在这个 scalar gain example 里，information content 来自 $x_i^2$。同样的 output noise $\sigma^2$ 下，larger $|x_i|$ 给出的 slope estimate variance 更小，所以 LS 解中它的 effective weight 更大。
+
+也可以把 LS 写成：
+
+$$
+\hat g_{\text{LS}}
+=
+\sum_i
+\left(
+\frac{x_i^2}{\sum_jx_j^2}
+\right)
+\left(
+\frac{y_i}{x_i}
+\right).
+$$
+
+括号里的第一项就是 weight，第二项就是单点 slope estimate。
+
+### Is This a General Property?
+
+Yes, but with an important qualification.
+
+For ordinary LS, the Gauss-Markov result says：如果 errors zero mean、uncorrelated、same variance，并且 $\Phi$ full column rank，那么 OLS is BLUE。也就是说，在这些假设下，OLS 自动给出 best linear unbiased estimator。
+
+但如果 measurement noise 的 variance 不相同：
+
+$$
+\text{Cov}(\epsilon)=R\neq \sigma^2 I
+$$
+
+ordinary LS 不再自动给正确的 noise weighting。这时需要 weighted / generalized least squares：
+
+$$
+\hat\theta_{\text{BLUE}}
+=
+(\Phi^TR^{-1}\Phi)^{-1}\Phi^TR^{-1}y.
+$$
+
+这里的 $R^{-1}$ 才是显式的 inverse-noise-covariance weighting：
+
+```text
+low noise variance  -> larger weight
+high noise variance -> smaller weight
+correlated noise    -> account for correlation structure
+```
+
+所以要分清两层：
+
+```text
+ordinary LS:
+    automatically weights information through Phi under equal-noise assumptions
+
+weighted / generalized LS:
+    explicitly weights measurements using R^{-1} when noise variances/correlations differ
+```
+
+这也是为什么 Roy 先用 inverse-variance weighting 讲直觉，再说 LS 一步就做到：在标准条件下，normal equations 已经把同一个 BLUE 结果编码进去了。
+
+## Correlated Noise: White Noise vs General BLUE
+
+Roy 后面说，如果 noise 之间有 correlation，electrical engineer 会说 noise has frequency content。直觉是：
+
+```text
+white noise:
+    no time/sample-to-sample correlation
+    no preferred frequency structure
+
+correlated noise:
+    errors have pattern, memory, drift, oscillation, or frequency content
+```
+
+在 ordinary LS 的标准 white-noise case：
+
+$$
+\text{Cov}(\epsilon)=\sigma^2 I.
+$$
+
+这里的 identity matrix 表示：
+
+- 每个 measurement noise variance 相同；
+- 不同 measurements 的 errors uncorrelated；
+- covariance matrix 没有 off-diagonal structure。
+
+这时 ordinary LS：
+
+$$
+\hat\theta_{\text{OLS}}
+=
+(\Phi^T\Phi)^{-1}\Phi^Ty
+$$
+
+就是 BLUE。
+
+但如果：
+
+$$
+\text{Cov}(\epsilon)=R
+$$
+
+其中 $R$ 不是 $\sigma^2 I$，例如：
+
+$$
+R=
+\begin{bmatrix}
+\sigma_1^2 & r_{12} & \cdots\\
+r_{21} & \sigma_2^2 & \cdots\\
+\vdots & \vdots & \ddots
+\end{bmatrix},
+$$
+
+那么 off-diagonal entries 表示：
+
+$$
+E[\epsilon_i\epsilon_j]\neq 0.
+$$
+
+也就是说，第 $i$ 个 error 和第 $j$ 个 error 不是独立乱动，而是有共同变化结构。
+
+普通 LS 在这个情况下通常仍然 unbiased，但不再是 minimum-variance unbiased estimator。BLUE 变成：
+
+$$
+\hat\theta_{\text{BLUE}}
+=
+(\Phi^TR^{-1}\Phi)^{-1}\Phi^TR^{-1}y.
+$$
+
+这里的 $R^{-1}$ 是 inverse covariance weighting。它的作用不是简单地给每个 point 一个 scalar weight，而是按整个 noise covariance structure 重新度量 residual：
+
+$$
+\min_\theta (y-\Phi\theta)^TR^{-1}(y-\Phi\theta).
+$$
+
+如果 $R=\sigma^2I$，则：
+
+$$
+R^{-1}=\frac{1}{\sigma^2}I.
+$$
+
+这个 scalar factor 会在 normal equations 中 cancel 掉，所以退化回 ordinary LS。
+
+### Correlation vs Independence
+
+Roy 提到可以查 correlation 和 independence 的区别。大致关系是：
+
+```text
+independence is stronger than zero correlation.
+```
+
+如果两个 random variables independent，那么它们没有任何 probabilistic dependence。知道一个变量的值，不会改变另一个变量的 distribution。
+
+如果两个变量 uncorrelated，只表示它们的 linear covariance 为 0：
+
+$$
+Cov(X,Y)=E[(X-E[X])(Y-E[Y])]=0.
+$$
+
+这只排除了 linear relationship，不排除 nonlinear relationship。
+
+例如：
+
+$$
+X\sim \text{symmetric around }0,
+\qquad
+Y=X^2.
+$$
+
+则 $Y$ 完全由 $X$ 决定，所以它们绝对不 independent。但由于 symmetry，可能有：
+
+$$
+Cov(X,Y)=Cov(X,X^2)=0.
+$$
+
+所以：
+
+```text
+independent -> uncorrelated
+uncorrelated -> not necessarily independent
+```
+
+在 Gaussian/noise modelling 里有一个特殊好处：如果 variables jointly Gaussian，那么 zero covariance implies independence。这也是为什么 Gaussian white noise 是一个很强、很方便的假设。
+
+### Exam Risk
+
+这部分中高概率会考，因为它直接连接 Roy 的 BLUE 结论。
+
+高概率考法：
+
+- 识别 ordinary LS 什么时候是 BLUE；
+- 写出 correlated noise 下的 BLUE；
+- 解释 $R^{-1}$ 的作用；
+- 说明如果 $R=\sigma^2I$，BLUE 退化为 ordinary LS；
+- 解释为什么实践中难点是估计 $R$。
+
+较低概率考法：
+
+- 完整证明该 estimator 在所有 unbiased linear estimators 中 covariance 最小。
 
 考试题型：
 
@@ -340,6 +3126,153 @@ $$
 - conditioning 变好。
 
 ## Bias-variance Tradeoff
+
+Roy 在这里问了一个很关键的问题：
+
+```text
+When choosing an estimator, what are we actually trying to minimise?
+```
+
+候选目标至少有三个：
+
+| Objective | What it asks for | Typical tool |
+|---|---|---|
+| minimise bias | make $E[\hat\theta]$ close to $\theta_0$ | unbiased estimator |
+| minimise variance | make $\hat\theta$ stable across repeated experiments | BLUE, inverse-variance weighting |
+| minimise MSE | minimise total expected squared error | regularisation / shrinkage |
+
+它们之间的关系是：
+
+$$
+\text{MSE}
+=
+\text{Bias}^2+\text{Variance}
+$$
+
+所以 minimum variance 不一定 minimum MSE，zero bias 也不一定 minimum MSE。
+
+### What BLUE Optimises
+
+BLUE means:
+
+```text
+Best Linear Unbiased Estimator
+```
+
+这里的 “Best” 不是所有意义下都最好，而是在一个受限集合里最好：
+
+```text
+among linear unbiased estimators,
+choose the one with minimum variance
+```
+
+也就是说 BLUE 的逻辑是：
+
+$$
+\text{force bias}=0,
+\qquad
+\text{then minimise variance}.
+$$
+
+所以 ordinary LS / weighted LS 这条线非常适合：
+
+- 参数 $\theta$ 本身有物理、工程或经济解释；
+- 你希望长期平均估计值等于 true parameter；
+- 你要在 unbiased 这个约束下让 estimate 尽量稳定。
+
+但它不保证 minimum MSE，因为它不允许用 bias 换 variance。
+
+### What Minimum MSE Optimises
+
+Minimum MSE 的目标是：
+
+$$
+\min\ E[(\hat\theta-\theta_0)^2]
+$$
+
+它允许：
+
+```text
+small bias increase
+-> larger variance decrease
+-> lower total MSE
+```
+
+这就是 shrinkage / regularisation 的思想。Ridge regularisation 会把 coefficient 往 0 拉：
+
+$$
+\hat\theta_\eta
+=
+(\Phi^T\Phi+\eta I)^{-1}\Phi^Ty
+$$
+
+它通常不再 unbiased，但可能有更小的 MSE，尤其是在：
+
+- data noisy；
+- columns of $\Phi$ highly correlated；
+- $\Phi^T\Phi$ ill-conditioned；
+- number of features large；
+- prediction on future data 比解释 exact parameter 更重要。
+
+Roy 后面说的 counterintuitive point 就是：
+
+> best fit to the experimental data is not necessarily best expected fit to future data.
+
+普通 LS 很擅长 fit 当前 training data，并且在标准假设下给出 BLUE。但 prediction 目标更关心 future/new data 上的 expected error，这时 minimum MSE 往往比 strict unbiasedness 更重要。
+
+### Connection to Data Mining / Model Selection
+
+这和 data mining 里学的 train / validation / test split 是同一条思想线。
+
+```text
+training error
+-> how well the model fits the data used to estimate theta
+
+validation error
+-> how well a chosen model complexity / eta predicts unseen data
+
+test error
+-> final estimate of generalisation performance
+```
+
+在 data mining 语言里：
+
+| Statistical language | Data mining language |
+|---|---|
+| low bias | model flexible enough to capture signal |
+| high bias | underfitting |
+| high variance | overfitting / unstable model |
+| regularisation | complexity control |
+| validation | choose model complexity / hyperparameter |
+| test error | estimate out-of-sample performance |
+
+因此 Roy 这里的 tradeoff 可以翻译成：
+
+```text
+too simple model:
+    high bias, low variance, underfit
+
+too flexible model:
+    low training error, low bias on training structure, high variance, overfit
+
+regularised / selected model:
+    controlled bias, controlled variance, better validation/test error
+```
+
+所以如果目标是 scientific parameter estimation，unbiased/BLUE 很有吸引力；如果目标是 prediction，minimum MSE 和 validation 通常更关键。
+
+### Practical Rule of Thumb
+
+```text
+If theta itself is the object of interest:
+    care strongly about unbiasedness and covariance.
+
+If future prediction is the object of interest:
+    care strongly about MSE / validation error.
+
+If Phi is ill-conditioned:
+    regularisation may be needed even before prediction quality is considered.
+```
 
 Regularisation 的核心不是让 training error 最小，而是让 expected prediction error 更好。
 
@@ -740,10 +3673,736 @@ $$
   - inverse variance estimate unbiased；
   - inverse variance weighting 是 BLUE；
   - regularised estimate 可以有更低 MSE。
+- 概念解释：
+  - BLUE minimises variance only among unbiased linear estimators；
+  - minimum MSE may accept bias to reduce variance；
+  - data mining 中的 underfitting / overfitting 是 bias-variance tradeoff 的预测版本。
 - 计算：
   - ordinary LS estimate；
   - covariance matrix；
   - non-identically distributed noise 下的 BLUE。
+
+## Lecture 6--7 High-frequency LS Practice Set
+
+Use this section actively: read the question, cover the solution, derive it yourself, then compare.
+
+### Problem 1: Build $\Phi$ and Derive Normal Equations
+
+**Question.** Suppose the model is:
+
+$$
+y_i \approx \theta_1+\theta_2x_i+\theta_3x_i^2,
+\qquad i=1,\ldots,N.
+$$
+
+1. Write $y$, $\theta$, and $\Phi$.
+2. Write the LS objective.
+3. Derive the normal equations.
+4. State the closed-form solution and the rank condition.
+
+**Solution.**
+
+Stack the observations:
+
+$$
+y=
+\begin{bmatrix}
+y_1\\
+y_2\\
+\vdots\\
+y_N
+\end{bmatrix},
+\qquad
+\theta=
+\begin{bmatrix}
+\theta_1\\
+\theta_2\\
+\theta_3
+\end{bmatrix}.
+$$
+
+The design matrix is:
+
+$$
+\Phi=
+\begin{bmatrix}
+1 & x_1 & x_1^2\\
+1 & x_2 & x_2^2\\
+\vdots & \vdots & \vdots\\
+1 & x_N & x_N^2
+\end{bmatrix}.
+$$
+
+The LS problem is:
+
+$$
+\min_\theta \|y-\Phi\theta\|_2^2.
+$$
+
+Let:
+
+$$
+J(\theta)=(y-\Phi\theta)^T(y-\Phi\theta).
+$$
+
+Expand:
+
+$$
+J(\theta)
+=
+y^Ty-2\theta^T\Phi^Ty+\theta^T\Phi^T\Phi\theta.
+$$
+
+Differentiate:
+
+$$
+\nabla_\theta J
+=
+-2\Phi^Ty+2\Phi^T\Phi\theta.
+$$
+
+Set to zero:
+
+$$
+\Phi^T\Phi\theta=\Phi^Ty.
+$$
+
+If $\Phi$ has full column rank, then $\Phi^T\Phi$ is invertible and:
+
+$$
+\hat\theta=(\Phi^T\Phi)^{-1}\Phi^Ty.
+$$
+
+Exam comments:
+
+- If $N<3$, full column rank is impossible.
+- If all $x_i$ values do not vary enough, columns can become dependent or nearly dependent.
+- In practice, use QR/SVD/backslash rather than explicitly inverting $\Phi^T\Phi$.
+
+### Problem 2: Projection Geometry Gives Normal Equations
+
+**Question.** Explain geometrically why the LS residual is orthogonal to the columns of $\Phi$, and derive the normal equations from that fact.
+
+**Solution.**
+
+The fitted vector is:
+
+$$
+\hat y=\Phi\hat\theta.
+$$
+
+All possible fitted vectors lie in the column space:
+
+$$
+\operatorname{col}(\Phi).
+$$
+
+OLS chooses the point in $\operatorname{col}(\Phi)$ closest to $y$. Therefore the residual:
+
+$$
+r=y-\Phi\hat\theta
+$$
+
+must be orthogonal to every direction in $\operatorname{col}(\Phi)$.
+
+The columns of $\Phi$ span this space, so:
+
+$$
+\Phi^Tr=0.
+$$
+
+Substitute $r=y-\Phi\hat\theta$:
+
+$$
+\Phi^T(y-\Phi\hat\theta)=0.
+$$
+
+Expand:
+
+$$
+\Phi^Ty-\Phi^T\Phi\hat\theta=0.
+$$
+
+Therefore:
+
+$$
+\Phi^T\Phi\hat\theta=\Phi^Ty.
+$$
+
+This is the same normal equation obtained by differentiating the cost.
+
+Exam sentence:
+
+```text
+Least squares projects y onto col(Phi); the residual is orthogonal to that subspace, giving Phi^T r = 0.
+```
+
+### Problem 3: Prove OLS Is Unbiased and Find Its Covariance
+
+**Question.** Suppose:
+
+$$
+y=\Phi\theta_0+\epsilon,
+\qquad
+E[\epsilon]=0,
+\qquad
+\text{Cov}(\epsilon)=\sigma^2I,
+$$
+
+and $\Phi$ has full column rank. Show that ordinary LS is unbiased and compute its covariance.
+
+**Solution.**
+
+OLS estimator:
+
+$$
+\hat\theta=(\Phi^T\Phi)^{-1}\Phi^Ty.
+$$
+
+Substitute the data-generating model:
+
+$$
+\begin{aligned}
+\hat\theta
+&=
+(\Phi^T\Phi)^{-1}\Phi^T(\Phi\theta_0+\epsilon)\\
+&=
+\theta_0+(\Phi^T\Phi)^{-1}\Phi^T\epsilon.
+\end{aligned}
+$$
+
+Take expectation:
+
+$$
+\begin{aligned}
+E[\hat\theta]
+&=
+\theta_0+(\Phi^T\Phi)^{-1}\Phi^TE[\epsilon]\\
+&=
+\theta_0.
+\end{aligned}
+$$
+
+So OLS is unbiased.
+
+For covariance, the error is:
+
+$$
+\hat\theta-\theta_0
+=
+(\Phi^T\Phi)^{-1}\Phi^T\epsilon.
+$$
+
+Use:
+
+$$
+\text{Cov}(A\epsilon)=A\text{Cov}(\epsilon)A^T.
+$$
+
+Here:
+
+$$
+A=(\Phi^T\Phi)^{-1}\Phi^T.
+$$
+
+Therefore:
+
+$$
+\begin{aligned}
+\text{Cov}(\hat\theta)
+&=
+(\Phi^T\Phi)^{-1}\Phi^T
+(\sigma^2I)
+\Phi(\Phi^T\Phi)^{-1}\\
+&=
+\sigma^2(\Phi^T\Phi)^{-1}.
+\end{aligned}
+$$
+
+Exam comments:
+
+- zero-mean error gives unbiasedness；
+- $\Phi^T\Phi$ controls estimator variance；
+- weak or nearly dependent columns make covariance large。
+
+### Problem 4: Derive Inverse-variance Weighting
+
+**Question.** Suppose $\hat\theta_i$ are independent unbiased estimators of $\theta$ with:
+
+$$
+\text{Var}(\hat\theta_i)=\sigma_i^2.
+$$
+
+Find weights $w_i$ such that:
+
+$$
+\hat\theta_w=\sum_iw_i\hat\theta_i
+$$
+
+is unbiased and has minimum variance.
+
+**Solution.**
+
+Unbiasedness:
+
+$$
+\begin{aligned}
+E[\hat\theta_w]
+&=
+\sum_iw_iE[\hat\theta_i]\\
+&=
+\theta\sum_iw_i.
+\end{aligned}
+$$
+
+Therefore:
+
+$$
+\sum_iw_i=1.
+$$
+
+Variance:
+
+$$
+\text{Var}(\hat\theta_w)=\sum_iw_i^2\sigma_i^2.
+$$
+
+Optimisation problem:
+
+$$
+\min_w \sum_iw_i^2\sigma_i^2
+\quad
+\text{s.t.}
+\quad
+\sum_iw_i=1.
+$$
+
+Lagrangian:
+
+$$
+L=\sum_iw_i^2\sigma_i^2+\lambda\left(\sum_iw_i-1\right).
+$$
+
+First-order condition:
+
+$$
+\frac{\partial L}{\partial w_i}
+=2w_i\sigma_i^2+\lambda=0.
+$$
+
+Hence:
+
+$$
+w_i=-\frac{\lambda}{2\sigma_i^2}.
+$$
+
+Let:
+
+$$
+c=-\frac{\lambda}{2}.
+$$
+
+Then:
+
+$$
+w_i=\frac{c}{\sigma_i^2}.
+$$
+
+Use the constraint:
+
+$$
+\sum_iw_i=1.
+$$
+
+Substitute:
+
+$$
+\sum_i\frac{c}{\sigma_i^2}=1.
+$$
+
+Factor out $c$:
+
+$$
+c\sum_i\frac{1}{\sigma_i^2}=1.
+$$
+
+So:
+
+$$
+c=\frac{1}{\sum_j1/\sigma_j^2}.
+$$
+
+Therefore:
+
+$$
+w_i
+=
+\frac{1/\sigma_i^2}{\sum_j1/\sigma_j^2}.
+$$
+
+Interpretation:
+
+```text
+small variance -> large inverse variance -> large weight
+large variance -> small inverse variance -> small weight
+```
+
+### Problem 5: BLUE with Correlated Noise
+
+This is a medium/high probability exam-style problem.
+
+**Question.** Suppose:
+
+$$
+y=\Phi\theta+\epsilon,
+\qquad
+E[\epsilon]=0,
+\qquad
+\text{Cov}(\epsilon)=R,
+$$
+
+where $R\succ0$ is known and $\Phi$ has full column rank. Consider a linear estimator:
+
+$$
+\hat\theta=Z^Ty.
+$$
+
+1. Find the condition on $Z$ for $\hat\theta$ to be unbiased.
+2. Compute $\text{Cov}(\hat\theta)$.
+3. State the BLUE.
+4. Show that it reduces to ordinary LS when $R=\sigma^2I$.
+5. Explain why knowing $R$ matters in practice.
+
+**Solution.**
+
+Start with:
+
+$$
+\hat\theta=Z^Ty.
+$$
+
+Substitute the model:
+
+$$
+\begin{aligned}
+\hat\theta
+&=
+Z^T(\Phi\theta+\epsilon)\\
+&=
+Z^T\Phi\theta+Z^T\epsilon.
+\end{aligned}
+$$
+
+Take expectation:
+
+$$
+\begin{aligned}
+E[\hat\theta]
+&=
+E[Z^T\Phi\theta+Z^T\epsilon]\\
+&=
+Z^T\Phi\theta+Z^TE[\epsilon]\\
+&=
+Z^T\Phi\theta.
+\end{aligned}
+$$
+
+For unbiasedness, we need:
+
+$$
+E[\hat\theta]=\theta
+$$
+
+for every possible $\theta$. Therefore:
+
+$$
+Z^T\Phi\theta=\theta
+\quad
+\text{for all }\theta.
+$$
+
+So:
+
+$$
+Z^T\Phi=I.
+$$
+
+This is the unbiasedness constraint.
+
+Now compute the covariance:
+
+$$
+\hat\theta-\theta
+=
+Z^T\epsilon
+$$
+
+when $Z^T\Phi=I$. Therefore:
+
+$$
+\begin{aligned}
+\text{Cov}(\hat\theta)
+&=
+E[(\hat\theta-\theta)(\hat\theta-\theta)^T]\\
+&=
+E[Z^T\epsilon\epsilon^TZ]\\
+&=
+Z^TE[\epsilon\epsilon^T]Z\\
+&=
+Z^TRZ.
+\end{aligned}
+$$
+
+So among all linear unbiased estimators, the goal is:
+
+$$
+\min_Z Z^TRZ
+\quad
+\text{subject to}
+\quad
+Z^T\Phi=I.
+$$
+
+The solution is:
+
+$$
+Z^T
+=
+(\Phi^TR^{-1}\Phi)^{-1}\Phi^TR^{-1}.
+$$
+
+Therefore the BLUE is:
+
+$$
+\hat\theta_{\text{BLUE}}
+=
+(\Phi^TR^{-1}\Phi)^{-1}\Phi^TR^{-1}y.
+$$
+
+Its covariance is:
+
+$$
+\text{Cov}(\hat\theta_{\text{BLUE}})
+=
+(\Phi^TR^{-1}\Phi)^{-1}.
+$$
+
+Now check the white-noise special case. If:
+
+$$
+R=\sigma^2I,
+$$
+
+then:
+
+$$
+R^{-1}=\frac{1}{\sigma^2}I.
+$$
+
+Substitute into BLUE:
+
+$$
+\begin{aligned}
+\hat\theta_{\text{BLUE}}
+&=
+\left(\Phi^T\frac{1}{\sigma^2}I\Phi\right)^{-1}
+\Phi^T\frac{1}{\sigma^2}Iy\\
+&=
+\left(\frac{1}{\sigma^2}\Phi^T\Phi\right)^{-1}
+\frac{1}{\sigma^2}\Phi^Ty\\
+&=
+\sigma^2(\Phi^T\Phi)^{-1}
+\frac{1}{\sigma^2}\Phi^Ty\\
+&=
+(\Phi^T\Phi)^{-1}\Phi^Ty.
+\end{aligned}
+$$
+
+So when the noise is white, BLUE reduces to ordinary LS.
+
+Interpretation:
+
+```text
+ordinary LS:
+    assumes R = sigma^2 I
+
+correlated-noise BLUE:
+    uses R^{-1} to account for variance and correlation structure
+```
+
+Practical issue: to compute the best linear unbiased estimator, you need to know or estimate $R$. In an exam, $R$ may be given. In real data, estimating $R$ can be difficult.
+
+Common mistakes:
+
+- writing ordinary LS when the question gives nontrivial $R$；
+- forgetting the unbiasedness constraint $Z^T\Phi=I$；
+- saying correlated noise makes LS biased. Ordinary LS can still be unbiased, but it is generally not best；
+- forgetting that $R^{-1}$ disappears only when $R=\sigma^2I$。
+
+### Problem 6: Explain Bias-variance Tradeoff and Regularisation
+
+**Question.** Explain why an unbiased LS estimator is not necessarily the minimum-MSE estimator. Then explain how ridge regularisation changes bias and variance.
+
+**Solution.**
+
+The key identity is:
+
+$$
+\text{MSE}
+=
+\text{Bias}^2+\text{Variance}.
+$$
+
+An unbiased estimator satisfies:
+
+$$
+E[\hat\theta]=\theta_0,
+$$
+
+so:
+
+$$
+\text{Bias}=0.
+$$
+
+Then:
+
+$$
+\text{MSE}=\text{Variance}.
+$$
+
+But this only says that MSE equals variance **inside the unbiased case**. It does not prove that no biased estimator can have smaller total MSE.
+
+Ridge solves:
+
+$$
+\min_\theta \|y-\Phi\theta\|_2^2+\eta\|\theta\|_2^2.
+$$
+
+The solution is:
+
+$$
+\hat\theta_\eta
+=
+(\Phi^T\Phi+\eta I)^{-1}\Phi^Ty.
+$$
+
+For $\eta>0$, the estimate is shrunk toward zero. Usually:
+
+```text
+eta increases
+-> variance decreases
+-> bias increases
+```
+
+This can improve MSE if the variance reduction is larger than the bias increase:
+
+$$
+\Delta \text{Variance}
+>
+\Delta \text{Bias}^2.
+$$
+
+Exam sentence:
+
+```text
+BLUE minimises variance among unbiased linear estimators; ridge may be biased but can have lower MSE and better prediction.
+```
+
+Connection to validation:
+
+```text
+training error usually decreases as model flexibility increases
+validation error estimates future prediction error
+choose eta by validation/CV, not by training residual alone
+```
+
+### Problem 7: Nonlinear LS as Repeated Linear LS
+
+**Question.** Suppose:
+
+$$
+y_{\text{obs}}=H(\theta)+\epsilon.
+$$
+
+Explain how Gauss-Newton turns nonlinear LS into repeated linear LS problems.
+
+**Solution.**
+
+The nonlinear least-squares objective is:
+
+$$
+\min_\theta \frac{1}{2}\|y_{\text{obs}}-H(\theta)\|_2^2.
+$$
+
+At current estimate $\theta_k$, linearise $H$:
+
+$$
+H(\theta_k+\delta\theta)
+\approx
+H(\theta_k)+J_k\delta\theta,
+$$
+
+where:
+
+$$
+J_k=\left.\frac{\partial H}{\partial\theta}\right|_{\theta_k}.
+$$
+
+Define current residual:
+
+$$
+r_k=y_{\text{obs}}-H(\theta_k).
+$$
+
+Then:
+
+$$
+y_{\text{obs}}-H(\theta_k+\delta\theta)
+\approx
+r_k-J_k\delta\theta.
+$$
+
+So the local problem is:
+
+$$
+\min_{\delta\theta}
+\|r_k-J_k\delta\theta\|_2^2.
+$$
+
+This is an ordinary linear LS problem with:
+
+```text
+output vector       = r_k
+regressor matrix   = J_k
+unknown parameter  = delta theta
+```
+
+The normal equations are:
+
+$$
+J_k^TJ_k\delta\theta=J_k^Tr_k.
+$$
+
+Solve for $\delta\theta$, then update:
+
+$$
+\theta_{k+1}=\theta_k+\delta\theta.
+$$
+
+Then re-linearise and repeat.
+
+Exam sentence:
+
+```text
+Gauss-Newton solves nonlinear least squares by repeatedly linearising the model and solving a local linear LS problem for the parameter update.
+```
+
+Common mistakes:
+
+- treating one linearisation as the global nonlinear solution；
+- forgetting that $J_k$ changes after each update；
+- confusing gradient descent with Gauss-Newton. Gauss-Newton solves a local LS problem, not just a fixed-size step along the negative gradient。
 
 ## Convex Optimisation Exercises
 
@@ -779,6 +4438,61 @@ Common mistakes:
 - forgetting the dimensions of $\theta$；
 - treating noisy $x$ and noisy $y$ as ordinary LS without comment。
 
+## Template: Show OLS Is Unbiased
+
+Use this when the question asks whether ordinary least squares is unbiased.
+
+Assume:
+
+$$
+y=\Phi\theta_0+\epsilon,
+\qquad
+E[\epsilon]=0,
+\qquad
+\Phi^T\Phi \text{ invertible}.
+$$
+
+Then:
+
+$$
+\begin{aligned}
+\hat\theta
+&=
+(\Phi^T\Phi)^{-1}\Phi^T y\\
+&=
+(\Phi^T\Phi)^{-1}\Phi^T(\Phi\theta_0+\epsilon)\\
+&=
+\theta_0+(\Phi^T\Phi)^{-1}\Phi^T\epsilon .
+\end{aligned}
+$$
+
+Therefore:
+
+$$
+\begin{aligned}
+E[\hat\theta]
+&=
+\theta_0+(\Phi^T\Phi)^{-1}\Phi^T E[\epsilon]\\
+&=
+\theta_0 .
+\end{aligned}
+$$
+
+So:
+
+$$
+\text{Bias}(\hat\theta)
+=
+E[\hat\theta]-\theta_0
+=0.
+$$
+
+Exam sentence:
+
+```text
+Under fixed Phi, full column rank, and zero-mean y-error, OLS is unbiased.
+```
+
 ## Template: Answer a BLUE Question
 
 1. Start from $\hat\theta = Z^T y$.
@@ -807,6 +4521,80 @@ Common mistakes:
 
 - assuming $R = I$ when the question gives correlated noise；
 - saying BLUE minimises MSE rather than variance among unbiased linear estimators。
+
+## Template: Derive Inverse-variance Weights
+
+Use this for combining independent unbiased estimates.
+
+Given:
+
+$$
+E[\hat\theta_i]=\theta,
+\qquad
+\text{Var}(\hat\theta_i)=\sigma_i^2,
+\qquad
+\hat\theta_w=\sum_i w_i\hat\theta_i.
+$$
+
+Unbiasedness:
+
+$$
+E[\hat\theta_w]=\theta\sum_i w_i
+\quad\Rightarrow\quad
+\sum_i w_i=1.
+$$
+
+Variance:
+
+$$
+\text{Var}(\hat\theta_w)=\sum_i w_i^2\sigma_i^2.
+$$
+
+Optimisation:
+
+$$
+\min_w \sum_i w_i^2\sigma_i^2
+\quad
+\text{s.t.}
+\quad
+\sum_i w_i=1.
+$$
+
+Lagrangian:
+
+$$
+L=\sum_i w_i^2\sigma_i^2+\lambda\left(\sum_i w_i-1\right).
+$$
+
+First-order condition:
+
+$$
+2w_i\sigma_i^2+\lambda=0
+\quad\Rightarrow\quad
+w_i=\frac{c}{\sigma_i^2}.
+$$
+
+Use $\sum_i w_i=1$:
+
+$$
+c\sum_i\frac{1}{\sigma_i^2}=1
+\quad\Rightarrow\quad
+c=\frac{1}{\sum_j1/\sigma_j^2}.
+$$
+
+Therefore:
+
+$$
+w_i
+=
+\frac{1/\sigma_i^2}{\sum_j1/\sigma_j^2}.
+$$
+
+Exam sentence:
+
+```text
+The minimum-variance unbiased linear combination weights each estimate in proportion to inverse variance.
+```
 
 ## Template: Explain Regularisation
 
@@ -854,6 +4642,1441 @@ Common mistakes:
 - omitting state estimation even though state is usually estimated, not directly measured；
 - writing terminal constraints without explaining their role。
 
+# Appendix: Practical EDA for Candidate $\Phi$
+
+这部分不是 Roy Smith least-squares 章节的考试重点，而是帮助把 DATA423 的 feature workflow 和 $\Phi$ 的矩阵视角连接起来。
+
+实践中，在正式拟合之前，我们通常会对 candidate $\Phi$ 做 EDA。核心问题是：
+
+```text
+Do these candidate columns have useful, independent variation for explaining y?
+```
+
+更具体地说：
+
+- 每一列自己是否有足够变化；
+- columns 之间是否高度相关；
+- columns 是否和 $y$ 有合理关系；
+- $\Phi$ 是否 full rank；
+- $\Phi$ 是否 ill-conditioned；
+- 是否存在 outliers 或 high leverage points；
+- 是否有 domain reason 支持这些 columns。
+
+## R: From Formula to $\Phi$
+
+在 R 里，`lm()` 公式背后会自动构造 design matrix，也就是这里的 $\Phi$。
+
+例如：
+
+```r
+model <- lm(y ~ x1 + x2 + x1:x2, data = df)
+X <- model.matrix(model)
+```
+
+这里：
+
+$$
+X = \Phi
+$$
+
+如果公式是：
+
+```r
+y ~ x1 + x2 + x1:x2
+```
+
+那么 $\Phi$ 的 columns 大致是：
+
+$$
+1,\quad x_1,\quad x_2,\quad x_1x_2
+$$
+
+如果写：
+
+```r
+y ~ poly(x, 3)
+```
+
+则 R 会构造三阶 polynomial 相关的 columns。实际生成的列是否是原始 powers 或 orthogonal polynomial，取决于 `poly()` 的设置。
+
+因此，一个很实用的习惯是：
+
+```r
+X <- model.matrix(model)
+head(X)
+dim(X)
+```
+
+先看清楚模型真正送进 LS 的 $\Phi$ 长什么样。
+
+## Check 1: Single-Column Variation
+
+第一步看每个 feature 自己有没有变化。几乎常数的 column 不会提供多少信息，还可能导致数值问题。
+
+```r
+summary(df)
+sapply(df[predictors], sd, na.rm = TRUE)
+```
+
+如果使用 `caret`：
+
+```r
+caret::nearZeroVar(df[predictors])
+```
+
+矩阵语言：
+
+```text
+near-zero variance column
+-> almost no direction in data
+-> weak information for estimating its coefficient
+```
+
+注意：variance 大不等于一定 useful。它还需要和 $y$ 有关系，并且不能只是其他 columns 的重复。
+
+## Check 2: Pairwise Correlation Between Features
+
+相关矩阵检查 columns 是否两两接近线性相关：
+
+```r
+cor(df[predictors], use = "complete.obs")
+```
+
+可视化：
+
+```r
+pairs(df[predictors])
+```
+
+如果：
+
+$$
+\operatorname{corr}(x_1,x_2)\approx 1
+$$
+
+那么 $\Phi$ 的两列方向几乎一样，容易造成 multicollinearity。
+
+矩阵语言：
+
+```text
+highly correlated columns
+-> Phi columns nearly linearly dependent
+-> larger condition number
+-> unstable coefficient estimates
+```
+
+但 pairwise correlation 不是完整诊断。两两相关不高，也可能多个 columns 合在一起造成 dependence。
+
+## Check 3: Relationship Between Each Feature and $y$
+
+单独看 feature 和 output 的关系：
+
+```r
+library(ggplot2)
+
+ggplot(df, aes(x1, y)) +
+  geom_point() +
+  geom_smooth()
+```
+
+这类图主要看：
+
+- 是否有大致线性关系；
+- 是否有 nonlinear pattern；
+- 是否需要 transformation；
+- 是否存在 outliers；
+- 是否不同区间有不同趋势；
+- 是否应该加入 interaction。
+
+例如如果 $x_1$ 和 $y$ 的关系随 $x_2$ 改变，就可能考虑：
+
+$$
+x_1x_2
+$$
+
+作为 interaction column。
+
+## Check 4: Multicollinearity Beyond Pairwise Correlation
+
+VIF 检查一个 predictor 能否被其他 predictors 解释。
+
+```r
+model <- lm(y ~ x1 + x2 + x3, data = df)
+car::vif(model)
+```
+
+直觉：
+
+```text
+high VIF for x_j
+-> x_j is predictable from other features
+-> coefficient for x_j is unstable
+```
+
+这比 pairwise correlation 更强，因为它检查的是 one column vs all other columns。
+
+## Check 5: Rank and Condition Number of $\Phi$
+
+这是最直接对应 Roy Smith 这里的检查。
+
+```r
+model <- lm(y ~ x1 + x2 + x1:x2, data = df)
+X <- model.matrix(model)
+
+qr(X)$rank
+ncol(X)
+kappa(X)
+```
+
+解释：
+
+```text
+qr(X)$rank == ncol(X)
+-> full column rank
+
+qr(X)$rank < ncol(X)
+-> lose rank
+-> some coefficients not identifiable
+
+kappa(X) large
+-> ill-conditioned
+-> coefficients sensitive to noise
+```
+
+如果想看 singular values：
+
+```r
+svd(X)$d
+```
+
+如果最小 singular value 很接近 0：
+
+$$
+\sigma_{\min}(\Phi)\approx 0
+$$
+
+说明某些 feature direction 几乎没有被数据激发出来。
+
+## Check 6: Residual Diagnostics After Fitting
+
+前面的 EDA 是拟合前检查 $\Phi$。拟合后还要看 residuals：
+
+```r
+par(mfrow = c(2, 2))
+plot(model)
+```
+
+对应检查：
+
+- Residuals vs Fitted: 是否有系统性模式；
+- Q-Q Residuals: residual 是否近似 normal；
+- Scale-Location: 是否 heteroscedastic；
+- Residuals vs Leverage: 是否有 high leverage / influential points。
+
+这一步回答的是：
+
+```text
+Given this Phi, does the fitted residual look like reasonable noise?
+```
+
+如果 residual 有明显结构，可能说明 $\Phi$ 的 columns 还没有表达出重要关系，需要重新做 feature engineering 或 extraction。
+
+## Check 7: Anscombe Warning and High-Dimensional $\Phi$
+
+Roy 用 Anscombe dataset 提醒我们：仅看 summary statistics 会误导。四组数据可以有相同的：
+
+- mean of $x$；
+- mean of $y$；
+- variance of $x$；
+- variance of $y$；
+- fitted line slope and intercept；
+- correlation-like summary；
+
+但图像结构完全不同。只有一组适合线性拟合；其他可能是 nonlinear relation、outlier-driven relation，或者根本没有关系。
+
+这对 $\Phi$ 的教训是：
+
+> summary statistics are not enough; the geometry of the data matters.
+
+这也连接到主章节里的 data-driven optimisation warning：如果 optimisation 的 objective、constraint 或 parameters 来自 fitted model，那么没有检查 data geometry 就直接优化，会把建模错误放大成决策错误。
+
+当 $d\le 2$ 或 $d\le 3$ 时，我们可以比较直接地画出 data cloud 或 column space 的几何图像。但当 $\Phi$ 有很多 columns 时，完整可视化不现实。这时不要放弃可视化，而是改成分层、切片、投影和诊断图。
+
+### What To Do When $d>3$
+
+高维时，实践策略不是“画一张完整的高维图”，而是：
+
+```text
+visualise useful 2D/3D summaries of the high-dimensional structure
+```
+
+推荐操作如下。
+
+第一，画 pairwise feature plots。目标是发现 obvious nonlinear patterns、clusters、outliers 和 collinearity。
+
+```r
+pairs(df[predictors])
+```
+
+如果 predictors 很多，不要画全部。先画：
+
+- domain-important variables；
+- 与 $y$ correlation 较高的 variables；
+- VIF 高的 variables；
+- suspected interaction variables。
+
+第二，画每个重要 feature 对 $y$ 的关系：
+
+```r
+ggplot(df, aes(x1, y)) +
+  geom_point() +
+  geom_smooth()
+```
+
+这不是为了证明模型正确，而是为了发现：
+
+- line 是否合理；
+- 是否更像 polynomial；
+- 是否被 outlier 驱动；
+- 是否存在 threshold / saturation；
+- 是否需要 interaction。
+
+第三，画 residual vs fitted：
+
+```r
+plot(model, which = 1)
+```
+
+如果 residual vs fitted 有曲线、漏斗形或分层，说明 $\Phi$ 可能没有表达出重要结构。
+
+第四，画 residual vs important predictors：
+
+```r
+df$resid <- residuals(model)
+
+ggplot(df, aes(x1, resid)) +
+  geom_point() +
+  geom_smooth()
+```
+
+如果 residual 对某个 predictor 仍有模式，说明这个 predictor 的关系没有被当前 $\Phi$ 正确表达。可能需要：
+
+- nonlinear term；
+- transformation；
+- interaction；
+- 分组模型；
+- 不同 model class。
+
+第五，用 partial residual / component-plus-residual plots 看某个 predictor 在控制其他 predictors 后的形状。
+
+```r
+car::crPlots(model)
+```
+
+这比单独画 $x_j$ vs $y$ 更接近多元回归语境，因为它部分控制了其他 columns 的影响。
+
+第六，检查 leverage 和 influential points：
+
+```r
+plot(model, which = 5)
+cooks.distance(model)
+hatvalues(model)
+```
+
+Anscombe 的一个重要教训就是：一两个点可能制造出看似合理的 slope。高维时更要检查 high leverage，因为某些点在单变量图里不显眼，但在 $\Phi$ 的 column space 中非常极端。
+
+第七，用 low-dimensional projection 看整体结构。比如 PCA：
+
+```r
+X <- model.matrix(model)[, -1]
+X_scaled <- scale(X)
+pca <- prcomp(X_scaled)
+
+plot(pca$x[, 1], pca$x[, 2])
+```
+
+如果想看 $y$ 或 residual 在 projection 上的结构：
+
+```r
+plot(pca$x[, 1], pca$x[, 2], col = cut(df$y, 4))
+```
+
+或：
+
+```r
+plot(pca$x[, 1], pca$x[, 2], col = cut(residuals(model), 4))
+```
+
+这回答的是：
+
+```text
+In the main variation directions of Phi, do y or residuals show structure?
+```
+
+第八，做 sample slicing。高维关系常常只在某些区间里显现。可以按某个变量分组，再画局部关系：
+
+```r
+ggplot(df, aes(x1, y)) +
+  geom_point() +
+  geom_smooth() +
+  facet_wrap(~ group_var)
+```
+
+如果不同 slice 的 slope 不同，就可能需要 interaction：
+
+$$
+x_1 x_2
+$$
+
+第九，把 visual checks 和 validation 结合。高维时不可能靠眼睛确认全部结构，所以最后要看：
+
+```r
+resampling / cross-validation / test performance
+```
+
+视觉检查帮助我们发现 model misspecification；validation 帮助我们判断新的 $\Phi$ 是否真的提升泛化。
+
+### High-Dimensional EDA Checklist
+
+当 $\Phi$ 很宽时，可以按这个顺序做：
+
+```text
+1. Check column variance and missingness.
+2. Check pairwise correlations for important predictors.
+3. Check VIF / rank / condition number.
+4. Plot y vs key predictors.
+5. Fit baseline model.
+6. Plot residuals vs fitted.
+7. Plot residuals vs key predictors.
+8. Check leverage and Cook's distance.
+9. Use PCA/low-dimensional projection of Phi.
+10. Validate candidate Phi designs by cross-validation.
+```
+
+核心态度是：
+
+> Do not trust statistics alone; use plots to find structure, and use validation to test whether the structure helps prediction.
+
+## Practical Workflow
+
+一个实际但不复杂的 workflow：
+
+```text
+1. Start from domain variables.
+2. Build candidate features: transformations, interactions, basis functions.
+3. Inspect each column: variance, missingness, units, scale.
+4. Inspect relationships: feature-feature correlation and feature-y plots.
+5. Build Phi via model.matrix().
+6. Check rank and condition number.
+7. Fit model.
+8. Check residual diagnostics.
+9. Use validation/cross-validation for model selection.
+10. Revise Phi if needed.
+```
+
+这个流程的重点不是“机械删除所有高相关变量”，而是理解：
+
+> useful information for estimating $\theta$ lives in independent, relevant variation of the columns of $\Phi$.
+
+因此，EDA 不是替代 LS，而是在问 LS 所依赖的 design matrix 是否真的含有足够信息。
+
+# Appendix: $\Phi$ as Hidden Structure and Dynamics
+
+这部分把前面关于 $\Phi$ 的直觉再提升一层：$\Phi$ 不只是一个 data table，也不只是 R 里 `model.matrix()` 生成的矩阵。它是模型把世界压缩成可计算结构的方式。
+
+核心句子：
+
+> choosing $\Phi$ means choosing what kinds of variation the model is allowed to explain.
+
+也可以说：
+
+> every column of $\Phi$ is an implicit hypothesis about the mechanism behind $y$.
+
+在 LS 里：
+
+$$
+y \approx \Phi\theta
+$$
+
+这句话不只是代数式。它隐含地说：
+
+```text
+y mainly varies along the directions represented by the columns of Phi.
+```
+
+因此，$\Phi$ 的列既是数学 basis，也是 assumptions about structure, dynamics, physics, behaviour, or data generation。
+
+## Common $\Phi$ Constructions and Their Implicit Assumptions
+
+| $\Phi$ construction | Example columns | Implicit assumption |
+|---|---|---|
+| Linear features | $1,\ x_1,\ x_2$ | $y$ 对输入的响应近似线性 |
+| Polynomial basis | $1,\ x,\ x^2,\ x^3$ | 关系是平滑曲线，可由局部弯曲近似 |
+| Chebyshev basis | $T_0(x),T_1(x),T_2(x)$ | 关系在区间内平滑，并希望数值更稳定 |
+| Interaction terms | $x_1x_2$ | 一个变量的影响取决于另一个变量 |
+| Log features | $\log x$ | 边际效应递减，或关系更像比例变化 |
+| Sin/cos seasonal terms | $\sin(2\pi t/T),\cos(2\pi t/T)$ | 数据有周期性，例如日、周、年 |
+| Lag features | $y_{t-1},y_{t-2},u_{t-1}$ | 当前状态受过去状态/输入影响 |
+| Conic section basis | $x^2,\ xy,\ y^2,\ x,\ y,\ 1$ | 轨迹近似服从二体中心力运动 |
+| PTDF / sensitivity matrix | $\mathrm{PTDF}\,p$ | 潮流可由 DC power flow 线性近似 |
+| Jacobian / linearisation | $H_\theta(\theta_i)$ | 非线性系统在局部可线性化 |
+| PCA components | $z_1,z_2,\ldots$ | 主要信息在少数 latent directions 中 |
+| One-hot categories | indicator columns | 不同类别有不同 baseline effect |
+| Splines | piecewise basis | 关系平滑，但不同区间曲率不同 |
+
+这张表的重点不是背例子，而是看出模式：
+
+```text
+choose columns
+-> choose allowed variation directions
+-> choose implicit model structure
+```
+
+## Orbit Fitting: Polynomial vs Conic Section
+
+Roy 讲 conic section 时，重点不是“圆锥曲线比多项式更高级”，而是：
+
+> conic section encodes the physics of ideal two-body motion.
+
+如果用 polynomial：
+
+$$
+y \approx a_0+a_1x+a_2x^2+a_3x^3
+$$
+
+隐含假设是：
+
+```text
+the trajectory is a smooth graph y=f(x) that can be locally bent by polynomial terms.
+```
+
+如果用 conic section：
+
+$$
+Ax^2+Bxy+Cy^2+Dx+Ey+F=0
+$$
+
+隐含假设变成：
+
+```text
+the trajectory is close to the solution of a two-body central-force problem.
+```
+
+其物理线索是：
+
+```text
+inverse-square central force
++ conservation of energy
++ conservation of angular momentum
+-> conic sections
+```
+
+所以 conic basis：
+
+$$
+x^2,\ xy,\ y^2,\ x,\ y,\ 1
+$$
+
+不是任意的 feature engineering。它把二体轨道的几何结构写进了 $\Phi$。
+
+这就是为什么短时间 polynomial 也许能 fit 一段轨迹，但如果要 extrapolate orbit 或解释 physical orbital parameters，conic section 更自然。
+
+## Industrial Examples
+
+下面这些例子帮助建立直觉：工业中的 $\Phi$ 往往来自物理模型、工程近似、过程知识或行为假设。
+
+### Power Systems: DC Power Flow / OPF
+
+可能有：
+
+$$
+f \approx \mathrm{PTDF}\,p
+$$
+
+这里 $\Phi$ 来自 PTDF 或 sensitivity matrix。
+
+隐含假设：
+
+```text
+voltage magnitudes near 1 p.u.
+angle differences small
+reactive power ignored
+network topology fixed
+line flows approximately linear in injections
+```
+
+所以 $\Phi$ 编码的是 DC power flow 近似，而不是任意矩阵。
+
+### Refinery / Chemical Process Scheduling
+
+可能有：
+
+$$
+\text{product output}
+\approx
+\Phi\cdot \text{feedstock mix}
+$$
+
+$\Phi$ 的列可能是不同 crude oil 的 yield profile，例如某种原油能炼出多少 petrol、diesel、jet fuel。
+
+隐含假设：
+
+```text
+yield coefficients approximately stable
+blending is roughly linear
+process units operate in known regimes
+capacity constraints known
+```
+
+这类 $\Phi$ 来自过程工程知识和历史 plant data。
+
+### Manufacturing: Production Time / Throughput Model
+
+例如：
+
+$$
+\text{production time}
+\approx
+\theta_0
++\theta_1(\text{batch size})
++\theta_2(\text{setup})
++\theta_3(\text{shift})
+$$
+
+隐含假设：
+
+```text
+batch size affects time predictably
+setup cost adds fixed overhead
+shift/operator effects can be separated
+relationship stable across observations
+```
+
+如果加入 interaction：
+
+$$
+\text{batch size}\times \text{shift}
+$$
+
+则是在假设 batch-size effect depends on shift/operator context。
+
+### Structural Engineering: Modal Basis
+
+在结构动力学或有限元降阶里，可能写：
+
+$$
+u \approx \Phi q
+$$
+
+其中 $\Phi$ 的列是 mode shapes，$q$ 是 modal coordinates。
+
+隐含假设：
+
+```text
+deformation can be represented by selected modes
+high-frequency modes are negligible
+linear elasticity approximately holds
+```
+
+这里 $\Phi$ 的列是结构系统“自然振动方式”的方向。
+
+### Control System Identification
+
+线性 state-space identification 常写：
+
+$$
+x_{t+1} \approx A x_t + B u_t
+$$
+
+写成 LS 时，$\Phi$ 包含：
+
+$$
+[x_t,\ u_t]
+$$
+
+隐含假设：
+
+```text
+next state depends linearly on current state and input
+dynamics are time-invariant over the dataset
+unmodelled effects are noise
+```
+
+如果系统是 nonlinear，则可能用 Jacobian linearisation 得到 local $\Phi$。
+
+### Predictive Maintenance
+
+$\Phi$ 可能包含：
+
+```text
+temperature
+vibration RMS
+load
+operating hours
+recent trend
+```
+
+隐含假设：
+
+```text
+failure risk is related to measurable degradation signals
+recent history contains predictive information
+sensor features summarize machine condition
+```
+
+如果 residual 仍有结构，可能说明某些 degradation mechanism 没有被当前 $\Phi$ 捕捉。
+
+### Traffic and Network Flow
+
+$\Phi$ 可能包含：
+
+```text
+previous traffic volume
+speed
+time of day
+day of week
+weather
+event indicator
+```
+
+隐含假设：
+
+```text
+traffic has temporal dependence
+daily/weekly cycles matter
+weather/events perturb baseline flow
+```
+
+这里 lag features 和 seasonal features 都是在把动态结构写入 $\Phi$。
+
+### Finance / Risk Factor Models
+
+Factor model：
+
+$$
+r_i \approx \beta_{i1}f_1+\beta_{i2}f_2+\cdots+\epsilon_i
+$$
+
+$\Phi$ 是 market factors。
+
+隐含假设：
+
+```text
+asset returns are driven by common latent/economic factors
+idiosyncratic noise is residual
+factor exposure is stable over fitting window
+```
+
+### Healthcare / Biostatistics
+
+$\Phi$ 可能包含：
+
+```text
+age
+BMI
+blood pressure
+biomarkers
+treatment indicator
+interaction terms
+```
+
+隐含假设：
+
+```text
+outcome varies systematically with physiological covariates
+treatment effect can be separated from baseline risk
+interactions may represent subgroup effects
+```
+
+### Demand Forecasting / Supply Chain
+
+$\Phi$ 可能包含：
+
+```text
+price
+promotion indicator
+holiday
+season
+lagged demand
+competitor price
+```
+
+隐含假设：
+
+```text
+demand responds to price and promotion
+seasonality matters
+past demand carries information about future demand
+```
+
+## The Main Intuition
+
+把所有例子压缩成一句：
+
+> $\Phi$ is the model's account of why $y$ varies.
+
+所以构造 $\Phi$ 时，不只是在做数据预处理，而是在回答：
+
+```text
+What mechanisms, dynamics, cycles, interactions, or physical laws
+do I believe generate the observed variation in y?
+```
+
+如果 $\Phi$ 选得好，least squares 是在正确的 structural directions 上投影。如果 $\Phi$ 选得差，least squares 仍然会给出最小 residual，但可能是在错误的假设空间里找到的最优解。
+
+# Appendix: Math Background - SVD and Pseudo-inverse
+
+这部分是 rank、condition number、pseudo-inverse 和 regularisation 的共同数学背景。考试不一定要求完整证明 SVD，但理解它会让 Roy 提到的 singular、rank deficient、pseudo-inverse 更自然。
+
+## What SVD Says
+
+Singular value decomposition, SVD, 写成：
+
+$$
+\Phi = U\Sigma V^T
+$$
+
+它的几何直觉是：
+
+```text
+V^T      : rotate / re-express input directions
+Sigma    : stretch or compress each special direction
+U        : rotate / re-express output directions
+```
+
+所以任何矩阵 $\Phi$ 的作用都可以理解成：
+
+```text
+input vector
+-> rotate to special coordinates
+-> scale each direction by singular values
+-> rotate into output space
+```
+
+其中最重要的是 $\Sigma$。它通常形如：
+
+$$
+\Sigma =
+\begin{bmatrix}
+\sigma_1 & 0 & \cdots\\
+0 & \sigma_2 & \cdots\\
+\vdots & \vdots & \ddots
+\end{bmatrix}
+$$
+
+对角线上的：
+
+$$
+\sigma_1,\sigma_2,\ldots
+$$
+
+叫 singular values。
+
+## Geometric Picture: Circle to Ellipse
+
+在二维直觉里，可以想象一个单位圆。矩阵 $\Phi$ 作用在这个圆上后，通常会变成椭圆：
+
+```text
+circle -> ellipse
+```
+
+SVD 告诉我们：
+
+- $V^T$ 找到输入空间里哪些方向会变成椭圆主轴；
+- $\Sigma$ 给出这些主轴被拉伸或压缩的长度；
+- $U$ 告诉我们这个椭圆在输出空间里朝哪个方向。
+
+因此 singular values 可以理解成椭圆半轴长度。
+
+如果：
+
+$$
+\sigma_i \text{ large}
+$$
+
+说明这个方向被数据/矩阵强烈看见。
+
+如果：
+
+$$
+\sigma_i \text{ small}
+$$
+
+说明这个方向被压得很扁，估计会对噪声敏感。
+
+如果：
+
+$$
+\sigma_i = 0
+$$
+
+说明这个方向被完全压没了，信息丢失。
+
+## Singular and Rank Deficient
+
+一个 square matrix 如果 singular，意思是它不可逆：
+
+$$
+A^{-1}\ \text{does not exist}
+$$
+
+几何上，它把至少一个非零方向压成了零：
+
+$$
+Ax=0,\quad x\neq 0
+$$
+
+所以不同输入可能给出同一个输出，无法反向唯一恢复。
+
+对 LS 来说，如果 $\Phi$ not full column rank，则存在：
+
+$$
+v\neq 0
+$$
+
+使得：
+
+$$
+\Phi v=0
+$$
+
+这意味着：
+
+$$
+\Phi(\theta+\alpha v)=\Phi\theta
+$$
+
+任意 $\alpha$ 都给出同样 prediction，因此参数不唯一。这就是 rank deficient 的本质。
+
+用 SVD 看，rank 就是非零 singular values 的数量：
+
+$$
+\operatorname{rank}(\Phi)
+=
+\#\{i:\sigma_i>0\}
+$$
+
+## Condition Number Through SVD
+
+Condition number 可以写成：
+
+$$
+\kappa(\Phi)
+=
+\frac{\sigma_{\max}}{\sigma_{\min}}
+$$
+
+如果 $\sigma_{\min}$ 很小，说明存在某个方向几乎看不见。此时：
+
+```text
+small data noise
+-> large coefficient uncertainty
+```
+
+Normal equations 会形成：
+
+$$
+\Phi^T\Phi
+$$
+
+它的 singular/eigen values 对应大致会平方，所以：
+
+$$
+\kappa(\Phi^T\Phi)=\kappa(\Phi)^2
+$$
+
+这就是为什么直接用 normal-equation inverse 在数值上可能更糟。
+
+## Pseudo-inverse from SVD
+
+普通 inverse 的思想是：每个方向都反向缩放。
+
+如果某方向被乘以：
+
+$$
+\sigma_i
+$$
+
+反解时要乘以：
+
+$$
+\frac{1}{\sigma_i}
+$$
+
+但如果：
+
+$$
+\sigma_i=0
+$$
+
+就不能取倒数。Pseudo-inverse 的做法是：
+
+$$
+\sigma_i^+
+=
+\begin{cases}
+1/\sigma_i, & \sigma_i\neq 0\\
+0, & \sigma_i=0
+\end{cases}
+$$
+
+因此如果：
+
+$$
+\Phi = U\Sigma V^T
+$$
+
+则：
+
+$$
+\Phi^+ = V\Sigma^+U^T
+$$
+
+直觉：
+
+```text
+directions with information: invert the scaling
+directions with zero information: do not guess
+```
+
+所以 pseudo-inverse 承认有些方向数据没有告诉我们，不强行恢复那些方向。
+
+## Meaning in Least Squares
+
+在：
+
+$$
+y \approx \Phi\theta
+$$
+
+中，SVD 告诉我们：
+
+```text
+which parameter directions are strongly visible in the data
+which directions are weakly visible
+which directions are invisible
+```
+
+如果 full column rank 且 well-conditioned，ordinary LS 很稳定。
+
+如果 rank deficient，有无限多组 $\theta$ 可能给出同样 prediction。Pseudo-inverse 选择其中 norm 最小的：
+
+$$
+\hat\theta
+=
+\arg\min_{\Phi\theta=y}\|\theta\|_2
+$$
+
+如果没有 exact solution，pseudo-inverse 给 least-squares best fit：
+
+$$
+\hat\theta
+=
+\arg\min_\theta \|\Phi\theta-y\|_2
+$$
+
+更完整地说，pseudo-inverse 在多解时选 minimum-norm solution。
+
+## Why Small Singular Values Are Dangerous
+
+如果：
+
+$$
+\sigma_i=0.001
+$$
+
+pseudo-inverse 会用：
+
+$$
+\frac{1}{\sigma_i}=1000
+$$
+
+这会把该方向上的噪声也放大 1000 倍。
+
+所以 small singular values 虽然不是严格 zero，但仍然危险。它们对应：
+
+```text
+nearly unidentifiable directions
+```
+
+这就是 regularisation 和 truncated SVD 的动机：
+
+- pseudo-inverse: invert all nonzero directions；
+- truncated SVD: ignore very small directions；
+- ridge regularisation: shrink unstable directions instead of fully inverting them。
+
+## One-Line Summary
+
+SVD 是看 $\Phi$ 的“方向显微镜”：
+
+```text
+large singular value  -> data strongly identifies that direction
+small singular value  -> direction is weak and noise-sensitive
+zero singular value   -> direction is invisible / rank deficient
+```
+
+Pseudo-inverse 是基于这个显微镜做的 generalized inverse：
+
+```text
+invert what can be inverted,
+ignore what has been completely lost,
+choose the minimum-norm solution when many solutions exist.
+```
+
+# Appendix: Projection Geometry and Instrumental Variables
+
+这部分补充 Roy 在 Lecture 6 里用几何解释导出 normal equations，并顺势引出 instrumental variable methods 的思路。它不是新的 LS 公式，而是同一个问题的另一种视角。
+
+## Projection View of Least Squares
+
+Least-squares problem 是：
+
+$$
+\min_\theta \|y-\Phi\theta\|_2^2
+$$
+
+其中：
+
+$$
+y\in\mathbb{R}^N,\quad
+\Phi\in\mathbb{R}^{N\times d},\quad
+\theta\in\mathbb{R}^d
+$$
+
+$\Phi\theta$ 是 $\Phi$ 的 columns 的 linear combination。因此所有可能的 fitted values：
+
+$$
+\hat y = \Phi\theta
+$$
+
+都落在 $\Phi$ 的 column space 里：
+
+$$
+\operatorname{col}(\Phi)
+$$
+
+几何上，OLS 做的是：
+
+> 把 $y$ 投影到 $\operatorname{col}(\Phi)$ 上，找到离 $y$ 最近的点 $\hat y=\Phi\theta^\star$。
+
+残差是：
+
+$$
+\epsilon = y-\Phi\theta^\star
+$$
+
+投影 theorem 告诉我们，最近点处的 residual 必须垂直于这个 subspace：
+
+$$
+\epsilon \perp \operatorname{col}(\Phi)
+$$
+
+也就是说 residual 不仅垂直于 $\Phi\theta^\star$，更强地说，它垂直于 $\Phi$ 的每一列：
+
+$$
+\phi_i^T\epsilon=0,\quad i=1,\ldots,d
+$$
+
+把这些条件叠成矩阵形式：
+
+$$
+\Phi^T\epsilon=0
+$$
+
+这就是 normal equations 的几何来源。
+
+## Inner Product Notation
+
+Roy 板书里写：
+
+$$
+\langle \Phi\theta^\star,\epsilon\rangle = 0
+$$
+
+这里的 inner product 对实向量就是：
+
+$$
+\langle a,b\rangle = a^Tb
+$$
+
+所以：
+
+$$
+\langle \Phi\theta^\star,\epsilon\rangle
+=
+(\Phi\theta^\star)^T\epsilon
+$$
+
+而 residual 是：
+
+$$
+\epsilon = y-\Phi\theta^\star
+$$
+
+代入：
+
+$$
+\langle \Phi\theta^\star, y-\Phi\theta^\star\rangle=0
+$$
+
+利用 inner product 的线性：
+
+$$
+\langle a,b-c\rangle
+=
+\langle a,b\rangle-\langle a,c\rangle
+$$
+
+得到：
+
+$$
+\langle \Phi\theta^\star,y\rangle
+-
+\langle \Phi\theta^\star,\Phi\theta^\star\rangle
+=0
+$$
+
+这对应你截图里的展开：
+
+$$
+\langle \Phi\theta^\star, y\rangle
+-
+\langle \Phi\theta^\star,\Phi\theta^\star\rangle
+=0
+$$
+
+## Expanding the Inner Products Step by Step
+
+第一项：
+
+$$
+\langle \Phi\theta^\star,y\rangle
+=
+(\Phi\theta^\star)^Ty
+$$
+
+用转置规则：
+
+$$
+(AB)^T = B^TA^T
+$$
+
+所以：
+
+$$
+(\Phi\theta^\star)^T
+=
+(\theta^\star)^T\Phi^T
+$$
+
+因此：
+
+$$
+\langle \Phi\theta^\star,y\rangle
+=
+(\theta^\star)^T\Phi^Ty
+$$
+
+第二项：
+
+$$
+\langle \Phi\theta^\star,\Phi\theta^\star\rangle
+=
+(\Phi\theta^\star)^T(\Phi\theta^\star)
+$$
+
+继续用同样的转置规则：
+
+$$
+(\Phi\theta^\star)^T(\Phi\theta^\star)
+=
+(\theta^\star)^T\Phi^T\Phi\theta^\star
+$$
+
+所以：
+
+$$
+(\theta^\star)^T\Phi^Ty
+-
+(\theta^\star)^T\Phi^T\Phi\theta^\star
+=0
+$$
+
+提取共同的 $(\theta^\star)^T$：
+
+$$
+(\theta^\star)^T
+\left(
+\Phi^Ty-\Phi^T\Phi\theta^\star
+\right)
+=0
+$$
+
+为了让这个 orthogonality condition 对 optimal projection 成立，括号中的 normal-equation residual 应该为 0：
+
+$$
+\Phi^Ty-\Phi^T\Phi\theta^\star=0
+$$
+
+所以：
+
+$$
+\Phi^T\Phi\theta^\star=\Phi^Ty
+$$
+
+这就是 normal equations。
+
+更直接、更标准的写法是从“residual 垂直于整个 column space”出发：
+
+$$
+\Phi^T\epsilon=0
+$$
+
+代入 $\epsilon=y-\Phi\theta^\star$：
+
+$$
+\Phi^T(y-\Phi\theta^\star)=0
+$$
+
+展开：
+
+$$
+\Phi^Ty-\Phi^T\Phi\theta^\star=0
+$$
+
+所以：
+
+$$
+\Phi^T\Phi\theta^\star=\Phi^Ty
+$$
+
+这个版本更严谨，因为它直接表达了 residual 对 $\Phi$ 的每一列都正交，而不仅仅是对某一个 fitted vector $\Phi\theta^\star$ 正交。
+
+## What This Has to Do with Instrumental Variables
+
+OLS 的核心 moment condition 是：
+
+$$
+\Phi^T\epsilon=0
+$$
+
+换句话说：
+
+> residual should be orthogonal to the regressors.
+
+在 sample form 里，如果 $\Phi$ 的第 $i$ 列是 regressor $\phi_i$，那么：
+
+$$
+\sum_{j=1}^N \phi_{ji}\epsilon_j=0
+$$
+
+这表示 regressor 和 residual 没有剩余相关性。
+
+但如果 regressors 和 true error 相关，例如：
+
+$$
+Cov(\Phi,\epsilon)\neq 0
+$$
+
+那么 OLS 的正交条件不再可信。此时强行要求：
+
+$$
+\Phi^T\epsilon=0
+$$
+
+会让 estimator 吸收错误的相关性，导致 biased 或 inconsistent estimates。
+
+Instrumental variables 的出发点就是换一个正交对象。我们找一个工具变量矩阵：
+
+$$
+Z
+$$
+
+它满足两个直觉条件：
+
+1. $Z$ 和 problematic regressors $\Phi$ 有关系；
+2. $Z$ 和 structural error $\epsilon$ 没关系。
+
+对应写成：
+
+$$
+Cov(Z,\Phi)\neq 0
+$$
+
+和：
+
+$$
+Cov(Z,\epsilon)=0
+$$
+
+于是 IV 不再要求 residual 对 $\Phi$ 正交，而是要求 residual 对 $Z$ 正交：
+
+$$
+Z^T\epsilon=0
+$$
+
+代入：
+
+$$
+\epsilon=y-\Phi\theta
+$$
+
+得到：
+
+$$
+Z^T(y-\Phi\theta)=0
+$$
+
+展开：
+
+$$
+Z^Ty-Z^T\Phi\theta=0
+$$
+
+所以：
+
+$$
+Z^T\Phi\theta=Z^Ty
+$$
+
+如果 $Z^T\Phi$ 可逆，则：
+
+$$
+\hat\theta_{\text{IV}}
+=
+(Z^T\Phi)^{-1}Z^Ty
+$$
+
+这就是 Roy 说 instrumental variable methods 可以从 orthogonality point of view 出发的意思。
+
+## OLS vs IV as Orthogonality Conditions
+
+可以把它们放在同一个框架里：
+
+| Method | Orthogonality condition | Meaning |
+|---|---|---|
+| OLS | $\Phi^T\epsilon=0$ | residual orthogonal to regressors |
+| IV | $Z^T\epsilon=0$ | residual orthogonal to instruments |
+
+OLS 的几何图像是：
+
+```text
+project y onto column space of Phi
+residual perpendicular to col(Phi)
+```
+
+IV 的直觉是：
+
+```text
+Phi may be contaminated
+so use Z as clean directions
+require residual to be orthogonal to Z instead
+```
+
+所以 Roy 这里的重点不是让你多背一个算法，而是让你看到：
+
+> least squares, normal equations, and instrumental variables all come from choosing which directions the residual must be orthogonal to.
+
 # Self Check
 
 You should be able to answer these without notes:
@@ -862,13 +6085,14 @@ You should be able to answer these without notes:
 2. Why is the LS residual orthogonal to the column space of $\Phi$?
 3. What is the difference between ordinary LS, weighted LS, and BLUE?
 4. Why does minimum variance among unbiased estimators not imply minimum MSE?
-5. How does regularisation change bias and variance?
-6. What is a convex set?
-7. Why are affine equality constraints allowed in convex optimisation?
-8. What is the difference between LP, QP, SOCP, QCQP, and SDP?
-9. What is an LMI?
-10. What does the Schur complement help with?
-11. How do you write an MPC optimisation problem?
+5. What is the difference between algebraic consistency and statistical consistency?
+6. How does regularisation change bias and variance?
+7. What is a convex set?
+8. Why are affine equality constraints allowed in convex optimisation?
+9. What is the difference between LP, QP, SOCP, QCQP, and SDP?
+10. What is an LMI?
+11. What does the Schur complement help with?
+12. How do you write an MPC optimisation problem?
 12. Why does MPC apply only the first input?
 13. What is explicit MPC, and why does it not scale well?
 
@@ -890,6 +6114,14 @@ $$
 
 $$
 \hat\theta = (\Phi^T\Phi)^{-1}\Phi^T y
+$$
+
+- OLS unbiased condition:
+
+$$
+y=\Phi\theta_0+\epsilon,\quad E[\epsilon]=0
+\quad\Rightarrow\quad
+E[\hat\theta]=\theta_0
 $$
 
 - BLUE:

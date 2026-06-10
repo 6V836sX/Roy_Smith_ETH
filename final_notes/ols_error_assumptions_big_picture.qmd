@@ -1,0 +1,558 @@
+---
+title: "OLS Error Assumptions in the Bigger Picture"
+subtitle: "扩展阅读：从 residual diagnostics 到 errors-in-variables 与 instrumental variables"
+format:
+  pdf:
+    pdf-engine: xelatex
+    toc: true
+    toc-depth: 2
+    toc-title: "Contents"
+    number-sections: true
+    colorlinks: true
+lang: zh
+documentclass: ctexart
+geometry: margin=0.8in
+header-includes:
+  - \usepackage{tikz}
+  - \usepackage{float}
+  - \usetikzlibrary{arrows.meta,positioning,shapes.geometric}
+---
+
+# Why This Note Exists
+
+这份扩展阅读的目标是把我们讨论过的 OLS 误差假设放进更大的图景里。核心问题是：
+
+$$
+y = \Phi\theta + \epsilon
+$$
+
+这里的关键不是“误差来自模型还是测量”，而是：
+
+> 标准 OLS 把误差建模为加在 $y$ 上，而不是加在 $\Phi$ 上。
+
+也就是说，OLS 默认把 $\Phi$ 当作可信的解释结构，然后用 $\epsilon$ 吸收观测输出、模型不完备、随机扰动等造成的差异。
+
+这份 note 主要回答三个问题：
+
+1. OLS 在统计建模工具箱中的位置是什么？
+2. residual diagnostic plots 检查的到底是哪一层假设？
+3. errors-in-variables 与 instrumental variables 分别解决什么问题？
+
+# Big Picture Flowchart
+
+下面的框图可以理解为一个诊断路线图。
+
+```{=latex}
+\begin{figure}[H]
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tikzpicture}[
+  font=\small,
+  box/.style={
+    rectangle,
+    draw,
+    rounded corners,
+    align=center,
+    minimum width=4.0cm,
+    minimum height=1.2cm,
+    inner sep=6pt
+  },
+  decision/.style={
+    diamond,
+    draw,
+    aspect=2.1,
+    align=center,
+    inner sep=3pt,
+    minimum width=4.2cm
+  },
+  arrow/.style={-{Stealth[length=2.4mm]}, thick},
+  note/.style={
+    rectangle,
+    draw,
+    align=center,
+    inner sep=6pt,
+    minimum width=4.5cm,
+    minimum height=1.1cm
+  },
+  node distance=1.45cm and 2.25cm
+]
+\node[box] (model) {估计关系\\[2pt]$\displaystyle y=\Phi\theta+\text{error}$};
+\node[decision, below=of model] (where) {误差/问题\\主要在哪里?};
+
+\node[box, below left=of where] (yerror) {$y$ 侧误差\\[2pt]$\displaystyle y=\Phi\theta+\epsilon$};
+\node[box, below=of yerror] (ols) {OLS / least squares\\[2pt]$\displaystyle \min_\theta \|y-\Phi\theta\|_2^2$};
+\node[box, below=of ols] (resid) {Residual diagnostics\\[2pt]$\displaystyle e=y-\hat y=y-\Phi\hat\theta$};
+\node[decision, below=of resid] (check) {residual 是否像\\合理 noise?};
+\node[box, below left=of check] (pass) {大致通过\\OLS 是合理基准};
+\node[box, below right=of check] (fail) {不通过\\改模型或估计方法\\nonlinear terms, WLS, robust SE, GLM};
+
+\node[box, below right=of where] (phierror) {$\Phi$ 本身有误差\\[2pt]$\displaystyle \Phi_{\text{obs}}=\Phi_{\text{true}}+V$};
+\node[box, below=of phierror] (eiv) {Errors-in-Variables\\[2pt]直接用 OLS 可能使 $\hat\theta$ 有偏};
+
+\node[note, right=2.0cm of eiv] (ivproblem) {另一类问题\\[2pt]$\displaystyle Cov(\Phi,\epsilon)\neq 0$};
+\node[box, below=of ivproblem] (iv) {Instrumental Variables\\[2pt]找 $Z$: 与 $\Phi$ 相关,\\但与 $\epsilon$ 无关};
+
+\draw[arrow] (model) -- (where);
+\draw[arrow] (where) -- (yerror);
+\draw[arrow] (where) -- (phierror);
+\draw[arrow] (yerror) -- (ols);
+\draw[arrow] (ols) -- (resid);
+\draw[arrow] (resid) -- (check);
+\draw[arrow] (check) -- node[left, font=\scriptsize] {yes} (pass);
+\draw[arrow] (check) -- node[right, font=\scriptsize] {no} (fail);
+\draw[arrow] (phierror) -- (eiv);
+\draw[arrow] (ivproblem) -- (iv);
+\draw[arrow, dashed] (where.east) -- ++(1.0,0) |- (ivproblem.west);
+\end{tikzpicture}%
+}
+\caption{OLS、errors-in-variables 与 instrumental variables 的定位图}
+\end{figure}
+```
+
+# Mindmap: Where OLS Sits
+
+```{=latex}
+\begin{figure}[H]
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tikzpicture}[
+  font=\small,
+  root/.style={
+    rectangle,
+    draw,
+    rounded corners,
+    align=center,
+    minimum width=5.2cm,
+    minimum height=1.2cm,
+    inner sep=7pt
+  },
+  branch/.style={
+    rectangle,
+    draw,
+    rounded corners,
+    align=left,
+    text width=5.0cm,
+    inner sep=7pt
+  },
+  sub/.style={
+    rectangle,
+    draw,
+    align=left,
+    text width=4.7cm,
+    inner sep=6pt
+  },
+  arrow/.style={-{Stealth[length=2.2mm]}, thick},
+  node distance=1.2cm and 0.8cm
+]
+\node[root] (root) {Linear Regression Big Picture\\[2pt]$\displaystyle y=\Phi\theta+\epsilon$};
+
+\node[branch, below left=1.2cm and 6.2cm of root] (ols) {
+\textbf{OLS / Least Squares}\\[2pt]
+Model: $\displaystyle y=\Phi\theta+\epsilon$\\
+$\Phi$ treated as accurate\\
+error placed in $y$ direction
+};
+\node[sub, below=0.55cm of ols] (olsfit) {
+\textbf{Estimator}\\[2pt]
+$\displaystyle \min_\theta \|y-\Phi\theta\|_2^2$\\
+$\displaystyle \Phi^T\Phi\hat\theta=\Phi^Ty$
+};
+\node[sub, below=0.55cm of olsfit] (olsdiag) {
+\textbf{Residual diagnostics}\\[2pt]
+$\displaystyle e=y-\hat y$\\
+mean near $0$; constant variance\\
+no strong pattern; check leverage
+};
+
+\node[branch, below=1.2cm of root] (eiv) {
+\textbf{Errors-in-Variables}\\[2pt]
+Regressor/input is noisy:\\
+$\displaystyle \Phi_{\text{obs}}=\Phi_{\text{true}}+V$\\[2pt]
+OLS treats $\Phi_{\text{obs}}$ as truth, so $\hat\theta$ may be biased.
+};
+\node[sub, below=0.55cm of eiv] (eivuse) {
+\textbf{Use when}\\[2pt]
+features, sensors, loads, PTDFs, or other inputs inside $\Phi$ are uncertain.
+};
+
+\node[branch, below right=1.2cm and 6.2cm of root] (iv) {
+\textbf{Instrumental Variables}\\[2pt]
+Regressor correlated with error:\\
+$\displaystyle Cov(\Phi,\epsilon)\neq 0$\\[2pt]
+Find $Z$ with $Cov(Z,\Phi)\neq0$ and $Cov(Z,\epsilon)=0$.
+};
+\node[sub, below=0.55cm of iv] (ivuse) {
+\textbf{Use when}\\[2pt]
+omitted variables, simultaneity, reverse causality, or measurement error create endogeneity.
+};
+
+\node[branch, below=1.25cm of olsdiag, xshift=6.2cm, text width=15.0cm] (other) {
+\textbf{Other related tools}\\[2pt]
+WLS: non-constant variance\\
+robust SE: heteroscedastic inference \quad robust regression: outliers\\
+ridge/lasso: ill-conditioning or many features\\
+GLM: non-Gaussian $y$ \quad time-series models: autocorrelated residuals
+};
+
+\draw[arrow] (root) -- (ols);
+\draw[arrow] (root) -- (eiv);
+\draw[arrow] (root) -- (iv);
+\draw[arrow] (ols) -- (olsfit);
+\draw[arrow] (olsfit) -- (olsdiag);
+\draw[arrow] (eiv) -- (eivuse);
+\draw[arrow] (iv) -- (ivuse);
+\draw[arrow] (olsdiag.south) -- ++(0,-0.45) -| (other.north west);
+\draw[arrow] (eivuse.south) -- (other.north);
+\draw[arrow] (ivuse.south) -- ++(0,-0.45) -| (other.north east);
+\end{tikzpicture}%
+}
+\vspace{0.6em}
+\caption{OLS 在更大线性回归工具箱中的位置}
+\end{figure}
+```
+
+# OLS: The Baseline Assumption
+
+OLS starts from:
+
+$$
+y = \Phi\theta + \epsilon
+$$
+
+and estimates $\theta$ by solving:
+
+$$
+\hat{\theta}
+= \arg\min_\theta \|y - \Phi\theta\|_2^2
+$$
+
+This is equivalent to finding the parameter vector that makes the residual vector as short as possible:
+
+$$
+e = y - \hat{y} = y - \Phi\hat{\theta}
+$$
+
+The important modelling assumption is:
+
+$$
+\Phi \text{ is treated as known and accurate.}
+$$
+
+Then the unexplained difference is placed in:
+
+$$
+\epsilon
+$$
+
+This $\epsilon$ can include measurement noise in $y$, unmodelled dynamics, random disturbances, or modelling simplifications. OLS does not require us to say that the error is only from measurement or only from modelling. It only says that the error is represented on the $y$ side.
+
+# What Residual Diagnostics Check
+
+Residual diagnostics happen after fitting OLS. The sequence is:
+
+```text
+fit OLS
+-> compute residuals e_i = y_i - y_hat_i
+-> inspect whether residuals behave like the assumed noise
+-> decide whether the model structure or error assumption is plausible
+```
+
+This connects directly to the STAT448 Lab 3 idea:
+
+$$
+e_i = y_i - \hat{y}_i
+$$
+
+The residual is the observed value minus the predicted value. Residual-based quantities then separate total variation into explained and unexplained parts. In particular:
+
+$$
+R^2 = 1 - \frac{RSS}{TSS}
+$$
+
+where:
+
+$$
+RSS = \sum_i (y_i - \hat{y}_i)^2
+$$
+
+So $RSS$ measures unexplained variation in $y$ after the model has done its best under the OLS criterion.
+
+## Main Diagnostic Questions
+
+The common residual plots answer different questions:
+
+| Diagnostic | What it asks | Warning sign |
+|---|---|---|
+| Residuals vs fitted | Is the linear form missing structure? | curve, trend, funnel shape |
+| Scale-location | Is residual variance roughly constant? | variance grows or shrinks with fitted value |
+| Q-Q residuals | Are residuals approximately normal? | strong tail deviation |
+| Residuals vs leverage | Are a few points dominating the fit? | high leverage or high Cook's distance |
+| Residuals vs each predictor | Is there predictor-specific nonlinearity? | systematic residual pattern against a predictor |
+
+The phrase "mean zero residuals" needs a small qualification. In OLS with an intercept, fitted residuals sum to zero by construction:
+
+$$
+\sum_i e_i = 0
+$$
+
+But this does not automatically prove the model is good. A bad model can still have residuals with average zero while showing curvature, heteroscedasticity, autocorrelation, or outlier influence.
+
+# When Residual Diagnostics Fail
+
+If the residual plot shows a systematic curve, the issue may be model form:
+
+```text
+linear model too simple
+-> add nonlinear terms
+-> add interactions
+-> transform variables
+-> use a different model class
+```
+
+If residual variance grows with fitted values, the issue may be non-constant variance:
+
+```text
+heteroscedasticity
+-> weighted least squares
+-> robust standard errors
+-> variance-stabilising transform
+```
+
+If there are influential points:
+
+```text
+outliers or high leverage
+-> inspect data quality
+-> robust regression
+-> sensitivity analysis
+```
+
+If residuals are autocorrelated:
+
+```text
+time dependence
+-> time-series model
+-> dynamic model
+-> correlated-error model
+```
+
+If $\Phi$ itself is noisy or endogenous, residual plots alone may not be enough. That is where errors-in-variables and instrumental variables become relevant.
+
+# Errors-in-Variables
+
+The standard OLS model treats $\Phi$ as clean:
+
+$$
+y = \Phi\theta + \epsilon
+$$
+
+An errors-in-variables model says the observed regressor matrix is itself noisy:
+
+$$
+\Phi_{\text{obs}} = \Phi_{\text{true}} + V
+$$
+
+while the true relation is:
+
+$$
+y = \Phi_{\text{true}}\theta + \epsilon
+$$
+
+The problem is that we only observe $\Phi_{\text{obs}}$, not $\Phi_{\text{true}}$. If we directly run OLS using $\Phi_{\text{obs}}$, then the estimator acts as if the noisy input were exact.
+
+In a simple one-regressor case:
+
+$$
+y = x_{\text{true}}\theta + \epsilon
+$$
+
+but we observe:
+
+$$
+x_{\text{obs}} = x_{\text{true}} + v
+$$
+
+Direct OLS with $x_{\text{obs}}$ often produces attenuation bias: the estimated slope is pulled toward zero. Intuitively, the horizontal coordinate is also shaking, but OLS only corrects vertical errors.
+
+Errors-in-variables is appropriate when:
+
+- input measurements are noisy;
+- features are estimated from another model;
+- sensor measurements affect $\Phi$;
+- line parameters, PTDF values, loads, or other regressors are uncertain;
+- the uncertainty in $\Phi$ is not negligible compared with the uncertainty in $y$.
+
+# Instrumental Variables
+
+Instrumental variables address a related but slightly different issue: the regressor is correlated with the error term.
+
+For a simple model:
+
+$$
+y = x\theta + \epsilon
+$$
+
+OLS needs:
+
+$$
+Cov(x, \epsilon) = 0
+$$
+
+If this fails, $x$ is called endogenous. Common causes include:
+
+- omitted variables;
+- reverse causality;
+- simultaneity;
+- measurement error in $x$;
+- feedback between the system response and the explanatory variable.
+
+IV looks for a variable $z$ that satisfies two requirements:
+
+$$
+Cov(z, x) \neq 0
+$$
+
+and:
+
+$$
+Cov(z, \epsilon) = 0
+$$
+
+In words:
+
+- $z$ must be relevant: it explains variation in $x$;
+- $z$ must be exogenous: it does not directly contaminate the error term.
+
+A common implementation is two-stage least squares:
+
+```text
+Stage 1:
+    use z to predict the problematic regressor x
+
+Stage 2:
+    regress y on the predicted, cleaner part of x
+```
+
+In formula form:
+
+$$
+x = z\pi + v
+$$
+
+then:
+
+$$
+y = \hat{x}\theta + \epsilon
+$$
+
+The intuition is that IV does not trust all variation in $x$. It only uses the part of $x$ that can be traced to a valid external source $z$.
+
+# DCOPF / Power-System Intuition
+
+For a power-system estimation problem, the same distinction is useful.
+
+Suppose:
+
+$$
+y = \Phi\theta + \epsilon
+$$
+
+where $y$ might represent observed prices, flows, dispatch outcomes, or another dependent variable, while $\Phi$ contains explanatory structure such as loads, sensitivities, PTDF-like quantities, network parameters, or constraint indicators.
+
+The OLS-style assumption is:
+
+```text
+Phi is trusted enough to be treated as fixed.
+The mismatch between observed y and predicted Phi theta is placed into epsilon.
+```
+
+This is often a useful first model. It gives a transparent baseline and residuals that can be inspected.
+
+But if the inputs inside $\Phi$ are themselves uncertain, the problem changes:
+
+```text
+loads uncertain
+line parameters uncertain
+constraint status misclassified
+PTDF or sensitivity matrix approximated
+data generated by another noisy estimation step
+```
+
+Then the error is no longer purely a $y$-side error. The model is closer to:
+
+$$
+y = (\Phi + \Delta\Phi)\theta + \epsilon
+$$
+
+Expanding:
+
+$$
+y = \Phi\theta + \Delta\Phi\theta + \epsilon
+$$
+
+Now the residual contains:
+
+$$
+\Delta\Phi\theta
+$$
+
+This term depends on the parameter being estimated. That is why the problem is harder: the error is entangled with the regressor and the unknown coefficient.
+
+# Choosing the Tool
+
+| Situation | First tool to think about | Why |
+|---|---|---|
+| $\Phi$ is trusted, noise is mainly in $y$ | OLS | baseline estimator, simple residual interpretation |
+| residuals show curvature | add nonlinear terms or transform variables | model form is too simple |
+| residual variance changes with fitted value | WLS or robust standard errors | OLS coefficients may still be useful, but inference changes |
+| residuals have strong outliers | robust regression or sensitivity analysis | squared loss over-weights large residuals |
+| $\Phi$ is measured with error | errors-in-variables | OLS treats noisy regressors as truth |
+| $\Phi$ is correlated with $\epsilon$ | instrumental variables | OLS no longer isolates causal/structural variation |
+| many correlated predictors | ridge / lasso | controls variance or performs selection |
+| response is binary, count, or bounded | GLM | ordinary Gaussian-error LS may be wrong |
+| residuals are time-correlated | time-series / dynamic model | independence assumption fails |
+
+# Key Takeaways
+
+1. OLS is the baseline method for:
+
+$$
+y = \Phi\theta + \epsilon
+$$
+
+where $\Phi$ is treated as fixed and reliable.
+
+2. Residual diagnostics do not mainly check whether OLS solved the optimisation problem correctly. They check whether the fitted residuals look compatible with the assumptions behind the model.
+
+3. If residuals show systematic patterns, the model may be missing nonlinear terms, interactions, variables, or a different error structure.
+
+4. Errors-in-variables is needed when $\Phi$ itself is noisy:
+
+$$
+\Phi_{\text{obs}} = \Phi_{\text{true}} + V
+$$
+
+5. Instrumental variables is needed when the regressor is not independent of the error:
+
+$$
+Cov(\Phi, \epsilon) \neq 0
+$$
+
+6. In engineering terms, OLS says:
+
+```text
+I trust the explanatory structure enough to fit vertical residuals.
+```
+
+Errors-in-variables says:
+
+```text
+I do not fully trust the explanatory structure itself.
+```
+
+Instrumental variables says:
+
+```text
+The explanatory variable is contaminated by something related to the residual,
+so I need an external source of clean variation.
+```
