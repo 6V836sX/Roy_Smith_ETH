@@ -701,16 +701,16 @@
  are each row there
  then what I have here
  is
- af
- z
- plus ax zero
+ A F
+ Z
+ plus AX_0
  equals b. So you can see
- my x zero has to be
+ my X_0 has to be
  one solution for this
  and af equals
  zero. So this characterizes
- the null space of a
- of a
+ the null space of A
+ of A
  So just to eliminate
  it's really just a matrix way of
  writing down what you would probably do anyway. You have an

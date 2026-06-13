@@ -4232,9 +4232,2039 @@ best eta   -> balance point for MSE/prediction
 
 # Convex Sets and Convex Optimisation
 
-## Convex Set
+这一章开始会出现很多几何 / 拓扑 / 凸分析词汇。下面统一采用：
 
-集合 $C$ convex，如果：
+```text
+中文解释（English term）
+```
+
+这样考试时能认英文，复习时又能先用中文理解。
+
+## Geometry Vocabulary Quick Table
+
+| English term | 中文 | 直觉 |
+|---|---|---|
+| set | 集合 | 一堆满足某条件的点 |
+| point | 点 | 空间中的一个元素 / vector |
+| line segment | 线段 | 两点之间所有 convex combinations |
+| hyperplane | 超平面 | $\mathbf{a}^T\mathbf{x}=b$，把空间切成两边的 flat boundary |
+| halfspace | 半空间 | $\mathbf{a}^T\mathbf{x}\le b$，超平面一侧的区域 |
+| norm ball | 范数球 | 离中心不超过半径 $r$ 的点集 |
+| norm cone | 范数锥 | 把 ball 的半径变成变量 $t$，即 $\|\mathbf{x}\|\le t$ |
+| polyhedron | 多面体 | 很多个 linear inequalities/equalities 交出来的区域 |
+| polytope | 有界多面体 / 多胞体 | bounded polyhedron，可以想成封闭的多边形 / 多面体 |
+| ellipsoid | 椭球 | 被 matrix 拉伸 / 旋转后的 ball |
+| cone | 锥 | 如果 $x$ 在里面，那么 $\gamma x,\gamma\ge0$ 也在里面 |
+| convex cone | 凸锥 | 同时满足 cone 和 convex set |
+| PSD cone | 正半定锥 | 所有 positive semidefinite matrices 组成的 cone |
+| affine | 仿射 | linear plus offset，例如 $Ax+b$ |
+| feasible region | 可行域 | 所有满足 constraints 的 $x$ |
+| boundary | 边界 | constraint 刚好 active 的边缘 |
+| interior | 内部 | 不贴着边界、附近还有空间的点 |
+
+## Matrix/Vector Form of Geometry（几何体的向量/矩阵解析定义）
+
+Roy 这里的几何语言，其实是在说：
+
+```text
+用 algebraic constraints（代数约束）定义 point sets（点集）。
+```
+
+在 optimisation 里，一个 geometry object（几何体）通常不是靠画图定义，而是靠“哪些 $\mathbf{x}$ 满足某些等式 / 不等式”定义：
+
+$$
+C=\{\mathbf{x}\mid \text{constraints on }\mathbf{x}\}
+$$
+
+这里用粗体表示 vector（向量），例如 $\mathbf{x},\mathbf{a}$；普通小写如 $b,r$ 表示 scalar（标量）。
+
+例如二维：
+
+$$
+\mathbf{x}=
+\begin{bmatrix}
+x_1\\
+x_2
+\end{bmatrix}
+\in\mathbb{R}^2
+$$
+
+三维：
+
+$$
+\mathbf{x}=
+\begin{bmatrix}
+x_1\\
+x_2\\
+x_3
+\end{bmatrix}
+\in\mathbb{R}^3
+$$
+
+更一般地：
+
+$$
+\mathbf{x}\in\mathbb{R}^n
+$$
+
+### Hyperplane（超平面）
+
+Hyperplane（超平面）的标准定义是：
+
+$$
+\{\mathbf{x}\mid \mathbf{a}^T\mathbf{x}=b\}
+$$
+
+其中：
+
+- $\mathbf{x}$ 是未知 point / vector（点 / 向量）；
+- $\mathbf{a}$ 是已知 vector，叫 normal vector（法向量）；
+- $b$ 是 scalar offset（标量偏移）；
+- $\mathbf{a}^T\mathbf{x}$ 是 inner product / dot product（内积 / 点积）。
+
+二维时：
+
+$$
+\mathbf{a}=
+\begin{bmatrix}
+a_1\\
+a_2
+\end{bmatrix},
+\quad
+\mathbf{x}=
+\begin{bmatrix}
+x_1\\
+x_2
+\end{bmatrix}
+$$
+
+所以：
+
+$$
+\mathbf{a}^T\mathbf{x}=a_1x_1+a_2x_2
+$$
+
+Hyperplane equation（超平面方程）变成：
+
+$$
+a_1x_1+a_2x_2=b
+$$
+
+\begin{center}
+\begin{tikzpicture}[scale=0.95, >=stealth]
+  \draw[->] (-0.5,0) -- (5.8,0) node[right] {$x_1$};
+  \draw[->] (0,-0.5) -- (0,4.25) node[above] {$x_2$};
+
+  \draw[thick, blue] (0.7,3.1) -- (4.75,0.62);
+  \node[blue, fill=white, inner sep=1.5pt] at (1.45,3.25) {$\mathbf{a}^T\mathbf{x}=b$};
+
+  \coordinate (xzero) at (2.65,1.9);
+  \fill (xzero) circle (2pt) node[below left] {$\mathbf{x}_0$};
+
+  \draw[->, thick, red] (xzero) -- (3.55,3.34);
+  \node[red, fill=white, inner sep=1.5pt, anchor=west] at (3.78,3.42) {$\mathbf{a}$ normal};
+
+  \draw[->, thick, teal] (xzero) -- (3.95,1.10);
+  \node[teal!80!black, fill=white, inner sep=1.5pt, anchor=west] at (4.12,1.05) {$\mathbf{x}-\mathbf{x}_0$ tangent};
+
+  \draw[dashed, red] (3.55,3.34) -- (4.85,2.54);
+  \node[align=center, fill=white, inner sep=1.5pt] at (2.95,4.02) {hyperplane / line};
+\end{tikzpicture}
+\end{center}
+
+在 $\mathbb{R}^2$ 里，这是一条 line（直线）。在 $\mathbb{R}^3$ 里，这是一个 plane（平面）。在 $\mathbb{R}^n$ 里，统一叫 hyperplane（超平面）。
+
+为什么维度会少 1？
+
+在 $\mathbb{R}^n$ 里，一个点 $\mathbf{x}$ 原本有 $n$ 个自由坐标：
+
+$$
+\mathbf{x}=
+\begin{bmatrix}
+x_1\\
+x_2\\
+\vdots\\
+x_n
+\end{bmatrix}
+$$
+
+但 hyperplane 加了一个 independent linear equality（独立线性等式）：
+
+$$
+\mathbf{a}^T\mathbf{x}=b
+$$
+
+也就是：
+
+$$
+a_1x_1+a_2x_2+\cdots+a_nx_n=b
+$$
+
+这个等式会“用掉”一个自由度。只要 $a_n\ne0$，就可以把其中一个变量写成其他变量的函数：
+
+$$
+x_n
+=
+\frac{b-a_1x_1-\cdots-a_{n-1}x_{n-1}}{a_n}
+$$
+
+所以 $x_1,\ldots,x_{n-1}$ 可以自由选，但 $x_n$ 被 equality 决定。自由度从 $n$ 个变成 $n-1$ 个。
+
+例子：
+
+```text
+R^2:  one equation a1 x1 + a2 x2 = b
+      -> 2 variables, 1 constraint
+      -> 1-dimensional line
+
+R^3:  one equation a1 x1 + a2 x2 + a3 x3 = b
+      -> 3 variables, 1 constraint
+      -> 2-dimensional plane
+
+R^n:  one independent linear equality
+      -> n variables, 1 constraint
+      -> (n-1)-dimensional hyperplane
+```
+
+从方向角度看，$\mathbf{a}$ 这个 normal vector（法向量）规定了一个不能自由移动的方向：沿着 $\mathbf{a}$ 的方向移动会改变 $\mathbf{a}^T\mathbf{x}$，所以会离开 $\mathbf{a}^T\mathbf{x}=b$。剩下所有与 $\mathbf{a}$ 正交的 directions（方向）仍然可以自由移动，因此 hyperplane 里的可移动方向组成一个 $n-1$ dimensional subspace（$n-1$ 维子空间）。
+
+几何直觉：
+
+```text
+\mathbf{a} tells which direction is perpendicular to the hyperplane.
+b tells where the hyperplane is shifted.
+```
+
+也就是说，$\mathbf{a}$ 不是平面上的方向，而是 normal direction（法向方向）。所有满足 $\mathbf{a}^T\mathbf{x}=b$ 的点 $\mathbf{x}$，都落在同一个 flat boundary（平直边界）上。
+
+如果 $\mathbf{x}_0$ 是 hyperplane 上某个点，即：
+
+$$
+\mathbf{a}^T\mathbf{x}_0=b
+$$
+
+那么任何同在 hyperplane 上的点 $\mathbf{x}$ 都满足：
+
+$$
+\mathbf{a}^T(\mathbf{x}-\mathbf{x}_0)=0
+$$
+
+这说明 $\mathbf{x}-\mathbf{x}_0$ 是沿着 hyperplane 走的 direction（切向方向），它和 normal vector $\mathbf{a}$ 正交。
+
+### Halfspace（半空间）
+
+把 equality（等式）换成 inequality（不等式），就得到 halfspace（半空间）：
+
+$$
+\{\mathbf{x}\mid \mathbf{a}^T\mathbf{x}\le b\}
+$$
+
+直觉：
+
+```text
+hyperplane boundary: vector a dot vector x = b
+halfspace side:      vector a dot vector x <= b
+```
+
+另一个方向是：
+
+$$
+\{\mathbf{x}\mid \mathbf{a}^T\mathbf{x}\ge b\}
+$$
+
+所以 hyperplane 像一把 knife，把空间切成两个 halfspaces。
+
+\begin{center}
+\begin{tikzpicture}[scale=0.9, >=stealth]
+  \draw[->] (-0.5,0) -- (5.2,0) node[right] {$x_1$};
+  \draw[->] (0,-0.5) -- (0,3.8) node[above] {$x_2$};
+
+  \fill[blue!12] (0.2,0.2) -- (5.0,0.2) -- (5.0,0.45) -- (0.6,3.15) -- (0.2,3.15) -- cycle;
+  \draw[thick, blue] (0.7,3.1) -- (4.6,0.7);
+  \node[blue, fill=white, inner sep=1.5pt] at (3.7,1.55) {$\mathbf{a}^T\mathbf{x}=b$};
+
+  \coordinate (p) at (2.65,1.9);
+  \draw[->, thick, red] (p) -- ++(1.0,1.6);
+  \node[red, fill=white, inner sep=1.5pt] at (4.05,3.45) {$\mathbf{a}$};
+
+  \node[blue!60!black, fill=white, inner sep=1.5pt] at (2.6,0.55) {$\mathbf{a}^T\mathbf{x}\le b$};
+  \node[gray!70!black, fill=white, inner sep=1.5pt] at (4.35,2.75) {$\mathbf{a}^T\mathbf{x}>b$};
+\end{tikzpicture}
+\end{center}
+
+判断 feasible side（可行侧）最稳的方法不是凭眼睛猜 left/right/up/down，而是用 test point（测试点）代入不等式。
+
+步骤：
+
+1. 先画 boundary（边界）：把 inequality 改成 equality。
+2. 选一个不在 boundary 上、容易算的点，例如 origin（原点）$\mathbf{0}$。
+3. 把 test point 代入 inequality。
+4. 如果满足，不等式可行侧就在 test point 那一侧；如果不满足，可行侧就在另一侧。
+
+例子：
+
+$$
+x_1+x_2\le 1
+$$
+
+Boundary 是：
+
+$$
+x_1+x_2=1
+$$
+
+选 origin：
+
+$$
+(0,0):\quad 0+0\le1
+$$
+
+成立，所以 feasible side 是包含 origin 的那一侧。
+
+如果是：
+
+$$
+x_1+x_2\ge 1
+$$
+
+origin 代入后：
+
+$$
+0+0\ge1
+$$
+
+不成立，所以 feasible side 是不包含 origin 的另一侧。
+
+多个约束时，对每条线都做同样检查，然后取所有可行侧的 intersection（交集）：
+
+```text
+one inequality  -> one halfspace
+many inequalities -> intersection of many halfspaces
+feasible region -> region satisfying all tests at once
+```
+
+方向词要小心：
+
+```text
+left/right/up/down depends on how the line is drawn.
+test-point substitution works every time.
+```
+
+### Stacking Many Linear Constraints（把很多线性约束堆成矩阵）
+
+如果有很多 halfspace constraints：
+
+$$
+\mathbf{a}_1^T\mathbf{x}\le b_1,\quad
+\mathbf{a}_2^T\mathbf{x}\le b_2,\quad
+\ldots,\quad
+\mathbf{a}_m^T\mathbf{x}\le b_m
+$$
+
+可以把每个 $\mathbf{a}_i^T$ 放成矩阵 $A$ 的一行：
+
+$$
+A=
+\begin{bmatrix}
+\mathbf{a}_1^T\\
+\mathbf{a}_2^T\\
+\vdots\\
+\mathbf{a}_m^T
+\end{bmatrix},
+\qquad
+b=
+\begin{bmatrix}
+b_1\\
+b_2\\
+\vdots\\
+b_m
+\end{bmatrix}
+$$
+
+于是所有 constraints 可以写成：
+
+$$
+Ax\le b
+$$
+
+这个不等式是 componentwise（逐分量）的，意思是：
+
+$$
+(Ax)_i\le b_i,\quad i=1,\ldots,m
+$$
+
+所以：
+
+$$
+\{x\mid Ax\le b\}
+$$
+
+就是很多 halfspaces（半空间）的 intersection（交集）。这就是 polyhedron（多面体）的基本矩阵定义。
+
+实际画图时，对每一行 $\mathbf{a}_i^T\mathbf{x}\le b_i$ 都先画 boundary line（边界线）$\mathbf{a}_i^T\mathbf{x}=b_i$，再用 test point 判断保留哪一侧。最后剩下的共同区域，就是 feasible region（可行域）。
+
+\begin{center}
+\begin{tikzpicture}[scale=0.82, >=stealth]
+  \draw[->] (-0.3,0) -- (6.3,0) node[right] {$x_1$};
+  \draw[->] (0,-0.3) -- (0,4.2) node[above] {$x_2$};
+
+  \fill[green!18] (1.0,0.8) -- (4.1,0.8) -- (4.6,2.5) -- (2.5,3.5) -- (0.8,2.4) -- cycle;
+
+  \draw[thick, blue] (0.3,0.8) -- (5.0,0.8);
+  \node[blue, fill=white, inner sep=1.5pt, anchor=west] at (5.25,0.70) {$\mathbf{a}_1^T\mathbf{x}\le b_1$};
+
+  \draw[thick, blue] (4.1,0.2) -- (4.9,3.0);
+  \node[blue, fill=white, inner sep=1.5pt, anchor=west] at (5.28,3.10) {$\mathbf{a}_2^T\mathbf{x}\le b_2$};
+
+  \draw[thick, blue] (0.5,2.2) -- (2.7,3.7) -- (5.1,2.6);
+  \node[blue, fill=white, inner sep=1.5pt, anchor=west] at (5.28,2.38) {$\mathbf{a}_3^T\mathbf{x}\le b_3$};
+
+  \draw[thick, blue] (0.8,0.4) -- (0.8,3.3);
+  \node[blue, fill=white, inner sep=1.5pt, anchor=east] at (0.68,3.45) {$\mathbf{a}_4^T\mathbf{x}\le b_4$};
+
+  \node[green!35!black, align=center, fill=white, inner sep=1.5pt] at (2.65,2.05) {feasible region\\$\{x\mid Ax\le b\}$};
+\end{tikzpicture}
+\end{center}
+
+### Two Ways to Describe the Same Polytope（同一个多胞体的两种表示）
+
+Roy 这里讲的是 convex geometry（凸几何）里非常重要的一对表示法。
+
+第一种是用 halfspaces / inequalities（半空间 / 不等式）定义：
+
+$$
+P=\{\mathbf{x}\mid A\mathbf{x}\le \mathbf{b}\}.
+$$
+
+这叫 H-representation（halfspace representation，半空间表示）。每一行
+
+$$
+\mathbf{a}_i^T\mathbf{x}\le b_i
+$$
+
+就是一个 boundary hyperplane 加上它的一侧。很多这样的半空间取交集，就得到一个 polyhedron / polytope。
+
+第二种是用 vertices（顶点）定义：
+
+$$
+P=\operatorname{conv}\{\mathbf{v}_1,\ldots,\mathbf{v}_k\}.
+$$
+
+这叫 V-representation（vertex representation，顶点表示）。这里的 $\operatorname{conv}$ 表示 convex hull（凸包），意思是所有顶点的 convex combinations（凸组合）：
+
+$$
+\mathbf{x}
+=\lambda_1\mathbf{v}_1+\cdots+\lambda_k\mathbf{v}_k,
+\qquad
+\lambda_i\ge 0,\quad
+\sum_{i=1}^k \lambda_i=1.
+$$
+
+直觉上：
+
+```text
+H-representation: keep the side of each wall
+                  用墙 / 边界的内侧定义区域
+
+V-representation: fill in the convex hull of corner points
+                  用角点围起来再填满中间
+```
+
+例如二维 square（正方形）可以有两种写法。
+
+H-representation:
+
+$$
+0\le x_1\le 1,\qquad 0\le x_2\le 1.
+$$
+
+也就是四个 halfspaces 的交集。
+
+V-representation:
+
+$$
+\operatorname{conv}\left\{
+\begin{bmatrix}0\\0\end{bmatrix},
+\begin{bmatrix}1\\0\end{bmatrix},
+\begin{bmatrix}1\\1\end{bmatrix},
+\begin{bmatrix}0\\1\end{bmatrix}
+\right\}.
+$$
+
+也就是四个 vertices 的 convex hull。
+
+\begin{center}
+\begin{tikzpicture}[scale=1.0, >=stealth]
+  \draw[->] (-0.4,0) -- (3.0,0) node[right] {$x_1$};
+  \draw[->] (0,-0.4) -- (0,2.5) node[above] {$x_2$};
+
+  \fill[green!18] (0.8,0.6) rectangle (2.2,2.0);
+  \draw[thick, blue] (0.8,0.6) rectangle (2.2,2.0);
+
+  \foreach \p/\lab in {
+    (0.8,0.6)/$\mathbf{v}_1$,
+    (2.2,0.6)/$\mathbf{v}_2$,
+    (2.2,2.0)/$\mathbf{v}_3$,
+    (0.8,2.0)/$\mathbf{v}_4$
+  }{
+    \fill[red] \p circle (1.5pt);
+  }
+
+  \node[red, anchor=north east, font=\small] at (0.72,0.48) {$\mathbf{v}_1$};
+  \node[red, anchor=north west, font=\small] at (2.28,0.48) {$\mathbf{v}_2$};
+  \node[red, anchor=west, font=\small] at (2.32,2.0) {$\mathbf{v}_3$};
+  \node[red, anchor=east, font=\small] at (0.68,2.0) {$\mathbf{v}_4$};
+
+  \node[blue, fill=white, inner sep=1.5pt] at (1.5,2.38) {four halfspaces};
+  \node[green!35!black, fill=white, inner sep=1.5pt] at (1.5,1.3) {convex hull};
+\end{tikzpicture}
+\end{center}
+
+Roy 说 “theoretically they are the same”，指的是：对 bounded polytope（有界多胞体）来说，H-representation 和 V-representation 可以描述同一个集合。一个正方形既可以说成四个半空间的交集，也可以说成四个顶点的凸包。
+
+但是 computationally（计算上）它们很不一样。
+
+如果优化问题天然写成 constraints（约束），比如：
+
+$$
+\min f(\mathbf{x})
+\quad \text{subject to}\quad
+A\mathbf{x}\le \mathbf{b},
+$$
+
+那么 H-representation 很方便，因为 solver 可以直接检查每个 inequality 是否满足。linear programming（线性规划）、quadratic programming（二次规划）、SOCP、SDP/LMI 都基本沿着这种 “constraints first” 的思路发展。
+
+而 V-representation 看起来几何直观，但在高维里有一个严重问题：vertices / edges / faces（顶点 / 边 / 面）的数量可能爆炸。即使 halfspaces 的数量不多，由它们围出来的 polytope 也可能有非常多 vertices。反过来，从 vertices 找出所有 supporting halfspaces / facets（支撑半空间 / 面）也可能非常贵。
+
+所以 Roy 说 “solving things in terms of half-spaces can be easy”，意思是：
+
+```text
+constraints as inequalities
+-> solver handles them directly
+-> no need to enumerate every vertex or edge
+```
+
+而 “NP-hard in terms of the edges” 的直觉是：
+
+```text
+if you describe or solve the geometry by listing vertices/edges/faces,
+you may have to deal with a combinatorial object.
+The number of edges/faces can grow extremely fast with dimension.
+Some associated enumeration/conversion problems become computationally hard.
+```
+
+这里不要把 Roy 的话理解成 “顶点表示永远不能用”。在低维画图时，V-representation 非常直观；但在 optimisation algorithms（优化算法）里，特别是高维问题里，通常更喜欢 H-representation / conic representation，因为它直接对应 constraints，而不是先把所有角点和边都找出来。
+
+一句话：
+
+```text
+H-representation tells the solver what constraints must hold.
+V-representation tells the geometry by listing the corners.
+
+They can define the same polytope,
+but they are not equally convenient computationally.
+```
+
+### Why Halfspaces Matter for Classification（为什么半空间对分类有用）
+
+Classification problem（分类问题）的基本任务是：
+
+```text
+given features x,
+decide which class / label x belongs to.
+```
+
+如果 feature vector 是：
+
+$$
+\mathbf{x}=
+\begin{bmatrix}
+x_1\\
+x_2
+\end{bmatrix},
+$$
+
+一个 linear classifier（线性分类器）可以写成：
+
+$$
+\mathbf{w}^T\mathbf{x}+c=0.
+$$
+
+这条 hyperplane / line（超平面 / 直线）叫 decision boundary（决策边界）。它把 feature space（特征空间）切成两个 halfspaces：
+
+$$
+\mathbf{w}^T\mathbf{x}+c\ge0
+\quad\text{and}\quad
+\mathbf{w}^T\mathbf{x}+c<0.
+$$
+
+于是分类规则可以写成：
+
+$$
+\hat y =
+\begin{cases}
++1, & \mathbf{w}^T\mathbf{x}+c\ge0,\\
+-1, & \mathbf{w}^T\mathbf{x}+c<0.
+\end{cases}
+$$
+
+也就是说：
+
+```text
+one hyperplane
+-> two halfspaces
+-> two predicted classes
+```
+
+\begin{center}
+\begin{tikzpicture}[scale=0.9, >=stealth]
+  \draw[->] (-0.3,0) -- (5.6,0) node[right] {$x_1$};
+  \draw[->] (0,-0.3) -- (0,4.1) node[above] {$x_2$};
+
+  \fill[red!10] (0.2,0.2) -- (5.3,0.2) -- (5.3,1.25) -- (0.7,3.6) -- (0.2,3.6) -- cycle;
+  \fill[blue!10] (0.7,3.6) -- (5.3,1.25) -- (5.3,3.8) -- (0.2,3.8) -- (0.2,3.6) -- cycle;
+
+  \draw[thick, purple] (0.7,3.6) -- (5.3,1.25)
+    node[pos=0.70, above right, fill=white, inner sep=1.5pt] {$\mathbf{w}^T\mathbf{x}+c=0$};
+
+  \foreach \p in {(1.1,0.9),(1.8,1.3),(2.7,0.8),(3.5,1.4),(4.5,0.8)}
+    \fill[red!75!black] \p circle (2pt);
+  \foreach \p in {(1.3,3.2),(2.0,2.9),(3.0,2.55),(4.0,2.85),(4.8,2.2)}
+    \fill[blue!70!black] \p circle (2pt);
+
+  \node[red!70!black, fill=white, inner sep=1.5pt] at (3.2,0.45) {class $-1$};
+  \node[blue!70!black, fill=white, inner sep=1.5pt] at (2.5,3.45) {class $+1$};
+\end{tikzpicture}
+\end{center}
+
+多个 halfspaces 也有用。比如一个 class 不是“某条线的一侧”，而是要同时满足多个 linear tests：
+
+$$
+A\mathbf{x}\le\mathbf{b}.
+$$
+
+这时 class region（类别区域）就是一个 polytope / polyhedron（多胞体 / 多面体）：
+
+```text
+inside all selected halfspaces -> class A
+outside at least one           -> not class A
+```
+
+这解释了 Roy 说 halfspace intersections 对 classification 有用：
+
+- 每条 hyperplane 是一个 decision boundary；
+- 每个 halfspace 是 boundary 的一侧；
+- 多个 halfspaces 的 intersection 可以定义一个 more structured decision region；
+- 线性模型、perceptron、logistic regression、linear SVM 都可以从这个几何视角理解。
+
+注意：classification 里的 $\Phi$ / feature engineering 也很重要。如果原始 feature space 中两类不是线性可分，可以通过 nonlinear features / kernels 把数据映射到新的 feature space，再用 hyperplane 分开。
+
+### Equality Constraints and Affine Sets（等式约束与仿射集合）
+
+类似地：
+
+$$
+Ax=b
+$$
+
+表示很多 hyperplanes（超平面）同时成立。它定义的是 affine set（仿射集合）。
+
+如果 $b=0$：
+
+$$
+Ax=0
+$$
+
+这个集合经过 origin（原点），通常是 subspace（子空间）。
+
+如果 $b\ne0$：
+
+$$
+Ax=b
+$$
+
+这个集合通常不经过 origin，是 shifted subspace（平移后的子空间），也就是 affine set（仿射集合）。
+
+### Solving Equality Constraints by Null Space（用零空间表示等式约束的所有解）
+
+Roy 这里讲的是：如果 optimisation problem 里有 equality constraint（等式约束）
+
+$$
+A\mathbf{x}=\mathbf{b},
+$$
+
+我们可以先把所有满足这个等式的 $\mathbf{x}$ 写出来，再把它 substitute back（代回）原问题。这样就能 eliminate equality constraints（消去等式约束）。
+
+先复习矩阵乘法的含义。假设：
+
+$$
+A=
+\begin{bmatrix}
+\mathbf{a}_1^T\\
+\mathbf{a}_2^T\\
+\vdots\\
+\mathbf{a}_m^T
+\end{bmatrix},
+\qquad
+\mathbf{x}\in\mathbb{R}^n,
+\qquad
+\mathbf{b}\in\mathbb{R}^m.
+$$
+
+那么：
+
+$$
+A\mathbf{x}=\mathbf{b}
+$$
+
+其实就是 $m$ 个 linear equations（线性方程）：
+
+$$
+\mathbf{a}_1^T\mathbf{x}=b_1,\quad
+\mathbf{a}_2^T\mathbf{x}=b_2,\quad
+\ldots,\quad
+\mathbf{a}_m^T\mathbf{x}=b_m.
+$$
+
+每一行 $\mathbf{a}_i^T\mathbf{x}=b_i$ 是一个 hyperplane。所有行同时满足，就是这些 hyperplanes 的 intersection（交集）。
+
+#### Null Space（零空间）
+
+Null space（零空间）定义为：
+
+$$
+\mathcal{N}(A)=\{\mathbf{v}\mid A\mathbf{v}=0\}.
+$$
+
+读法：
+
+```text
+null space of A
+= all directions v that A maps to zero
+= all movements that do not change Ax
+```
+
+为什么它重要？
+
+如果 $\mathbf{x}_0$ 是 $A\mathbf{x}=\mathbf{b}$ 的一个 particular solution（特解），也就是：
+
+$$
+A\mathbf{x}_0=\mathbf{b},
+$$
+
+那么任何 null-space direction（零空间方向）$\mathbf{v}$ 都可以加到 $\mathbf{x}_0$ 上：
+
+$$
+\mathbf{x}=\mathbf{x}_0+\mathbf{v},
+\qquad
+\mathbf{v}\in\mathcal{N}(A).
+$$
+
+因为：
+
+$$
+A(\mathbf{x}_0+\mathbf{v})
+=A\mathbf{x}_0+A\mathbf{v}
+=\mathbf{b}+0
+=\mathbf{b}.
+$$
+
+所以：
+
+```text
+particular solution x0:
+  one point satisfying Ax = b
+
+null space directions:
+  directions you can move without violating Ax = b
+
+all solutions:
+  x0 + any null-space direction
+```
+
+这就是 Roy 说的 “particular solution $\mathbf{x}_0$ and then $Fz$ defines all of the other ones”。
+
+#### Matrix Form: x = x0 + Fz
+
+实际计算时，我们不会一个一个列出所有 $\mathbf{v}$。我们找一个 matrix $F$，它的 columns（列）是一组 basis vectors（基向量），span（张成）整个 null space：
+
+$$
+\mathcal{N}(A)=\{F\mathbf{z}\mid \mathbf{z}\in\mathbb{R}^k\}.
+$$
+
+这里：
+
+- $F\in\mathbb{R}^{n\times k}$；
+- $\mathbf{z}\in\mathbb{R}^k$ 是新的 free variable（自由变量）；
+- $k$ 是 degrees of freedom（自由度）；
+- $AF=0$，因为 $F$ 的每一列都在 null space 里。
+
+于是所有满足 $A\mathbf{x}=\mathbf{b}$ 的解都可以写成：
+
+$$
+\mathbf{x}=\mathbf{x}_0+F\mathbf{z}.
+$$
+
+代回原 constraint：
+
+$$
+A\mathbf{x}
+=A(\mathbf{x}_0+F\mathbf{z})
+=A\mathbf{x}_0+AF\mathbf{z}.
+$$
+
+要让它等于 $\mathbf{b}$，只需要：
+
+$$
+A\mathbf{x}_0=\mathbf{b},
+\qquad
+AF=0.
+$$
+
+这正是 Roy 写的：
+
+$$
+AF\mathbf{z}+A\mathbf{x}_0=\mathbf{b}.
+$$
+
+由于 $AF=0$ 且 $A\mathbf{x}_0=\mathbf{b}$，所以无论 $\mathbf{z}$ 怎么选，$\mathbf{x}=\mathbf{x}_0+F\mathbf{z}$ 都满足 equality constraint。
+
+\begin{center}
+\begin{tikzpicture}[scale=0.95, >=stealth]
+  \draw[->] (-0.4,0) -- (6.0,0) node[right] {$x_1$};
+  \draw[->] (0,-0.4) -- (0,4.2) node[above] {$x_2$};
+
+  \draw[thick, blue] (0.8,0.8) -- (5.2,3.5);
+  \coordinate (X0) at (2.4,1.78);
+  \coordinate (X1) at (4.0,2.76);
+  \fill[red] (X0) circle (1.8pt) node[below right] {$\mathbf{x}_0$};
+  \draw[->, thick, green!45!black] (X0) -- (X1) node[midway, below right] {$F\mathbf{z}$};
+
+  \draw[->, thick, red] (X0) -- ++(-0.95,1.55) node[above left] {normal direction};
+  \node[blue, fill=white, inner sep=1.5pt] at (4.15,3.45) {$A\mathbf{x}=\mathbf{b}$};
+  \node[green!35!black, align=center, fill=white, inner sep=1.5pt] at (3.45,1.35) {null-space direction\\keeps $A\mathbf{x}$ unchanged};
+\end{tikzpicture}
+\end{center}
+
+二维图里，$A\mathbf{x}=b$ 是一条 line。$\mathbf{x}_0$ 是这条线上一个点。沿着线本身移动，就是 null-space direction；沿着 normal direction 移动，会离开 constraint。
+
+#### Concrete Example（具体例子）
+
+考虑：
+
+$$
+A=
+\begin{bmatrix}
+1 & 1
+\end{bmatrix},
+\qquad
+b=3.
+$$
+
+constraint 是：
+
+$$
+x_1+x_2=3.
+$$
+
+一个 particular solution 是：
+
+$$
+\mathbf{x}_0=
+\begin{bmatrix}
+3\\
+0
+\end{bmatrix},
+\qquad
+A\mathbf{x}_0=3.
+$$
+
+null space 满足：
+
+$$
+A\mathbf{v}=0
+\quad\Longleftrightarrow\quad
+v_1+v_2=0.
+$$
+
+所以一个 null-space basis vector 是：
+
+$$
+\mathbf{f}=
+\begin{bmatrix}
+1\\
+-1
+\end{bmatrix},
+\qquad
+A\mathbf{f}=1-1=0.
+$$
+
+于是：
+
+$$
+F=
+\begin{bmatrix}
+1\\
+-1
+\end{bmatrix},
+\qquad
+z\in\mathbb{R}.
+$$
+
+所有解可以写成：
+
+$$
+\mathbf{x}
+=
+\mathbf{x}_0+Fz
+=
+\begin{bmatrix}
+3\\
+0
+\end{bmatrix}
++
+\begin{bmatrix}
+1\\
+-1
+\end{bmatrix}z
+=
+\begin{bmatrix}
+3+z\\
+-z
+\end{bmatrix}.
+$$
+
+检查：
+
+$$
+x_1+x_2=(3+z)+(-z)=3.
+$$
+
+无论 $z$ 是多少，constraint 都满足。$z$ 就是剩下的 degree of freedom（自由度）。
+
+#### Why This Helps Optimisation（为什么这对优化有用）
+
+如果原问题是：
+
+$$
+\min_{\mathbf{x}} f(\mathbf{x})
+\quad \text{subject to}\quad
+A\mathbf{x}=\mathbf{b},
+$$
+
+我们可以令：
+
+$$
+\mathbf{x}=\mathbf{x}_0+F\mathbf{z}.
+$$
+
+然后原问题变成：
+
+$$
+\min_{\mathbf{z}} f(\mathbf{x}_0+F\mathbf{z}).
+$$
+
+这样 equality constraint 已经自动满足，不需要再写。
+
+直觉：
+
+```text
+Instead of optimizing over all x,
+optimize only over the free directions z
+that stay inside Ax = b.
+```
+
+如果 null space 维度 $k=0$，说明没有 degrees of freedom。那就只有一个 feasible point $\mathbf{x}_0$：
+
+```text
+if k = 0:
+  x0 is the only solution
+  no optimisation left
+
+if k > 0:
+  there are free directions Fz
+  still need to optimize over z
+```
+
+这就是 Roy 说的：
+
+```text
+If you don't have any degrees of freedom,
+x0 is the answer and you're done.
+
+But in general,
+you still have to do some optimization.
+```
+
+一句话总结：
+
+```text
+Ax = b defines an affine set.
+x0 gives one feasible point.
+Null(A) gives all directions that keep feasibility.
+All solutions are x = x0 + Fz.
+```
+
+### Norm Ball（范数球）
+
+Norm ball（范数球）定义为：
+
+$$
+\{\mathbf{x}\mid \|\mathbf{x}-\mathbf{x}_c\|_2\le r\}
+$$
+
+其中：
+
+- $\mathbf{x}_c$ 是 center（中心）；
+- $r$ 是 radius（半径）；
+- $\|\mathbf{x}-\mathbf{x}_c\|_2$ 是 $\mathbf{x}$ 到中心的 Euclidean distance（欧氏距离）。
+
+二维里是 disk（圆盘），三维里是 ball（球），高维里仍叫 norm ball。
+
+### Norm Cone（范数锥）
+
+Roy 接着说的 norm cone（范数锥）可以看成：
+
+```text
+norm ball + an extra scalar variable t
+```
+
+Norm ball 里 radius（半径）$r$ 是固定常数：
+
+$$
+\|\mathbf{x}\|_2\le r
+$$
+
+Norm cone 里，右边不再是固定半径，而是一个 variable（变量）$t$：
+
+$$
+\|\mathbf{x}\|_2\le t
+$$
+
+所以 norm cone 的集合定义是：
+
+$$
+\{(t,\mathbf{x})\mid \|\mathbf{x}\|_2\le t\}
+$$
+
+这里：
+
+- $\mathbf{x}\in\mathbb{R}^n$ 是 vector（向量）；
+- $t\in\mathbb{R}$ 是 scalar（标量）；
+- 因为 norm 总是非负，所以这个 constraint 自动要求 $t\ge0$。
+
+直觉：
+
+```text
+fixed radius r:
+    one ball
+
+variable radius t:
+    as t grows, the allowed ball grows
+    stacking all these balls over t creates a cone
+```
+
+在一维 slice（切片）里，如果 $\mathbf{x}$ 只有一个 scalar component $x$，那么：
+
+$$
+\|\mathbf{x}\|_2\le t
+\quad\text{becomes}\quad
+|x|\le t
+$$
+
+也就是：
+
+$$
+-t\le x\le t
+$$
+
+这里也用 test point / inequality logic 判断区域：
+
+- $x\le t$ 等价于 $x-t\le0$，boundary 是 $x=t$；
+- $-t\le x$ 等价于 $x\ge -t$，boundary 是 $x=-t$；
+- norm cone 还隐含 $t\ge0$，因为 $|x|\ge0$。
+
+所以 feasible region 必须同时满足：
+
+$$
+x\le t,\qquad x\ge -t,\qquad t\ge0.
+$$
+
+这就是两条斜线之间、并且在 $t$ 轴非负方向上的区域。
+
+画在 $(x,t)$ 平面里就是一个 cone-shaped region（锥形区域）：
+
+\begin{center}
+\begin{tikzpicture}[scale=0.9, >=stealth]
+  \draw[->] (-3.2,0) -- (3.2,0) node[right] {$x$};
+  \draw[->] (0,-0.2) -- (0,3.4) node[above] {$t$};
+
+  \fill[orange!18] (0,0) -- (-2.7,2.7) -- (2.7,2.7) -- cycle;
+  \draw[thick, orange!80!black] (0,0) -- (-2.9,2.9)
+    node[above left, fill=white, inner sep=1.5pt] {$x=-t$};
+  \draw[thick, orange!80!black] (0,0) -- (2.9,2.9)
+    node[above right, fill=white, inner sep=1.5pt] {$x=t$};
+
+  \node[orange!60!black, align=center, fill=white, inner sep=1.5pt] at (0,1.6)
+    {$|x|\le t$\\norm cone slice};
+  \node[gray!70!black, fill=white, inner sep=1.5pt] at (2.2,0.45) {outside};
+\end{tikzpicture}
+\end{center}
+
+Lecture 8 讲义里的 second-order cone 图，就是把 $\mathbf{x}=(x_1,x_2)$ 时的：
+
+$$
+\sqrt{x_1^2+x_2^2}\le t
+$$
+
+画成三维区域。每一个固定高度 $t$ 的 horizontal slice（水平切片）都是一个 radius 为 $t$ 的 disk；这些 disk 从 origin 开始往上叠，就形成 cone：
+
+\begin{center}
+\begin{tikzpicture}[scale=0.95, >=stealth]
+  \draw[->] (0,0) -- (4.2,0.1) node[right] {$x_1$};
+  \draw[->] (0,0) -- (-1.4,-0.9) node[left] {$x_2$};
+  \draw[->] (0,-0.1) -- (0,3.7) node[above] {$t$};
+
+  \fill[orange!16] (0,0) -- (-2.3,2.65) arc[start angle=190,end angle=350,x radius=2.35,y radius=0.55] -- cycle;
+  \draw[thick, orange!85!black] (0,0) -- (-2.3,2.65);
+  \draw[thick, orange!85!black] (0,0) -- (2.3,2.65);
+  \draw[thick, orange!85!black] (0,2.65) ellipse [x radius=2.35, y radius=0.55];
+  \draw[dashed, orange!70!black] (-2.35,2.65) arc[start angle=180,end angle=360,x radius=2.35,y radius=0.55];
+
+  \draw[thin, gray] (-2.35,2.65) -- (2.35,2.65);
+  \node[fill=white, inner sep=1.5pt] at (2.7,2.75) {$\|\mathbf{x}\|_2=t$};
+  \node[fill=white, text=orange!60!black, inner sep=1.5pt, align=center] at (0.1,1.55)
+    {inside\\$\|\mathbf{x}\|_2\le t$};
+  \node[fill=white, inner sep=1.5pt] at (-1.7,2.95) {disk slice};
+\end{tikzpicture}
+\end{center}
+
+为什么叫 cone？
+
+如果 $(t,\mathbf{x})$ 满足 $\|\mathbf{x}\|_2\le t$，那么对任意 $\gamma\ge0$：
+
+$$
+\|\gamma\mathbf{x}\|_2
+=
+\gamma\|\mathbf{x}\|_2
+\le
+\gamma t
+$$
+
+所以：
+
+$$
+(\gamma t,\gamma\mathbf{x})
+$$
+
+仍然在集合里。这正是 cone（锥）的 scaling property（缩放性质）。
+
+同时它也是 convex cone（凸锥），因为 norm 是 convex 的，而且任意两个满足 $\|\mathbf{x}\|\le t$ 的点做 nonnegative combination 后仍满足同类不等式。
+
+Norm cone 也叫 second-order cone（二阶锥）或 Lorentz cone（洛伦兹锥）：
+
+$$
+\mathcal{Q}^{n+1}
+=
+\{(t,\mathbf{x})\in\mathbb{R}\times\mathbb{R}^n
+\mid
+\|\mathbf{x}\|_2\le t\}.
+$$
+
+这就是 SOCP（second-order cone program，二阶锥规划）名字里的 cone。
+
+### Ellipsoid（椭球）
+
+Ellipsoid（椭球）定义为：
+
+$$
+\{x\mid (x-x_c)^TP^{-1}(x-x_c)\le1\}
+$$
+
+其中 $P\succ0$ 是 positive definite matrix（正定矩阵）。
+
+直觉：
+
+```text
+norm ball:
+    all directions use the same scale
+
+ellipsoid:
+    different directions have different scales
+```
+
+如果 $P=I$，就回到单位球：
+
+$$
+\|x-x_c\|_2^2\le1
+$$
+
+如果 $P$ 的某些方向 eigenvalue（特征值）大，ellipsoid 在那些方向更长；eigenvalue 小，ellipsoid 在那些方向更短。
+
+### Ellipsoidal Algorithm（椭球算法）
+
+Roy 截图里的 ellipsoidal algorithm（椭球算法）是在讲一种 optimisation strategy（优化策略）：
+
+```text
+Keep an ellipsoid that is guaranteed to contain the optimum.
+At each step, cut away half that cannot contain the optimum.
+Wrap the remaining half with a smaller ellipsoid.
+Repeat.
+```
+
+它不是 gradient descent。Gradient descent 是：
+
+```text
+current point -> take a step -> next point
+```
+
+Ellipsoid method 更像：
+
+```text
+current uncertainty region -> cut it -> smaller uncertainty region
+```
+
+所以它关心的是：
+
+```text
+Where can the optimum still be?
+```
+
+而不是：
+
+```text
+Which direction should I step right now?
+```
+
+#### Reparametrised Form（重参数化形式）
+
+前面 Roy 已经讲过 equality constraint 的处理：
+
+$$
+\mathbf{x}=\mathbf{x}_0+F\mathbf{z}.
+$$
+
+这里 $\mathbf{x}_0$ 是一个 particular feasible point（特解），$F\mathbf{z}$ 是 null-space directions（零空间方向）。这样 equality constraints 已经自动满足。
+
+所以原来的 problem 可以写成 $\mathbf{z}$ 空间里的问题：
+
+$$
+\min_{\mathbf{z}}\ \phi(\mathbf{z})
+\quad
+\text{subject to}
+\quad
+\psi_i(\mathbf{z})\le0,\quad i=1,\ldots,m,
+$$
+
+其中：
+
+$$
+\phi(\mathbf{z})=f_0(F\mathbf{z}+\mathbf{x}_0),
+\qquad
+\psi_i(\mathbf{z})=f_i(F\mathbf{z}+\mathbf{x}_0).
+$$
+
+意思是：
+
+```text
+z is the free variable after equality constraints are removed.
+x = Fz + x0 maps z back to the original variable x.
+phi(z) is the objective expressed in z.
+psi_i(z) are the inequality constraints expressed in z.
+```
+
+所以椭球算法是在 $\mathbf{z}$ 空间里工作：它维护一个 ellipsoid，认为 optimum $\mathbf{z}^\star$ 在里面。
+
+#### Step 1: Start With a Big Ellipsoid（先用大椭球包住最优点）
+
+先假设我们知道一个很大的 ellipsoid：
+
+$$
+E_0
+=
+\{\mathbf{z}\mid(\mathbf{z}-\mathbf{c}_0)^TP_0^{-1}(\mathbf{z}-\mathbf{c}_0)\le1\}
+$$
+
+并且确信：
+
+$$
+\mathbf{z}^\star\in E_0.
+$$
+
+这里：
+
+- $\mathbf{c}_0$ 是 ellipsoid center（椭球中心）；
+- $P_0$ 决定 ellipsoid 的 shape / size（形状 / 大小）；
+- $\mathbf{z}^\star$ 是最优解。
+
+直觉：
+
+```text
+I do not know where the optimum is,
+but I know it is somewhere inside this big ellipsoid.
+```
+
+#### Step 2: Evaluate at the Center（在中心点计算函数与约束）
+
+在当前椭球中心 $\mathbf{c}$ 处，计算：
+
+$$
+\phi(\mathbf{c}),
+\qquad
+\psi_i(\mathbf{c}).
+$$
+
+如果暂时只看 unconstrained problem（无约束问题），就只看 objective $\phi$。
+
+如果有 constraints，则还要看有没有 violated constraint（被违反的约束）：
+
+$$
+\psi_i(\mathbf{c})>0.
+$$
+
+Roy 这里先说 “focus on just the cost function”，也就是先忽略 constraints，只用 objective 的 gradient / subgradient 来切椭球。
+
+#### Gradient and Subgradient（梯度与次梯度）
+
+如果 $\phi$ differentiable（可微），我们用 gradient：
+
+$$
+\nabla\phi(\mathbf{c}).
+$$
+
+Gradient 指向 function 增加最快的方向。对 convex function，有一条重要 inequality：
+
+$$
+\phi(\mathbf{z})
+\ge
+\phi(\mathbf{c})
++
+\nabla\phi(\mathbf{c})^T(\mathbf{z}-\mathbf{c}).
+$$
+
+这条式子的意思是：在 $\mathbf{c}$ 点的 tangent plane（切平面）永远在 convex function 的 graph 下面。
+
+如果函数不可微，比如有 kink（尖点）：
+
+$$
+f(x)=|x|
+$$
+
+在 $x=0$ 没有唯一 gradient。这时可以用 subgradient（次梯度）。
+
+Subgradient $g$ 的定义是：
+
+$$
+f(y)\ge f(x)+g^T(y-x)
+\quad
+\text{for all } y.
+$$
+
+也就是说，$g$ 定义了一条仍然在函数下面的 supporting line / supporting hyperplane（支撑线 / 支撑超平面）。
+
+\begin{center}
+\begin{tikzpicture}[scale=0.9, >=stealth]
+  \draw[->] (-3.2,0) -- (3.2,0) node[right] {$x$};
+  \draw[->] (0,-0.3) -- (0,3.2) node[above] {$f(x)$};
+
+  \draw[thick, blue] (-2.7,2.7) -- (0,0) -- (2.7,2.7);
+  \fill[red] (0,0) circle (1.6pt) node[below right] {kink};
+
+  \draw[thin, green!45!black] (-2.4,-1.2) -- (2.4,1.2);
+  \draw[thin, green!45!black] (-2.4,0) -- (2.4,0);
+  \draw[thin, green!45!black] (-2.4,1.2) -- (2.4,-1.2);
+  \node[green!35!black, align=center, fill=white, inner sep=1.5pt] at (1.75,1.55) {many supporting lines\\many subgradients};
+  \node[blue, fill=white, inner sep=1.5pt] at (-1.9,2.35) {$f(x)=|x|$};
+\end{tikzpicture}
+\end{center}
+
+所以 Roy 说：
+
+```text
+replace the gradient with a set of gradients.
+Those are called sub-gradients.
+```
+
+#### Step 3: Use Gradient/Subgradient to Cut the Ellipsoid（用梯度切掉一半）
+
+设当前中心是 $\mathbf{c}$，取一个 gradient 或 subgradient：
+
+$$
+\mathbf{g}\in\partial\phi(\mathbf{c}).
+$$
+
+对 convex function，如果 $\mathbf{g}^T(\mathbf{z}-\mathbf{c})>0$，那么由 subgradient inequality：
+
+$$
+\phi(\mathbf{z})
+\ge
+\phi(\mathbf{c})+\mathbf{g}^T(\mathbf{z}-\mathbf{c})
+>
+\phi(\mathbf{c}).
+$$
+
+这说明这些点的 objective value 比中心点还大。既然中心点 $\mathbf{c}$ 已经在椭球里，最优点不可能在这个 “higher side”（更高的一侧）。所以 minimizer 必须在另一侧：
+
+$$
+\mathbf{g}^T(\mathbf{z}-\mathbf{c})\le0.
+$$
+
+这就是一个 halfspace cut（半空间切割）。
+
+```text
+gradient/subgradient gives a separating hyperplane through the center.
+one side cannot contain the minimizer.
+keep the other side.
+```
+
+\begin{center}
+\begin{tikzpicture}[scale=0.95, >=stealth]
+  \draw[->] (-0.6,0) -- (6.8,0) node[right] {$z_1$};
+  \draw[->] (0,-0.6) -- (0,4.5) node[above] {$z_2$};
+
+  \begin{scope}[rotate around={-18:(3,2)}]
+    \fill[orange!12] (3,2) ellipse (2.55 and 1.25);
+    \draw[thick, orange] (3,2) ellipse (2.55 and 1.25);
+  \end{scope}
+
+  \coordinate (C) at (3,2);
+  \fill[red] (C) circle (1.8pt) node[below left] {$\mathbf{c}$};
+  \draw[->, thick, purple] (C) -- ++(1.25,1.05) node[above right] {$\mathbf{g}$};
+
+  \draw[thick, red] (1.2,4.0) -- (5.5,0.15);
+  \node[red, fill=white, inner sep=1.5pt] at (5.25,0.7) {cut};
+  \node[align=center, fill=white, inner sep=1.5pt] at (4.95,3.25) {discard:\\$\mathbf{g}^T(\mathbf{z}-\mathbf{c})>0$};
+  \node[align=center, fill=white, inner sep=1.5pt] at (1.75,1.1) {keep:\\$\mathbf{g}^T(\mathbf{z}-\mathbf{c})\le0$};
+\end{tikzpicture}
+\end{center}
+
+这张图对应 Roy 的话：
+
+```text
+if the gradient points this way,
+cut the ellipse in two,
+then the minimizer has to lie in this one.
+```
+
+#### Step 4: Wrap the Remaining Half With a Smaller Ellipsoid（用更小椭球包住剩下的一半）
+
+切完之后，剩下的集合是：
+
+$$
+E\cap\{\mathbf{z}\mid \mathbf{g}^T(\mathbf{z}-\mathbf{c})\le0\}.
+$$
+
+它不是一个 ellipsoid，而是 half-ellipsoid（半个椭球）。为了继续用同样算法，我们找一个 new ellipsoid（新椭球）把它包住：
+
+```text
+old ellipsoid
+-> cut by halfspace
+-> half ellipsoid
+-> smallest-volume enclosing ellipsoid
+-> new smaller ellipsoid
+```
+
+这个 “smallest volume ellipse enclosing the half ellipse” 就是 Roy 截图第 3 步。
+
+#### A Concrete 2D Cut Example（二维数值例子：椭圆怎么切半空间）
+
+先不要看复杂公式。用最简单的二维例子：
+
+$$
+E_k=\{\mathbf{z}\mid \mathbf{z}^T\mathbf{z}\le1\}.
+$$
+
+这就是 unit disk（单位圆），也可以看成一个特殊的 ellipse：
+
+$$
+\mathbf{c}_k=
+\begin{bmatrix}
+0\\
+0
+\end{bmatrix},
+\qquad
+P_k=
+\begin{bmatrix}
+1&0\\
+0&1
+\end{bmatrix}.
+$$
+
+假设在中心点算出来的 gradient 是：
+
+$$
+\mathbf{g}_k=
+\begin{bmatrix}
+1\\
+0
+\end{bmatrix}.
+$$
+
+这表示 objective 沿着 positive $z_1$ direction（向右）增加最快。对 convex objective 来说，右半边的点满足：
+
+$$
+\mathbf{g}_k^T(\mathbf{z}-\mathbf{c}_k)>0.
+$$
+
+代入数字：
+
+$$
+\begin{bmatrix}1&0\end{bmatrix}
+\begin{bmatrix}z_1\\ z_2\end{bmatrix}
+>0
+\quad\Longleftrightarrow\quad
+z_1>0.
+$$
+
+也就是说，右半边 $z_1>0$ 的 objective 一定比中心点更高。既然中心点已经是一个 candidate，minimizer 不需要去右半边找。我们保留：
+
+$$
+\mathbf{g}_k^T(\mathbf{z}-\mathbf{c}_k)\le0
+\quad\Longleftrightarrow\quad
+z_1\le0.
+$$
+
+所以这一步的 halfspace cut 很具体：
+
+```text
+old region: unit disk
+discard:    right half, z1 > 0
+keep:       left half,  z1 <= 0
+```
+
+\begin{center}
+\begin{tikzpicture}[scale=1.12, >=stealth]
+  \draw[->] (-2.15,0) -- (2.25,0) node[right] {$z_1$};
+  \draw[->] (0,-1.65) -- (0,1.75) node[above] {$z_2$};
+
+  \fill[green!12] (0,0) -- (90:1.15) arc (90:270:1.15) -- cycle;
+  \fill[red!9] (0,0) -- (-90:1.15) arc (-90:90:1.15) -- cycle;
+  \draw[thick, orange] (0,0) circle (1.15);
+  \draw[thick, red] (0,-1.35) -- (0,1.35);
+
+  \fill[black] (0,0) circle (1.4pt);
+  \node[fill=white, inner sep=1pt] at (0.28,-0.28) {$\mathbf{c}_k$};
+  \draw[->, thick, purple] (0,0) -- (1.05,0);
+  \node[purple, fill=white, inner sep=1pt] at (1.18,-0.24) {$\mathbf{g}_k$};
+
+  \node[align=center, fill=white, inner sep=1.5pt] at (-0.95,0.82) {keep\\$z_1\le0$};
+  \node[align=center, fill=white, inner sep=1.5pt] at (1.08,0.82) {discard\\$z_1>0$};
+  \node[red, fill=white, inner sep=1.5pt] at (0.45,-1.27) {cut line: $z_1=0$};
+\end{tikzpicture}
+\end{center}
+
+这个例子里的 “line” 是 $z_1=0$。在更高维里，它就是 hyperplane：
+
+$$
+\mathbf{g}_k^T(\mathbf{z}-\mathbf{c}_k)=0.
+$$
+
+而保留下来的那一侧是 halfspace：
+
+$$
+\mathbf{g}_k^T(\mathbf{z}-\mathbf{c}_k)\le0.
+$$
+
+注意：保留下来的 half-disk 不是 ellipse。所以算法下一步要找一个 new ellipse 把它包起来。
+
+#### Roy's Ellipse Update Formula（Roy 的椭球更新公式）
+
+Roy 截图里的 ellipsoid 通常写成：
+
+$$
+E_k=
+\{
+\mathbf{z}\mid
+(\mathbf{z}-\mathbf{v}_k)^TP_k^{-1}(\mathbf{z}-\mathbf{v}_k)\le1
+\}.
+$$
+
+这里：
+
+- $\mathbf{v}_k$ is the centre（中心）；
+- $P_k$ is the shape matrix（形状矩阵）；
+- $P_k$ 的 eigenvectors 决定椭球朝向；
+- $P_k$ 的 eigenvalues 决定各方向的半轴长度平方。
+
+Roy 的更新分三步。
+
+**1. Normalize the gradient with respect to $P_k$（按椭球几何归一化梯度）**
+
+$$
+\tilde{\mathbf{g}}
+=
+\frac{\mathbf{g}_k}
+{\sqrt{\mathbf{g}_k^TP_k\mathbf{g}_k}}.
+$$
+
+这一步不是普通 Euclidean normalization（不是简单除以 $\|\mathbf{g}\|_2$）。它是在当前 ellipse 的 geometry 下 normalize。
+
+为什么要这样做？因为同一个 gradient direction，在一个长扁椭圆里，沿不同轴方向切，实际切掉的几何尺度不同。$P_k$ 告诉我们当前椭圆在各方向有多宽。
+
+所以 Roy 说：
+
+```text
+you normalize the gradient with respect to P,
+because you only care about its direction.
+```
+
+**2. Move the centre（移动中心）**
+
+$$
+\mathbf{v}_{k+1}
+=
+\mathbf{v}_k
+-
+\frac{P_k\tilde{\mathbf{g}}}{n+1}.
+$$
+
+这里 $n$ 是 dimension（维度）。如果是二维平面，$n=2$，所以 denominator 是 $3$。
+
+直觉：
+
+```text
+gradient points toward the discarded side.
+new centre moves away from that side.
+```
+
+也就是说，如果 gradient 指向右边，而右边被切掉，新椭圆中心就会往左移。
+
+**3. Update the shape matrix（更新椭球形状）**
+
+$$
+P_{k+1}
+=
+\frac{n^2}{n^2-1}
+\left(
+P_k
+-
+\frac{2}{n+1}
+P_k\tilde{\mathbf{g}}\tilde{\mathbf{g}}^TP_k
+\right).
+$$
+
+这条式子看起来复杂，但含义可以拆成两层：
+
+```text
+P_k
+  old ellipse shape
+
+P_k gtilde gtilde^T P_k
+  rank-1 correction in the cut direction
+
+n^2/(n^2-1)
+  rescaling so the new ellipsoid still encloses the kept half
+```
+
+为什么 Roy 说它是 rank 1 update？
+
+因为：
+
+$$
+\tilde{\mathbf{g}}\tilde{\mathbf{g}}^T
+$$
+
+是一个 outer product（外积）。一个 vector 乘它自己的 transpose，会得到一个 rank-1 matrix。它只主要改变一个方向：cut direction（切割方向）。
+
+#### Numerical Update Example（把二维数字代进去算一次）
+
+继续用上面的例子：
+
+$$
+n=2,\qquad
+\mathbf{v}_k=
+\begin{bmatrix}0\\0\end{bmatrix},
+\qquad
+P_k=
+\begin{bmatrix}1&0\\0&1\end{bmatrix},
+\qquad
+\mathbf{g}_k=
+\begin{bmatrix}1\\0\end{bmatrix}.
+$$
+
+Step 1:
+
+$$
+\sqrt{\mathbf{g}_k^TP_k\mathbf{g}_k}
+=
+\sqrt{
+\begin{bmatrix}1&0\end{bmatrix}
+\begin{bmatrix}1&0\\0&1\end{bmatrix}
+\begin{bmatrix}1\\0\end{bmatrix}
+}
+=1.
+$$
+
+所以：
+
+$$
+\tilde{\mathbf{g}}
+=
+\begin{bmatrix}1\\0\end{bmatrix}.
+$$
+
+Step 2:
+
+$$
+\mathbf{v}_{k+1}
+=
+\begin{bmatrix}0\\0\end{bmatrix}
+-
+\frac{1}{3}
+\begin{bmatrix}1&0\\0&1\end{bmatrix}
+\begin{bmatrix}1\\0\end{bmatrix}
+=
+\begin{bmatrix}
+-1/3\\
+0
+\end{bmatrix}.
+$$
+
+新中心移动到了左边，因为我们保留的是 $z_1\le0$。
+
+Step 3:
+
+$$
+\tilde{\mathbf{g}}\tilde{\mathbf{g}}^T
+=
+\begin{bmatrix}1\\0\end{bmatrix}
+\begin{bmatrix}1&0\end{bmatrix}
+=
+\begin{bmatrix}1&0\\0&0\end{bmatrix}.
+$$
+
+因为 $P_k=I$：
+
+$$
+P_k\tilde{\mathbf{g}}\tilde{\mathbf{g}}^TP_k
+=
+\begin{bmatrix}1&0\\0&0\end{bmatrix}.
+$$
+
+代入：
+
+$$
+P_{k+1}
+=
+\frac{4}{3}
+\left(
+\begin{bmatrix}1&0\\0&1\end{bmatrix}
+-
+\frac{2}{3}
+\begin{bmatrix}1&0\\0&0\end{bmatrix}
+\right).
+$$
+
+括号里是：
+
+$$
+\begin{bmatrix}1&0\\0&1\end{bmatrix}
+-
+\begin{bmatrix}2/3&0\\0&0\end{bmatrix}
+=
+\begin{bmatrix}1/3&0\\0&1\end{bmatrix}.
+$$
+
+所以：
+
+$$
+P_{k+1}
+=
+\begin{bmatrix}
+4/9&0\\
+0&4/3
+\end{bmatrix}.
+$$
+
+这说明新椭圆是：
+
+$$
+\frac{(z_1+1/3)^2}{4/9}
++
+\frac{z_2^2}{4/3}
+\le1.
+$$
+
+读这个式子：
+
+- centre is $(-1/3,0)$；
+- horizontal semi-axis 是 $\sqrt{4/9}=2/3$；
+- vertical semi-axis 是 $\sqrt{4/3}\approx1.155$。
+
+所以新椭圆向左移动，并且变得更竖、更窄。它刚好包住左半圆。
+
+\begin{center}
+\begin{tikzpicture}[scale=1.12, >=stealth]
+  \draw[->] (-2.2,0) -- (1.95,0) node[right] {$z_1$};
+  \draw[->] (0,-1.75) -- (0,1.75) node[above] {$z_2$};
+
+  \fill[green!10] (0,0) -- (90:1.0) arc (90:270:1.0) -- cycle;
+  \draw[thick, orange] (0,0) circle (1.0);
+  \draw[thick, red] (0,-1.25) -- (0,1.25);
+
+  \begin{scope}[shift={(-0.333,0)}]
+    \draw[thick, blue] (0,0) ellipse (0.667 and 1.155);
+  \end{scope}
+
+  \fill[black] (0,0) circle (1.3pt);
+  \node[fill=white, inner sep=1pt] at (0.28,-0.2) {$\mathbf{v}_k$};
+  \fill[blue] (-0.333,0) circle (1.3pt);
+  \node[blue, fill=white, inner sep=1pt] at (-0.72,-0.28) {$\mathbf{v}_{k+1}$};
+  \node[orange, fill=white, inner sep=1.5pt] at (1.05,-0.9) {old circle};
+  \node[blue, fill=white, inner sep=1.5pt] at (-1.35,1.3) {new ellipse};
+  \node[green!45!black, fill=white, inner sep=1.5pt] at (-1.08,-0.78) {kept half};
+\end{tikzpicture}
+\end{center}
+
+这个例子就是 Roy 公式的实际含义：
+
+```text
+cut line says which side to keep.
+centre update moves toward the kept side.
+shape update stretches/shrinks the ellipse to cover the kept half.
+```
+
+#### Volume Reduction（体积缩小保证）
+
+Roy 说：
+
+$$
+\operatorname{vol}(E_{k+1})
+<
+e^{-\frac{1}{2n}}
+\operatorname{vol}(E_k).
+$$
+
+这句话不是说每次都切掉 exactly 50%。它说的是：更新后的 enclosing ellipsoid 的 volume 有一个 guaranteed shrink factor（保证缩小因子）。
+
+当 $n=2$：
+
+$$
+e^{-1/(2n)}
+=
+e^{-1/4}
+\approx0.779.
+$$
+
+所以：
+
+$$
+\operatorname{vol}(E_{k+1})
+<
+0.779\operatorname{vol}(E_k).
+$$
+
+也就是 new ellipse 的面积最多约为旧面积的 $77.9\%$，大约减少 $22.1\%$。
+
+Roy 口头说 “volume drops by 77%” 容易让人误解。更准确地读应该是：
+
+```text
+the remaining volume is about 77% of the old volume for n = 2
+```
+
+不是减少 77%，而是变成约 77%。重点是：每一步都有数学保证，不会只是在经验上变小。
+
+算法反复做：
+
+```text
+1. Evaluate objective/constraints at ellipsoid center.
+2. Use gradient/subgradient or violated constraint to define a cut.
+3. Keep the half that must contain the optimum.
+4. Enclose that half with a smaller ellipsoid.
+5. Repeat.
+```
+
+关键性质：
+
+```text
+the volume of each ellipsoid shrinks by at least a specified factor.
+```
+
+也就是说，每一步都能保证 uncertainty region（不确定区域）变小。只要一直切下去，包含最优点的 ellipsoid 会越来越小。
+
+#### What If There Are Constraints?（如果有约束怎么办）
+
+Roy 截图里也有 constraints：
+
+$$
+\psi_i(\mathbf{z})\le0.
+$$
+
+如果当前中心 $\mathbf{c}$ violate（违反）某个 constraint：
+
+$$
+\psi_i(\mathbf{c})>0,
+$$
+
+那么用这个 constraint 的 subgradient 也可以做 cut。
+
+对于 convex constraint function $\psi_i$，如果：
+
+$$
+\psi_i(\mathbf{c})>0,
+$$
+
+则当前中心不可行。最优可行点必须在让 $\psi_i$ 变小的一侧。于是可以用：
+
+$$
+\mathbf{g}_i^T(\mathbf{z}-\mathbf{c})\le0,
+\qquad
+\mathbf{g}_i\in\partial\psi_i(\mathbf{c})
+$$
+
+来切掉不可能含有 feasible optimum（可行最优点）的一半。
+
+所以 ellipsoid method 可以同时处理：
+
+```text
+objective cut:
+  center is feasible, use objective subgradient
+
+constraint cut:
+  center violates a constraint, use constraint subgradient
+```
+
+#### 80/20 Intuition（80/20 直觉）
+
+Ellipsoidal algorithm 的核心不是要你手算更新公式，而是理解：
+
+```text
+Convexity gives valid cuts.
+Ellipsoids keep a compact uncertainty region.
+Each cut removes a region that cannot contain the optimum.
+Each enclosing ellipsoid is smaller.
+Repeated cuts converge toward the global optimum.
+```
+
+和前面 quasi-convex bisection 的思想类似：
+
+```text
+Do not only ask:
+  what is the gradient step?
+
+Ask:
+  what region can still contain the optimum?
+```
+
+一句话：
+
+```text
+Ellipsoid method is geometry-driven optimisation:
+use gradients/subgradients as certificates to cut away impossible regions.
+```
+
+#### Historical Status and Exam Perspective（历史地位与考试角度）
+
+Ellipsoid method 不是最近的新算法。它是 convex optimisation 里很经典的 old algorithm（老算法），主要价值偏 theory / foundations（理论基础），不是现代工程里最常用的高效 solver。
+
+它出名的历史原因是：
+
+```text
+ellipsoid method was used to prove that linear programming is polynomial-time solvable.
+```
+
+更精确地说，通常把这个里程碑归到 Khachiyan 1979 对 linear programming（线性规划）多项式时间可解的证明。Roy 口头提到 1984，可能是在简化这段历史；1984 更常和 Karmarkar's interior-point method（内点法）联系在一起。对本课来说，不需要背优化史细节，但要知道：
+
+```text
+ellipsoid method is historically important because it gave a polynomial-time guarantee.
+```
+
+现代工程中，真正常用来解 LP / QP / SOCP / SDP / LMI 的通常是：
+
+```text
+simplex method
+interior-point methods
+active-set methods
+first-order / proximal methods
+ADMM
+commercial solvers: Gurobi, MOSEK, CPLEX
+modeling tools: CVX, CVXPY, YALMIP
+```
+
+所以 Roy 讲 ellipsoid method，大概率不是让你以后手写它作为主要求解器，而是为了建立这几个思想：
+
+| Roy 想传达的思想 | 中文理解 |
+|---|---|
+| convexity gives valid cuts | 凸性让我们能安全切掉不可能含有最优点的区域 |
+| gradient/subgradient as certificate | 梯度/次梯度不只是 descent direction，也能作为排除区域的证据 |
+| optimisation as shrinking uncertainty region | 优化可以理解为不断缩小“最优点可能在哪里”的区域 |
+| cutting-plane idea | 很多算法不是沿梯度走，而是用 halfspace 切 feasible/optimal region |
+| polynomial-time guarantee | 算法复杂度也可以被严格证明 |
+
+**Will this be an exam question?（是否可能作为考题？）**
+
+参考 Roy 给的 `Convex_Opt_exercises.pdf`，exercise 说明里已经说这些题：
+
+```text
+generally relevant, but harder than the ENEL445 examination
+```
+
+而 convex exercise 里和 ellipsoid 相关的题主要是：
+
+```text
+minimum-volume ellipsoid containing another ellipsoid and finite points
+```
+
+它要求用 SDP / LMI / S-procedure formulation 来表达，不是要求完整手推 ellipsoid method 的迭代公式。
+
+所以我的考试风险判断是：
+
+| 内容 | 考试可能性 | 备注 |
+|---|---:|---|
+| 解释 ellipsoid / halfspace / gradient cut 的几何直觉 | High | Roy 课堂讲得很具体，适合短答题 |
+| 给出 ellipsoid method 的 4-step summary | Medium-High | 可能问 “describe the idea” |
+| 判断 minimizer 在 cut 的哪一侧 | Medium | 可用 subgradient inequality 解释 |
+| 记住完整 $P_{k+1}$ 更新公式并手算 | Low-Medium | exercise 难度高于考试；更像 coding / theory extension |
+| 证明 LP polynomial time | Low | 应知道历史意义，不太可能要求证明 |
+| minimum-volume ellipsoid as SDP/LMI | Medium for advanced exercise, lower for exam | 可能作为理解 SDP/LMI 建模的延伸 |
+
+**考试版最小记忆：**
+
+```text
+Ellipsoid method keeps an ellipsoid containing the optimum.
+At the centre, evaluate objective/constraints.
+A gradient, subgradient, or violated constraint gives a cutting hyperplane.
+Discard the side that cannot contain the optimum.
+Wrap the remaining region in a smaller ellipsoid.
+Repeat until the uncertainty region is small enough.
+```
+
+对 ENEL445 来说，最重要的不是背公式，而是能说清楚：
+
+```text
+Convexity turns local gradient/subgradient information into global geometric exclusion.
+```
+
+### Why This Matters for Optimisation（为什么这对优化重要）
+
+Optimisation problem 里的 constraint（约束）本质上就是在定义 feasible region（可行域）：
+
+$$
+\text{feasible region}
+=
+\{x\mid \text{all constraints are satisfied}\}
+$$
+
+所以 Roy 讲 hyperplane、halfspace、cone、ellipsoid，不是为了抽象几何本身，而是为了让你能看懂：
+
+```text
+linear constraints     -> intersections of halfspaces
+norm constraints       -> norm cones / second-order cones
+quadratic constraints  -> balls / ellipsoids
+PSD constraints        -> matrix-valued convex geometry
+LMI constraints        -> affine matrix expression inside PSD cone
+```
+
+一句话记忆：
+
+```text
+Analytic geometry in optimisation:
+describe shapes by equations and inequalities in x.
+```
+
+## Convex Set（凸集）
+
+集合 $C$ 是 convex set（凸集），如果：
 
 $$
 x_1, x_2 \in C,\quad \gamma \in [0,1]
@@ -4242,53 +6272,1523 @@ x_1, x_2 \in C,\quad \gamma \in [0,1]
 \gamma x_1 + (1-\gamma)x_2 \in C
 $$
 
-直觉：任意两点连线都在集合里。
+直觉：任意两点之间的 line segment（线段）都在集合里。
 
 重要例子：
 
-- hyperplane: $\{x \mid a^T x = b\}$；
-- halfspace: $\{x \mid a^T x \le b\}$；
-- norm ball: $\{x \mid \|x-x_c\| \le r\}$；
-- polyhedron: linear inequalities/equalities 的交集；
-- ellipsoid:
+- hyperplane（超平面）: $\{\mathbf{x} \mid \mathbf{a}^T \mathbf{x} = b\}$；
+- halfspace（半空间）: $\{\mathbf{x} \mid \mathbf{a}^T \mathbf{x} \le b\}$；
+- norm ball（范数球）: $\{x \mid \|x-x_c\| \le r\}$；
+- polyhedron（多面体）: linear inequalities/equalities（线性不等式 / 等式）的交集；
+- ellipsoid（椭球）:
 
 $$
 \{x \mid (x-x_c)^T P^{-1}(x-x_c) \le 1\}
 $$
 
-重要性质：convex sets 的 intersection 仍然 convex。
+重要性质：convex sets（凸集）的 intersection（交集）仍然 convex（凸）。
 
-## Cones and PSD Cone
+## Convex Function and Convex Domain（凸函数与凸定义域）
 
-Cone:
+是的，Roy 这里的意思是：在标准 convex analysis（凸分析）里，一个 convex function（凸函数）的 domain（定义域）必须是 convex set（凸集）。
+
+函数 $f$ 是 convex function，如果它的 domain $\operatorname{dom} f$ 是 convex set，并且对任意
+
+$$
+\mathbf{x},\mathbf{y}\in \operatorname{dom} f,\qquad \gamma\in[0,1],
+$$
+
+都有：
+
+$$
+f(\gamma \mathbf{x}+(1-\gamma)\mathbf{y})
+\le
+\gamma f(\mathbf{x})+(1-\gamma)f(\mathbf{y}).
+$$
+
+这就是 Roy 说的：
+
+```text
+the line between two function values lies above the function
+```
+
+左边是先在 input space（输入空间）里取 $\mathbf{x}$ 和 $\mathbf{y}$ 的 convex combination（凸组合），再计算函数值。右边是直接把两个 function values（函数值）用直线连接起来。Convex function 的图像在这条 chord（弦线）下面。
+
+\begin{center}
+\begin{tikzpicture}[scale=0.95, >=stealth]
+  \draw[->] (-0.4,0) -- (5.2,0) node[right] {$x$};
+  \draw[->] (0,-0.2) -- (0,4.0) node[above] {$f(x)$};
+
+  \draw[domain=0.5:4.6, smooth, variable=\x, thick, blue]
+    plot ({\x},{0.33*(\x-2.6)*(\x-2.6)+0.55});
+
+  \coordinate (X) at (1.2,{0.33*(1.2-2.6)*(1.2-2.6)+0.55});
+  \coordinate (Y) at (4.2,{0.33*(4.2-2.6)*(4.2-2.6)+0.55});
+  \coordinate (Z) at (2.5,{0.33*(2.5-2.6)*(2.5-2.6)+0.55});
+  \coordinate (L) at (2.5,2.02);
+
+  \draw[thick, red] (X) -- (Y);
+  \fill[blue] (X) circle (1.6pt) node[above left] {$(x,f(x))$};
+  \fill[blue] (Y) circle (1.6pt) node[above right] {$(y,f(y))$};
+  \fill[blue] (Z) circle (1.4pt);
+  \fill[red] (L) circle (1.4pt);
+  \draw[dashed] (2.5,0) -- (Z);
+  \draw[dashed, red] (Z) -- (L);
+
+  \node[blue, fill=white, inner sep=1.5pt] at (3.4,0.8) {$f(\gamma x+(1-\gamma)y)$};
+  \node[red, fill=white, inner sep=1.5pt] at (3.0,2.45) {$\gamma f(x)+(1-\gamma)f(y)$};
+  \node[align=center] at (2.7,3.35) {red chord above blue curve};
+\end{tikzpicture}
+\end{center}
+
+为什么 domain 也必须 convex？
+
+因为上面的定义需要 $\gamma \mathbf{x}+(1-\gamma)\mathbf{y}$ 这个点仍然在 domain 里。也就是说，如果 $\mathbf{x}$ 和 $\mathbf{y}$ 都是允许输入，那么它们中间的所有 convex combinations 也必须是允许输入。否则下面这个表达式可能根本没有定义：
+
+$$
+f(\gamma \mathbf{x}+(1-\gamma)\mathbf{y}).
+$$
+
+例如，假设一个函数只定义在两个分开的区间上：
+
+$$
+\operatorname{dom} f=[-3,-1]\cup[1,3].
+$$
+
+这个 domain 不是 convex set，因为取 $x=-2$ 和 $y=2$，中点 $0$ 不在 domain 里。即使函数在每一段上看起来都像 bowl-shaped（碗形），整体上也不能叫 convex function，因为连接两个可行输入的 line segment 中间跑出了定义域。
+
+\begin{center}
+\begin{tikzpicture}[scale=0.92, >=stealth]
+  \draw[->] (-3.8,0) -- (3.8,0) node[right] {$x$};
+  \draw[->] (0,-0.2) -- (0,3.3) node[above] {$f(x)$};
+
+  \draw[domain=-3:-1, smooth, variable=\x, thick, blue]
+    plot ({\x},{0.35*(\x+2)*(\x+2)+0.55});
+  \draw[domain=1:3, smooth, variable=\x, thick, blue]
+    plot ({\x},{0.35*(\x-2)*(\x-2)+0.55});
+
+  \draw[very thick, green!45!black] (-3,-0.08) -- (-1,-0.08);
+  \draw[very thick, green!45!black] (1,-0.08) -- (3,-0.08);
+  \node[green!35!black, fill=white, inner sep=1.5pt] at (-2,-0.42) {$[-3,-1]$};
+  \node[green!35!black, fill=white, inner sep=1.5pt] at (2,-0.42) {$[1,3]$};
+  \node[red, fill=white, inner sep=1.5pt] at (0,0.35) {gap: not in domain};
+
+  \fill[blue] (-2,0.55) circle (1.5pt) node[above left] {$x$};
+  \fill[blue] (2,0.55) circle (1.5pt) node[above right] {$y$};
+  \draw[dashed, red] (-2,0.55) -- (2,0.55);
+  \node[red, align=center, fill=white, inner sep=1.5pt] at (0,1.35) {line segment crosses\\outside domain};
+\end{tikzpicture}
+\end{center}
+
+所以 Roy 的逻辑是：
+
+```text
+convex set first:
+  we need line segments between feasible points to stay feasible
+
+convex function second:
+  along those feasible line segments,
+  the function value stays below the straight-line interpolation
+```
+
+在 optimisation 里，这一点很重要。A convex optimisation problem 通常要求：
+
+- objective function（目标函数）是 convex；
+- feasible region / domain（可行域 / 定义域）是 convex；
+- constraints（约束）也以保持 convex feasible set 的方式写出来。
+
+如果 domain 不是 convex，那么即使函数曲线局部看起来很“碗形”，也会破坏 convex optimisation 的核心性质：local optimum（局部最优）不一定就是 global optimum（全局最优），线段插值也不再可靠。
+
+### Strictly Convex vs Convex（严格凸 vs 凸）
+
+Roy 后面说：
+
+```text
+a strictly convex function is always curving.
+But one that's just convex could have a flat region.
+```
+
+这句话的数学版本是：
+
+Convex function（凸函数）要求：
+
+$$
+f(\gamma \mathbf{x}+(1-\gamma)\mathbf{y})
+\le
+\gamma f(\mathbf{x})+(1-\gamma)f(\mathbf{y}).
+$$
+
+Strictly convex function（严格凸函数）要求更强：只要 $\mathbf{x}\ne\mathbf{y}$ 且 $\gamma\in(0,1)$，就有：
+
+$$
+f(\gamma \mathbf{x}+(1-\gamma)\mathbf{y})
+<
+\gamma f(\mathbf{x})+(1-\gamma)f(\mathbf{y}).
+$$
+
+区别就在这个 $\le$ 和 $<$。
+
+直觉：
+
+```text
+convex:
+  graph can touch the chord over an interval
+  可以有平的一段 / 直的一段
+
+strictly convex:
+  between any two different points, the graph stays strictly below the chord
+  中间不能贴着弦线走
+```
+
+所以 $f(x)=x^2$ 是 strictly convex；而
+
+$$
+f(x)=
+\begin{cases}
+0, & |x|\le 1,\\
+|x|-1, & |x|>1
+\end{cases}
+$$
+
+是 convex 但不是 strictly convex，因为它在 $[-1,1]$ 上有 flat region（平坦区域）。
+
+\begin{center}
+\begin{tikzpicture}[scale=0.9, >=stealth]
+  \begin{scope}
+    \draw[->] (-2.4,0) -- (2.4,0) node[right] {$x$};
+    \draw[->] (0,-0.2) -- (0,3.0) node[above] {$f(x)$};
+    \draw[domain=-1.75:1.75, smooth, variable=\x, thick, blue]
+      plot ({\x},{0.75*\x*\x+0.25});
+    \draw[thick, red] (-1.45,{0.75*1.45*1.45+0.25}) -- (1.45,{0.75*1.45*1.45+0.25});
+    \node[blue, fill=white, inner sep=1.5pt] at (0,0.75) {$x^2$};
+    \node[red, fill=white, inner sep=1.5pt] at (0,2.25) {chord strictly above};
+    \node[align=center] at (0,-0.75) {strictly convex\\no flat interval};
+  \end{scope}
+
+  \begin{scope}[xshift=6.1cm]
+    \draw[->] (-2.4,0) -- (2.4,0) node[right] {$x$};
+    \draw[->] (0,-0.2) -- (0,3.0) node[above] {$f(x)$};
+    \draw[thick, blue] (-2.2,1.45) -- (-1,0.25) -- (1,0.25) -- (2.2,1.45);
+    \draw[thick, red] (-0.9,0.25) -- (0.9,0.25);
+    \node[blue, fill=white, inner sep=1.5pt] at (0,0.55) {flat region};
+    \node[red, fill=white, inner sep=1.5pt] at (0,1.35) {chord touches graph};
+    \node[align=center] at (0,-0.75) {convex but not\\strictly convex};
+  \end{scope}
+\end{tikzpicture}
+\end{center}
+
+为什么这对 optimisation 很重要？
+
+- 如果 $f$ 是 convex，任何 local minimum 都是 global minimum。
+- 如果 $f$ 是 strictly convex，并且 minimum 存在，那么 minimizer（最优解点）通常是 unique（唯一的）。
+- 如果只是 convex 但有 flat bottom（平底），可能有 infinitely many minimizers（无穷多个最优解）。
+
+例如左边的 $x^2$ 只有一个 minimizer：$x=0$。右边的 flat-bottom convex function 在整个 $[-1,1]$ 上都是 minimum，所以最优值唯一，但最优解不唯一。
+
+在工程里，这对应一个很实际的问题：
+
+```text
+convex objective:
+  easy to know we found a global optimum
+
+strictly convex objective:
+  also helps guarantee a unique solution
+
+flat convex objective:
+  many parameter values may be equally optimal
+```
+
+所以 Roy 说 “strictly convex is always curving” 是一个直觉说法。更严谨地说，strict convexity 禁止函数在两个不同点之间沿着一条 straight line / flat segment 走；普通 convexity 允许这种 flat region。
+
+### Convex Functions with Vector Inputs（向量输入的凸函数）
+
+Roy 接下来把 $x$ 从 scalar（标量，一个数）推广到 vector（向量，一列数）。这时不要被符号吓到，核心规则没有变。
+
+Scalar input（一维输入）时：
+
+$$
+x\in \mathbb{R},
+\qquad
+f(x)\in \mathbb{R}.
+$$
+
+Vector input（多维输入）时：
+
+$$
+\mathbf{x}\in \mathbb{R}^n,
+\qquad
+f(\mathbf{x})\in \mathbb{R}.
+$$
+
+注意：这里通常还是 scalar-valued function（标量值函数）。意思是 input 是一个 vector，但 output 是一个 number。例如：
+
+```text
+input:
+  x = [x1, x2, ..., xn]^T
+
+output:
+  f(x) = one number
+```
+
+比如二维：
+
+$$
+\mathbf{x}=
+\begin{bmatrix}
+x_1\\
+x_2
+\end{bmatrix},
+\qquad
+f(\mathbf{x})=x_1^2+x_2^2.
+$$
+
+这里 $\mathbf{x}$ 是一个点，也可以理解成 feature vector / decision vector（特征向量 / 决策变量）。$f(\mathbf{x})$ 是这个点对应的 height / cost / objective value（高度 / 成本 / 目标函数值）。
+
+Convex function 的定义还是同一条：
+
+$$
+f(\gamma \mathbf{x}+(1-\gamma)\mathbf{y})
+\le
+\gamma f(\mathbf{x})+(1-\gamma)f(\mathbf{y}).
+$$
+
+只是现在 $\mathbf{x}$ 和 $\mathbf{y}$ 是 vectors：
+
+$$
+\mathbf{x}=
+\begin{bmatrix}
+x_1\\
+x_2\\
+\vdots\\
+x_n
+\end{bmatrix},
+\qquad
+\mathbf{y}=
+\begin{bmatrix}
+y_1\\
+y_2\\
+\vdots\\
+y_n
+\end{bmatrix}.
+$$
+
+它们的 convex combination 是 componentwise（逐分量）算的：
+
+$$
+\gamma\mathbf{x}+(1-\gamma)\mathbf{y}
+=
+\begin{bmatrix}
+\gamma x_1+(1-\gamma)y_1\\
+\gamma x_2+(1-\gamma)y_2\\
+\vdots\\
+\gamma x_n+(1-\gamma)y_n
+\end{bmatrix}.
+$$
+
+所以如果 $\gamma=0.25$，那么这个点就是：
+
+```text
+25% of x + 75% of y
+```
+
+它仍然是 $\mathbf{x}$ 和 $\mathbf{y}$ 之间 line segment（线段）上的一个点。
+
+\begin{center}
+\begin{tikzpicture}[scale=0.95, >=stealth]
+  \draw[->] (-0.3,0) -- (5.5,0) node[right] {$x_1$};
+  \draw[->] (0,-0.3) -- (0,3.8) node[above] {$x_2$};
+
+  \coordinate (X) at (1.0,0.9);
+  \coordinate (Y) at (4.6,3.0);
+  \coordinate (Z) at (3.7,2.475);
+
+  \draw[thick, blue] (X) -- (Y);
+  \fill[blue] (X) circle (1.8pt) node[below left] {$\mathbf{x}$};
+  \fill[blue] (Y) circle (1.8pt) node[above right] {$\mathbf{y}$};
+  \fill[red] (Z) circle (1.8pt) node[below right] {$\gamma\mathbf{x}+(1-\gamma)\mathbf{y}$};
+
+  \node[align=center, fill=white, inner sep=1.5pt] at (2.8,1.25) {line segment in\\input space};
+\end{tikzpicture}
+\end{center}
+
+这里要区分两个空间：
+
+```text
+input space:
+  where x and y live
+  比如 R^2, R^3, R^n
+
+output/value space:
+  where f(x) and f(y) live
+  通常是一条 real number axis
+```
+
+Roy 说 “you need two points”，指的是：判断 convexity 时要取 domain 里的任意两个 input points $\mathbf{x}$ 和 $\mathbf{y}$，然后看它们中间所有 convex combinations 的函数值是否低于 chord。
+
+#### How to Read the Sum Symbol（如何读懂求和符号）
+
+向量函数经常出现 $\sum$。它只是 “add many similar terms”（把很多相似项加起来）。
+
+例如：
+
+$$
+\sum_{i=1}^{n} x_i^2
+$$
+
+读作：
+
+```text
+sum from i = 1 to n of x_i squared
+```
+
+展开就是：
+
+$$
+x_1^2+x_2^2+\cdots+x_n^2.
+$$
+
+如果 $n=3$，并且
+
+$$
+\mathbf{x}=
+\begin{bmatrix}
+2\\
+-1\\
+4
+\end{bmatrix},
+$$
+
+那么：
+
+$$
+\sum_{i=1}^{3} x_i^2
+=2^2+(-1)^2+4^2
+=4+1+16
+=21.
+$$
+
+所以一重求和符号的读法可以很机械：
+
+```text
+i = 1: use x1
+i = 2: use x2
+...
+i = n: use xn
+then add them all
+```
+
+#### Double Sum and Matrix Form（双重求和与矩阵形式）
+
+Roy 的讲义里还出现了 double sum（双重求和）：
+
+$$
+\sum_{i=1}^{m}\sum_{j=1}^{n} A_{ij}X_{ij}.
+$$
+
+读作：
+
+```text
+sum over i from 1 to m,
+and for each i, sum over j from 1 to n,
+of A_ij times X_ij.
+```
+
+最机械的理解是：matrix（矩阵）有 row index（行指标）$i$ 和 column index（列指标）$j$。
+
+```text
+i tells which row.
+j tells which column.
+A_ij means entry of A at row i, column j.
+X_ij means entry of X at row i, column j.
+```
+
+如果 $m=2,n=3$，那么：
+
+$$
+A=
+\begin{bmatrix}
+A_{11} & A_{12} & A_{13}\\
+A_{21} & A_{22} & A_{23}
+\end{bmatrix},
+\qquad
+X=
+\begin{bmatrix}
+X_{11} & X_{12} & X_{13}\\
+X_{21} & X_{22} & X_{23}
+\end{bmatrix}.
+$$
+
+双重求和展开就是：
+
+$$
+\sum_{i=1}^{2}\sum_{j=1}^{3} A_{ij}X_{ij}
+=
+A_{11}X_{11}+A_{12}X_{12}+A_{13}X_{13}
++A_{21}X_{21}+A_{22}X_{22}+A_{23}X_{23}.
+$$
+
+也就是说：
+
+```text
+go row by row,
+inside each row go column by column,
+multiply matching entries,
+then add everything.
+```
+
+这就是 matrices 的 inner product（矩阵内积），常写成：
+
+$$
+\langle A,X\rangle
+=
+\sum_{i=1}^{m}\sum_{j=1}^{n} A_{ij}X_{ij}.
+$$
+
+Roy 截图中的 affine function on matrices（矩阵上的仿射函数）是：
+
+$$
+f(X)=\operatorname{tr}(A^TX)+b
+=
+\sum_{i=1}^{m}\sum_{j=1}^{n} A_{ij}X_{ij}+b.
+$$
+
+这里：
+
+- $X\in\mathbb{R}^{m\times n}$ 是 matrix input（矩阵输入）；
+- $A\in\mathbb{R}^{m\times n}$ 是 fixed matrix（固定矩阵），类似 vector case 里的 coefficient vector；
+- $b\in\mathbb{R}$ 是 scalar offset（标量偏移）；
+- $f(X)\in\mathbb{R}$ 仍然是 one number（一个数）。
+
+这和 vector affine function 完全平行：
+
+$$
+f(\mathbf{x})=\mathbf{a}^T\mathbf{x}+b
+=
+\sum_{i=1}^{n} a_i x_i+b.
+$$
+
+对比表：
+
+| Input type | Affine function | Expanded sum | Meaning |
+|---|---|---|---|
+| vector $\mathbf{x}\in\mathbb{R}^n$ | $\mathbf{a}^T\mathbf{x}+b$ | $\sum_{i=1}^n a_i x_i+b$ | match each vector entry |
+| matrix $X\in\mathbb{R}^{m\times n}$ | $\operatorname{tr}(A^TX)+b$ | $\sum_{i=1}^m\sum_{j=1}^n A_{ij}X_{ij}+b$ | match each matrix entry |
+
+所以 $\operatorname{tr}(A^TX)$ 不要先理解成一个神秘的 trace trick。先把它读成：
+
+```text
+multiply A and X entry-by-entry,
+then add all entries.
+```
+
+为什么是 $A^TX$ 而不是直接 $AX$？因为 trace formula 是矩阵内积的紧凑写法：
+
+$$
+\operatorname{tr}(A^TX)=\langle A,X\rangle.
+$$
+
+其中 trace（迹）表示 square matrix（方阵）对角线元素之和：
+
+$$
+\operatorname{tr}
+\left(
+\begin{bmatrix}
+c_{11} & c_{12}\\
+c_{21} & c_{22}
+\end{bmatrix}
+\right)
+=c_{11}+c_{22}.
+$$
+
+但在读 optimisation 讲义时，你可以先记住：
+
+```text
+vector dot product:
+  a^T x = sum_i a_i x_i
+
+matrix dot product:
+  tr(A^T X) = sum_i sum_j A_ij X_ij
+```
+
+它们都是 affine functions，所以都是 convex functions and concave functions（既凸也凹）。原因是它们没有 curvature（曲率）：图像是 flat hyperplane（平的超平面）。
+
+和 p-norm 的关系是：
+
+```text
+affine function:
+  weighted sum of entries
+
+norm:
+  size of vector/matrix
+```
+
+Roy 这一页是在给 $\mathbb{R}^n$ 和 $\mathbb{R}^{m\times n}$ 上的 convex function examples（凸函数例子）：vector 上有 affine functions 和 norms；matrix 上也有 affine functions，以及 spectral norm（最大奇异值 / 谱范数）这类 matrix norm。
+
+#### Norms as Convex Functions（范数是凸函数）
+
+Roy 说 norms are convex functions。Norm（范数）可以理解成 vector 的 size / length（大小 / 长度）。
+
+最常见的是 Euclidean norm / 2-norm：
+
+$$
+\|\mathbf{x}\|_2
+=
+\sqrt{x_1^2+x_2^2+\cdots+x_n^2}
+=
+\sqrt{\sum_{i=1}^{n}x_i^2}.
+$$
+
+二维时：
+
+$$
+\mathbf{x}=
+\begin{bmatrix}
+x_1\\
+x_2
+\end{bmatrix},
+\qquad
+\|\mathbf{x}\|_2=\sqrt{x_1^2+x_2^2}.
+$$
+
+这就是 Pythagoras（勾股定理）：点 $(x_1,x_2)$ 到 origin（原点）的距离。
+
+更一般的 p-norm 定义为：
+
+$$
+\|\mathbf{x}\|_p
+=
+\left(\sum_{i=1}^{n}|x_i|^p\right)^{1/p},
+\qquad p\ge 1.
+$$
+
+逐步读：
+
+```text
+1. take each component xi
+2. take its magnitude |xi|
+3. raise it to power p
+4. add all components
+5. take the 1/p power
+```
+
+例如：
+
+$$
+\|\mathbf{x}\|_1=\sum_{i=1}^{n}|x_i|
+=|x_1|+\cdots+|x_n|
+$$
+
+叫 1-norm / Manhattan norm。二维里它的 norm ball 是 diamond shape（菱形）。
+
+$$
+\|\mathbf{x}\|_2=\sqrt{\sum_{i=1}^{n}x_i^2}
+$$
+
+叫 2-norm / Euclidean norm。二维里它的 norm ball 是 circle（圆）。
+
+$$
+\|\mathbf{x}\|_\infty=\max_i |x_i|
+$$
+
+叫 infinity norm。二维里它的 norm ball 是 square（正方形）。
+
+这些就是 Roy 前面画过的 norm balls：
+
+$$
+\{\mathbf{x}\mid \|\mathbf{x}\|_p\le r\}.
+$$
+
+\begin{center}
+\begin{tikzpicture}[scale=0.9, >=stealth]
+  \begin{scope}
+    \draw[->] (-1.6,0) -- (1.6,0) node[right] {$x_1$};
+    \draw[->] (0,-1.6) -- (0,1.6) node[above] {$x_2$};
+    \draw[thick, blue] (0,1.0) -- (1.0,0) -- (0,-1.0) -- (-1.0,0) -- cycle;
+    \node at (0,-1.95) {$\|\mathbf{x}\|_1\le1$};
+  \end{scope}
+
+  \begin{scope}[xshift=4.2cm]
+    \draw[->] (-1.6,0) -- (1.6,0) node[right] {$x_1$};
+    \draw[->] (0,-1.6) -- (0,1.6) node[above] {$x_2$};
+    \draw[thick, teal] (0,0) circle (1.0);
+    \node at (0,-1.95) {$\|\mathbf{x}\|_2\le1$};
+  \end{scope}
+
+  \begin{scope}[xshift=8.4cm]
+    \draw[->] (-1.6,0) -- (1.6,0) node[right] {$x_1$};
+    \draw[->] (0,-1.6) -- (0,1.6) node[above] {$x_2$};
+    \draw[thick, purple] (-1,-1) rectangle (1,1);
+    \node at (0,-1.95) {$\|\mathbf{x}\|_\infty\le1$};
+  \end{scope}
+\end{tikzpicture}
+\end{center}
+
+为什么 norms 是 convex functions？直觉上，vector 的 length 不会因为在两个 vectors 中间插值而超过两端长度的线性插值：
+
+$$
+\|\gamma\mathbf{x}+(1-\gamma)\mathbf{y}\|
+\le
+\gamma\|\mathbf{x}\|+(1-\gamma)\|\mathbf{y}\|.
+$$
+
+这其实来自 triangle inequality（三角不等式）：
+
+$$
+\|\mathbf{u}+\mathbf{v}\|\le \|\mathbf{u}\|+\|\mathbf{v}\|.
+$$
+
+所以当 Roy 说 “P-norm is exactly those balls that I drew before”，可以理解成：
+
+```text
+norm function:
+  maps each vector x to its size ||x||p
+
+norm ball:
+  all vectors whose size is less than or equal to r
+```
+
+也就是：
+
+$$
+\text{function } \|\mathbf{x}\|_p
+\quad \Longrightarrow \quad
+\text{set } \{\mathbf{x}\mid \|\mathbf{x}\|_p\le r\}.
+$$
+
+一句话总结：
+
+```text
+Vector-input convex functions use the same convexity rule.
+The only new difficulty is reading vector components and sums.
+Norms are the first major examples:
+they turn vectors into scalar lengths, and their sublevel sets are norm balls.
+```
+
+## Quasi-convex Functions（准凸函数）
+
+Roy 后面讲 quasi-convex functions（准凸函数）。它们经常出现在 control systems（控制系统）和一些 optimisation problems 里。
+
+准凸函数不一定是 convex function。它的定义不是看 graph（函数图像）是否在 chord 下面，而是看所有 sublevel sets（下水平集）是否 convex。
+
+首先，domain 仍然必须是 convex set：
+
+$$
+\operatorname{dom} f \text{ is convex}.
+$$
+
+然后对任意 real number $\alpha$，定义 sublevel set：
+
+$$
+S_\alpha
+=
+\{\mathbf{x}\in \operatorname{dom} f \mid f(\mathbf{x})\le \alpha\}.
+$$
+
+读法：
+
+```text
+S_alpha is the set of all x whose function value is no larger than alpha.
+S_alpha 是所有函数值不超过 alpha 的点。
+```
+
+如果对每个 $\alpha$，$S_\alpha$ 都是 convex set，那么 $f$ 就是 quasi-convex function：
+
+$$
+f \text{ is quasi-convex}
+\quad\Longleftrightarrow\quad
+S_\alpha \text{ is convex for every } \alpha.
+$$
+
+\begin{center}
+\begin{tikzpicture}[scale=0.95, >=stealth]
+  \draw[->] (-0.4,0) -- (6.2,0) node[right] {$x$};
+  \draw[->] (0,-0.2) -- (0,3.8) node[above] {$f(x)$};
+
+  \draw[domain=0.55:5.5, smooth, variable=\x, thick, blue]
+    plot ({\x},{0.22*(\x-3)^2 + 0.18*sin(180*\x) + 0.55});
+
+  \draw[thick, red] (0.45,1.45) -- (5.75,1.45) node[right] {$\alpha$};
+  \draw[very thick, green!45!black] (1.15,0.05) -- (4.85,0.05);
+  \draw[dashed, green!45!black] (1.15,0.05) -- (1.15,1.45);
+  \draw[dashed, green!45!black] (4.85,0.05) -- (4.85,1.45);
+
+  \node[blue, fill=white, inner sep=1.5pt] at (4.7,2.4) {not necessarily convex graph};
+  \node[green!35!black, fill=white, inner sep=1.5pt] at (3.0,-0.32) {$S_\alpha=\{x\mid f(x)\le \alpha\}$};
+  \node[align=center, fill=white, inner sep=1.5pt] at (3.0,1.85) {below level $\alpha$\\is one interval};
+\end{tikzpicture}
+\end{center}
+
+一维里，convex set 就是 interval（区间）。所以一维 quasi-convex function 的直觉是：
+
+```text
+for every horizontal level alpha,
+the part below alpha is one interval, not separated pieces.
+```
+
+这允许函数图像有一些不满足 convex graph inequality 的形状，但它不能有多个 separated valleys（分开的谷）。如果某个 level $\alpha$ 下面有两段分开的区域，那么 sublevel set 不是 convex，这个函数就不是 quasi-convex。
+
+### Convex vs Quasi-convex（凸 vs 准凸）
+
+所有 convex functions 都是 quasi-convex，但反过来不成立。
+
+原因是：convex function 的 sublevel sets 一定是 convex sets：
+
+$$
+\{\mathbf{x}\mid f(\mathbf{x})\le \alpha\}
+$$
+
+会形成 convex feasible region。这个性质是 convex optimisation 里非常常用的。
+
+但 quasi-convex 只要求 sublevel sets convex，不要求 graph itself convex。
+
+对比：
+
+| Function type | 中文 | 看什么 | 要求 |
+|---|---|---|---|
+| convex function | 凸函数 | graph / chord | graph below chord |
+| quasi-convex function | 准凸函数 | sublevel sets | every $S_\alpha$ is convex |
+
+### Why Bisection Works（为什么可以用二分法）
+
+Roy 说 quasi-convex functions 给了你一种求解方式：不要直接沿着 gradient descent（梯度下降）走，而是检查 sublevel set 是否可行，然后对 $\alpha$ 做 bisection（二分法）。
+
+关键性质是 nested sublevel sets（嵌套下水平集）：
+
+如果 $\alpha_1\le \alpha_2$，那么：
+
+$$
+S_{\alpha_1}\subseteq S_{\alpha_2}.
+$$
+
+直觉：
+
+```text
+lower alpha:
+  stricter requirement f(x) <= alpha
+  smaller set
+
+higher alpha:
+  looser requirement f(x) <= alpha
+  larger set
+```
+
+所以我们可以把求最小值改写成一系列 feasibility problems（可行性问题）：
+
+$$
+\text{Is there any } \mathbf{x}
+\text{ such that }
+f(\mathbf{x})\le \alpha?
+$$
+
+也就是问：
+
+$$
+S_\alpha \ne \emptyset?
+$$
+
+如果某个 $\alpha$ 可行，说明 minimum value（最小函数值）不超过 $\alpha$。如果不可行，说明 $\alpha$ 太低了。
+
+Bisection 的流程：
+
+```text
+1. Find lower and upper bounds: L <= f* <= U.
+2. Pick midpoint alpha = (L + U)/2.
+3. Check feasibility of f(x) <= alpha.
+4. If feasible:
+     U = alpha
+   else:
+     L = alpha
+5. Repeat until U - L is small enough.
+```
+
+这里 $f^\star$ 表示 global minimum value（全局最小值）。
+
+准凸函数的好处是：每次检查 $f(\mathbf{x})\le \alpha$ 时，sublevel set 是 convex set，因此这个 feasibility problem 往往可以用 convex optimisation methods 处理。
+
+### Bisection Example Exercise（准凸二分法习题）
+
+你提到的 “Amoji” 很可能是 Armijo line search（Armijo 线搜索）。Armijo 是 gradient descent / Newton method 里选择 step size（步长）的方法；Roy 这里讲的不是 Armijo，而是 bisection on objective value（对目标函数值做二分）。
+
+区别：
+
+```text
+Armijo line search:
+  choose a step size along a descent direction
+  沿着下降方向选步长
+
+quasi-convex bisection:
+  choose a candidate objective value alpha
+  test whether f(x) <= alpha is feasible
+  对目标值 alpha 做可行性检查
+```
+
+下面做一个具体习题。
+
+**Problem.** 在 $x>0$ 上最小化：
+
+$$
+f(x)=\max\left\{x,\frac{4}{x}\right\}.
+$$
+
+也就是：
+
+$$
+\min_{x>0}\ \max\left\{x,\frac{4}{x}\right\}.
+$$
+
+这个函数是 quasi-convex，因为它的 sublevel set 是 convex interval（凸区间）。对某个候选值 $\alpha$，检查：
+
+$$
+f(x)\le \alpha.
+$$
+
+这等价于同时满足：
+
+$$
+x\le \alpha,
+\qquad
+\frac{4}{x}\le \alpha.
+$$
+
+因为 $x>0$，第二个不等式可以改写成：
+
+$$
+x\ge \frac{4}{\alpha}.
+$$
+
+所以 sublevel set 是：
+
+$$
+S_\alpha
+=
+\left\{x>0\mid \frac{4}{\alpha}\le x\le \alpha\right\}.
+$$
+
+这是一个 interval，所以是 convex set。
+
+现在 feasibility question（可行性问题）变成：
+
+```text
+Is there any x such that 4/alpha <= x <= alpha?
+```
+
+也就是说，区间必须非空：
+
+$$
+\frac{4}{\alpha}\le \alpha.
+$$
+
+因为 $\alpha>0$，所以：
+
+$$
+4\le \alpha^2
+\quad\Longleftrightarrow\quad
+\alpha\ge 2.
+$$
+
+这已经告诉我们 global minimum value 是：
+
+$$
+f^\star=2.
+$$
+
+对应的 minimizer 是：
+
+$$
+x^\star=2,
+$$
+
+因为：
+
+$$
+f(2)=\max\left\{2,\frac{4}{2}\right\}=2.
+$$
+
+但假设我们不知道答案，只用 bisection 来找。
+
+先给一个 bracket（夹逼区间）：
+
+$$
+0\le f^\star\le 5.
+$$
+
+然后每次取中点 $\alpha=(L+U)/2$，检查 $S_\alpha$ 是否非空。
+
+| Step | $L$ | $U$ | $\alpha=(L+U)/2$ | Feasible? | Reason |
+|---:|---:|---:|---:|---|---|
+| 1 | 0 | 5 | 2.5 | yes | $4/2.5=1.6\le2.5$ |
+| 2 | 0 | 2.5 | 1.25 | no | $4/1.25=3.2>1.25$ |
+| 3 | 1.25 | 2.5 | 1.875 | no | $4/1.875\approx2.13>1.875$ |
+| 4 | 1.875 | 2.5 | 2.1875 | yes | $4/2.1875\approx1.83\le2.1875$ |
+| 5 | 1.875 | 2.1875 | 2.03125 | yes | $4/2.03125\approx1.97\le2.03125$ |
+| 6 | 1.875 | 2.03125 | 1.953125 | no | $4/1.953125\approx2.05>1.953125$ |
+
+现在我们知道：
+
+$$
+1.953125 \le f^\star \le 2.03125.
+$$
+
+继续二分，区间会越来越窄，最后夹到 $f^\star=2$。
+
+这个例子的关键不是梯度，而是：
+
+```text
+alpha too low:
+  S_alpha is empty
+  no x can make f(x) <= alpha
+
+alpha high enough:
+  S_alpha is nonempty
+  there exists x with f(x) <= alpha
+```
+
+这就是 quasi-convex bisection 的核心。
+
+**Exercise for you.** 用同样方法做：
+
+$$
+\min_{x>0}\ \max\left\{2x,\frac{8}{x}\right\}.
+$$
+
+提示：
+
+$$
+2x\le \alpha,
+\qquad
+\frac{8}{x}\le \alpha.
+$$
+
+所以：
+
+$$
+x\le \frac{\alpha}{2},
+\qquad
+x\ge \frac{8}{\alpha}.
+$$
+
+问题变成：什么时候区间
+
+$$
+\left[\frac{8}{\alpha},\frac{\alpha}{2}\right]
+$$
+
+非空？
+
+答案应该得到：
+
+$$
+\alpha^\star=4,
+\qquad
+x^\star=2.
+$$
+
+### Why Gradient Descent Can Be Misleading（为什么梯度下降可能误导）
+
+Roy 说 flat does not mean you're at the bottom。对 quasi-convex functions，某些区域可能变 flat（梯度很小或为零），但这不一定表示已经到 global minimum。
+
+所以：
+
+```text
+convex / quasi-convex structure:
+  tells us global geometry of level sets
+
+gradient:
+  only tells us local slope
+```
+
+在 quasi-convex problems 里，用 bisection on alpha 通常比盲目 gradient descent 更稳，因为它利用的是 sublevel sets 的 global convex structure（全局凸集合结构）。
+
+一句话：
+
+```text
+Convex function:
+  graph has convex shape.
+
+Quasi-convex function:
+  every below-alpha region has convex shape.
+
+This is weaker than convexity,
+but still strong enough to support global search by bisection.
+```
+
+### 80/20 Takeaway: Back to Structure（核心思想：回到结构）
+
+这一段最值得带走的思想不是某个公式，而是：
+
+```text
+Optimization is not the same thing as gradient descent.
+Optimization is about exploiting problem structure.
+```
+
+Gradient descent（梯度下降）只是很多 optimisation algorithms 里的一个 family。它依赖 local slope（局部斜率）。但 Roy 讲 quasi-convexity 的重点是：有时我们不需要先问 “gradient 是多少”，而应该先问：
+
+```text
+What is the structure of the feasible sets?
+What is the geometry of the level sets?
+```
+
+对于 quasi-convex optimisation：
+
+$$
+\min_{\mathbf{x}} f(\mathbf{x})
+$$
+
+可以转成：
+
+$$
+\text{given } \alpha,\quad
+\text{is there } \mathbf{x}\text{ such that } f(\mathbf{x})\le \alpha?
+$$
+
+也就是：
+
+```text
+Optimization
+=
+sequence of feasibility problems.
+```
+
+Bisection 搜索的是 objective value（目标函数值）$\alpha$：
+
+```text
+guess alpha
+check feasibility of f(x) <= alpha
+
+feasible:
+  alpha may be too high, lower U
+
+infeasible:
+  alpha is too low, raise L
+```
+
+Armijo line search 搜索的是 step size（步长）$t$。它服务于 gradient-based method（基于梯度的方法）：
+
+$$
+f(\mathbf{x}_k+t\mathbf{d}_k)
+\le
+f(\mathbf{x}_k)
++c\,t\,\nabla f(\mathbf{x}_k)^T\mathbf{d}_k.
+$$
+
+含义是：沿着 descent direction（下降方向）走 $t$ 这么远，函数值必须下降得足够明显。
+
+Backtracking line search（回溯线搜索）的典型形式是：
+
+```text
+t = 1
+while Armijo condition is not satisfied:
+    t = beta * t
+```
+
+通常 $\beta=0.5$。
+
+对比：
+
+| Method | 搜索变量 | 含义 | 判断标准 | 主要用途 | 依赖 |
+|---|---|---|---|---|---|
+| quasi-convex bisection | $\alpha$ | candidate objective value（候选目标值） | feasibility: $S_\alpha\ne\emptyset$ | global search over value | level-set geometry |
+| Armijo line search | $t$ | step size（步长） | sufficient decrease（足够下降） | local step selection | gradient |
+
+所以这两者不是同一个算法：
+
+```text
+Quasi-convex bisection asks:
+  Is this target value achievable?
+
+Armijo asks:
+  Is this gradient step good enough?
+```
+
+对 machine learning / data science 的启发是：不要把 “optimization” 简化成 “take gradient”。很多时候真正重要的是 modeling（建模）和 problem structure recognition（问题结构识别）。
+
+可能有用的 structure 包括：
+
+- convex structure（凸结构）；
+- quasi-convex / level-set structure（准凸 / 水平集结构）；
+- constraint structure（约束结构）；
+- combinatorial structure（组合结构）；
+- coverage / facility-location structure（覆盖 / 设施选址结构）。
+
+工程实践里，很多时候你不会手写 quasi-convex bisection，而是调用：
+
+```text
+problem.solve()
+model.fit()
+```
+
+但你仍然需要知道自己交给 solver 的是什么结构。因为 solver 能不能可靠地找到 global optimum，往往取决于你有没有把问题建模成正确的 structure。
+
+最值得记忆的一句话：
+
+```text
+When gradient information becomes messy,
+look at the geometry of feasible sets.
+```
+
+或者更工程一点：
+
+```text
+Do not first ask: what is the gradient?
+First ask: what is the structure of this problem?
+```
+
+这也是从 “data science 做模型” 走向 “optimisation and decision science 做系统” 的重要思维转变。
+
+## Cones and PSD Cone（锥与正半定锥）
+
+Cone（锥）：
 
 $$
 x \in C,\ \gamma \ge 0 \Rightarrow \gamma x \in C
 $$
 
-Convex cone 还要求 conic combination 也在集合内。
+也就是说，只要某个 direction（方向）在集合里，沿着这个 direction 从 origin（原点）往外放大仍然在集合里。Cone 只保证 single ray（单条射线）上的 scaling，不自动保证两条 ray 中间的点也在集合里。
 
-Positive semidefinite cone:
+Convex cone（凸锥）要再加一个条件：任意 nonnegative linear combination（非负线性组合），也叫 conic combination（锥组合），仍然在集合里：
+
+$$
+x_1,x_2\in C,\quad
+\gamma_1,\gamma_2\ge0
+\quad\Rightarrow\quad
+\gamma_1x_1+\gamma_2x_2\in C
+$$
+
+这就是 Roy 说的：
+
+```text
+not just that one stays in,
+but every positive combination,
+including every line in between.
+```
+
+对比记忆：
+
+| Object | 中文 | 要求 | 直觉 |
+|---|---|---|---|
+| cone | 锥 | $x\in C \Rightarrow \gamma x\in C,\gamma\ge0$ | 每个方向可以从原点往外拉长 |
+| convex set | 凸集 | $\gamma x_1+(1-\gamma)x_2\in C,\gamma\in[0,1]$ | 两点之间的线段在集合里 |
+| convex cone | 凸锥 | $\gamma_1x_1+\gamma_2x_2\in C,\gamma_i\ge0$ | 既能沿方向放大，也能在方向之间做非负组合 |
+
+Positive semidefinite cone / PSD cone（正半定锥）：
 
 $$
 S_+^n = \{X \in S^n \mid X \succeq 0\}
 $$
 
-PSD 的等价理解：
+Lecture 8 讲义里的 PSD cone 图可以用最小的 $2\times2$ symmetric matrix（对称矩阵）理解。令：
 
 $$
-z^T X z \ge 0 \quad \text{for all } z
+X=
+\begin{bmatrix}
+x & y\\
+y & z
+\end{bmatrix}
 $$
 
-或所有 eigenvalues 非负。
+则：
+
+$$
+X\succeq0
+\quad\Longleftrightarrow\quad
+x\ge0,\quad z\ge0,\quad xz-y^2\ge0.
+$$
+
+边界是：
+
+$$
+xz-y^2=0
+\quad\Longleftrightarrow\quad
+z=\frac{y^2}{x}
+\quad (x>0).
+$$
+
+PSD cone 是这个 curved boundary（弯曲边界）以上、且 $x,z$ 非负的区域：
+
+\begin{center}
+\begin{tikzpicture}[scale=0.95, >=stealth]
+  \draw[->] (0,0) -- (4.4,0) node[right] {$x$};
+  \draw[->] (0,0) -- (-1.25,-0.85) node[left] {$y$};
+  \draw[->] (0,0) -- (0,3.6) node[above] {$z$};
+
+  \fill[blue!12] (0.35,0.15)
+    .. controls (1.0,0.45) and (1.85,0.55) .. (3.65,0.2)
+    -- (3.65,2.95)
+    .. controls (2.25,2.35) and (1.15,2.25) .. (0.35,2.75)
+    -- cycle;
+
+  \draw[thick, blue!75!black] (0.35,0.15)
+    .. controls (1.0,0.45) and (1.85,0.55) .. (3.65,0.2);
+  \draw[thick, blue!75!black] (0.35,2.75)
+    .. controls (1.15,2.25) and (2.25,2.35) .. (3.65,2.95);
+  \draw[thick, blue!75!black] (0.35,0.15) -- (0.35,2.75);
+  \draw[thick, blue!75!black] (3.65,0.2) -- (3.65,2.95);
+
+  \draw[blue!65!black] (0.75,0.55) .. controls (1.55,0.95) and (2.25,1.15) .. (3.35,0.85);
+  \draw[blue!65!black] (0.75,1.15) .. controls (1.55,1.50) and (2.35,1.75) .. (3.35,1.45);
+  \draw[blue!65!black] (0.75,1.75) .. controls (1.55,2.05) and (2.35,2.25) .. (3.35,2.05);
+  \draw[blue!65!black] (1.05,0.3) -- (1.05,2.52);
+  \draw[blue!65!black] (2.05,0.38) -- (2.05,2.55);
+  \draw[blue!65!black] (3.05,0.32) -- (3.05,2.78);
+
+  \node[fill=white, inner sep=1.5pt, align=center] at (2.6,3.18)
+    {boundary\\$xz-y^2=0$};
+  \node[fill=white, text=blue!70!black, inner sep=1.5pt, align=center] at (1.6,1.35)
+    {PSD cone\\$xz-y^2\ge0$};
+\end{tikzpicture}
+\end{center}
+
+### Why Split the Matrix into Basis Matrices?
+
+Roy 接着把：
+
+$$
+X=
+\begin{bmatrix}
+x & y\\
+y & z
+\end{bmatrix}
+$$
+
+写成：
+
+$$
+X
+=
+x
+\begin{bmatrix}
+1&0\\
+0&0
+\end{bmatrix}
++
+y
+\begin{bmatrix}
+0&1\\
+1&0
+\end{bmatrix}
++
+z
+\begin{bmatrix}
+0&0\\
+0&1
+\end{bmatrix}.
+$$
+
+这个写法的重点是：把 matrix variable（矩阵变量）表示成 decision variables（决策变量）乘以 fixed basis matrices（固定基矩阵）。
+
+也就是说：
+
+```text
+variables:
+    x, y, z
+
+fixed matrices:
+    F1, F2, F3
+
+matrix expression:
+    X(x,y,z) = x F1 + y F2 + z F3
+```
+
+这样做的好处有三个。
+
+第一，它把 PSD constraint 写成 standard LMI form：
+
+$$
+F(\theta)
+=
+F_0+\theta_1F_1+\cdots+\theta_mF_m
+\succeq0.
+$$
+
+在这个例子里 $F_0=0$，$\theta=(x,y,z)$。
+
+第二，它让 optimisation software 更容易接收问题。Solver 不需要你手工展开：
+
+$$
+xz-y^2\ge0
+$$
+
+这种 nonlinear-looking scalar inequality。你只要告诉 solver：
+
+```text
+this affine matrix expression must lie in the PSD cone
+```
+
+也就是：
+
+$$
+xF_1+yF_2+zF_3 \in S_+^2.
+$$
+
+第三，它把 LP、SOCP、SDP/LMI 放进同一种 conic modelling language：
+
+```text
+linear expression in variables
+must lie inside a cone
+```
+
+对 LP，cone 是 $\mathbb{R}_+^m$。  
+对 SOCP，cone 是 second-order cone。  
+对 LMI/SDP，cone 是 PSD cone。
+
+### Is This Matrix Blocking?
+
+这和 matrix block partitioning（矩阵分块）有关，但不是同一个操作。
+
+这里的操作是 basis expansion（基矩阵展开）：
+
+```text
+write a symmetric matrix as
+linear combination of fixed matrices.
+```
+
+它的目的：让 solver 看见 affine matrix expression（仿射矩阵表达式）。
+
+Matrix blocking / partitioning（矩阵分块）是另一件事：
+
+```text
+split a large matrix into submatrices,
+for example
+
+[ Q   S  ]
+[ S^T R  ]
+```
+
+它的目的通常是做 algebraic manipulation（代数操作），例如 Schur complement（舒尔补）、elimination、或者把 control LMI 改写成可解形式。
+
+所以两者关系可以这样记：
+
+| Operation | 中文 | 在这里的作用 |
+|---|---|---|
+| basis matrix expansion | 基矩阵展开 | 把变量放进 fixed matrix basis，形成 affine matrix expression |
+| block partitioning | 矩阵分块 | 把矩阵按子块切开，方便 Schur complement / LMI transformation |
+
+在本章中，两者都有用：
+
+- PSD cone example 用 basis expansion 表示 $X=xF_1+yF_2+zF_3$；
+- Schur complement 和 control LMI 会大量用 block partitioning。
+
+PSD（positive semidefinite，正半定）的等价理解：
+
+$$
+\mathbf{v}^T X \mathbf{v} \ge 0 \quad \text{for all } \mathbf{v}
+$$
+
+或所有 eigenvalues（特征值）非负。
 
 易错点：
 
-- positive semidefinite: eigenvalues $\ge 0$；
-- positive definite: eigenvalues $> 0$；
-- cone 不自动 convex。
+- positive semidefinite（正半定）: eigenvalues $\ge 0$；
+- positive definite（正定）: eigenvalues $> 0$；
+- cone（锥）不自动 convex（凸）。
 
-## Convex Optimisation Problem
+## Did We Already Learn This? LP/LMI as Cone Programming
+
+你感觉“之前好像没有这样学过 cone 或 cone constraints”是正常的。
+
+通常第一次学 linear programming（线性规划，LP）时，写的是 standard inequality form（标准不等式形式）：
+
+$$
+\begin{aligned}
+\min_{\mathbf{x}}\quad & \mathbf{c}^T\mathbf{x}\\
+\text{subject to}\quad & A\mathbf{x}\le \mathbf{b}.
+\end{aligned}
+$$
+
+这时我们会说：
+
+```text
+linear objective + linear inequalities
+```
+
+但 Roy 现在换了一个更 general 的语言：cone programming（锥规划）。
+
+核心观察是，componentwise inequality（逐分量不等式）其实等价于 saying a vector lies in the nonnegative orthant cone（非负正交象限锥）。
+
+定义：
+
+$$
+\mathbb{R}_+^m
+=
+\{\mathbf{s}\in\mathbb{R}^m\mid s_i\ge0,\ i=1,\ldots,m\}.
+$$
+
+这是一个 cone，因为如果 $\mathbf{s}\ge0$，那么对任意 $\gamma\ge0$：
+
+$$
+\gamma\mathbf{s}\ge0.
+$$
+
+现在把 LP 约束：
+
+$$
+A\mathbf{x}\le\mathbf{b}
+$$
+
+改写成：
+
+$$
+\mathbf{b}-A\mathbf{x}\in\mathbb{R}_+^m.
+$$
+
+这里 $\mathbf{b}-A\mathbf{x}$ 叫 slack vector（松弛向量）。它每个分量都非负，意思就是每条 inequality 都满足。
+
+所以：
+
+```text
+LP standard view:
+    A x <= b
+
+LP conic view:
+    b - A x lies in the nonnegative orthant cone R_+^m
+```
+
+这就是 Roy 说：
+
+```text
+linear programs are programming over the positive orthant cone
+```
+
+的意思。
+
+同理，LMI / SDP 用的不是 $\mathbb{R}_+^m$，而是 PSD cone（正半定锥）：
+
+$$
+F(\mathbf{x})\succeq0.
+$$
+
+也就是：
+
+```text
+LP:
+    vector inequality
+    b - A x in R_+^m
+    cone = nonnegative orthant
+
+LMI / SDP:
+    matrix inequality
+    F(x) in S_+^n
+    cone = positive semidefinite cone
+```
+
+所以你可以这样理解学习路径：
+
+| 以前可能学过的形式 | Roy 现在用的 cone 语言 | 本质 |
+|---|---|---|
+| $x_i\ge0$ | $\mathbf{x}\in\mathbb{R}_+^n$ | nonnegative orthant cone |
+| $A\mathbf{x}\le\mathbf{b}$ | $\mathbf{b}-A\mathbf{x}\in\mathbb{R}_+^m$ | LP over positive orthant cone |
+| $\|\mathbf{x}\|_2\le t$ | $(t,\mathbf{x})\in\mathcal{Q}^{n+1}$ | SOCP over second-order cone |
+| $F(\mathbf{x})\succeq0$ | $F(\mathbf{x})\in S_+^n$ | LMI/SDP over PSD cone |
+
+一句话记忆：
+
+```text
+You may have learned LP constraints before,
+but Roy is re-framing constraints as membership in cones.
+That cone-language is what lets LP, SOCP, and LMI/SDP sit in one framework.
+```
+
+## Convex Optimisation Problem（凸优化问题）
 
 标准形式：
 
@@ -4302,14 +7802,14 @@ $$
 
 其中：
 
-- $f_0$ 和 $f_i$ convex；
-- equality constraints 必须 affine。
+- $f_0$ 和 $f_i$ convex（凸函数）；
+- equality constraints（等式约束）必须 affine（仿射）。
 
-为什么重要：convex problem 的 local information 可以支持 global solution，solver 更可靠。
+为什么重要：convex problem（凸问题）的 local information（局部信息）可以支持 global solution（全局解），solver 更可靠。
 
 # Problem Classes: LP, QP, SOCP, QCQP, SDP
 
-## Linear Program
+## Linear Program（线性规划，LP）
 
 LP:
 
@@ -4323,13 +7823,13 @@ $$
 
 特征：
 
-- linear cost；
-- linear constraints；
-- feasible region 是 polytope/polyhedron。
+- linear cost（线性目标函数）；
+- linear constraints（线性约束）；
+- feasible region（可行域）是 polytope/polyhedron（多胞体 / 多面体）。
 
 例子：diet problem、logistics、Chebyshev center。
 
-## Quadratic Program
+## Quadratic Program（二次规划，QP）
 
 QP:
 
@@ -4343,30 +7843,40 @@ $$
 
 特征：
 
-- quadratic cost；
-- linear constraints。
+- quadratic cost（二次目标函数）；
+- linear constraints（线性约束）。
 
 例子：
 
-- constrained least squares；
-- portfolio optimisation；
-- simple MPC。
+- constrained least squares（带约束最小二乘）；
+- portfolio optimisation（投资组合优化）；
+- simple MPC（简单模型预测控制）。
 
-## Second-order Cone Problem
+## Second-order Cone Problem（二阶锥规划，SOCP）
 
-SOCP 典型 constraint：
+SOCP 就是 optimisation problem 里允许出现 norm cone / second-order cone（范数锥 / 二阶锥）约束。
+
+SOCP 典型 constraint（约束）：
 
 $$
 \|A_i x + b_i\|_2 \le c_i^T x + d_i
 $$
 
+它和前面的 basic norm cone：
+
+$$
+\|\mathbf{x}\|_2\le t
+$$
+
+是同一结构，只是把 $\mathbf{x}$ 换成 affine expression（仿射表达式）$A_i x+b_i$，把 $t$ 换成 affine scalar expression（仿射标量表达式）$c_i^Tx+d_i$。
+
 特征：
 
-- linear objective 常见；
-- feasible region 是 second-order cones 的 intersection；
-- QP 有时可以 reformulate 成 SOCP。
+- linear objective（线性目标）常见；
+- feasible region（可行域）是 second-order cones（二阶锥）的 intersection（交集）；
+- QP 有时可以 reformulate（重写）成 SOCP。
 
-## QCQP
+## QCQP（二次约束二次规划）
 
 QCQP:
 
@@ -4378,44 +7888,44 @@ $$
 \end{aligned}
 $$
 
-如果 $P_i$ 满足相应 convexity 条件，feasible region 可以理解为 ellipsoids 的 intersection。
+如果 $P_i$ 满足相应 convexity（凸性）条件，feasible region（可行域）可以理解为 ellipsoids（椭球）的 intersection（交集）。
 
-## SDP and LMI
+## SDP and LMI（半定规划与线性矩阵不等式）
 
-Semidefinite program 的核心是 matrix-valued affine constraint：
+Semidefinite program / SDP（半定规划）的核心是 matrix-valued affine constraint（矩阵值仿射约束）：
 
 $$
 x_1F_1 + \cdots + x_NF_N + G \preceq 0
 $$
 
-这就是 Linear Matrix Inequality。
+这就是 Linear Matrix Inequality / LMI（线性矩阵不等式）。
 
 考试分类技巧：
 
 ```text
-linear cost + linear constraints -> LP
-quadratic cost + linear constraints -> QP
-norm cone constraints -> SOCP
-quadratic constraints -> QCQP
-PSD matrix constraints -> SDP/LMI
-finite horizon dynamic optimisation -> MPC, often QP
+linear cost + linear constraints        -> LP（线性规划）
+quadratic cost + linear constraints     -> QP（二次规划）
+norm cone constraints                   -> SOCP（二阶锥规划）
+quadratic constraints                   -> QCQP（二次约束二次规划）
+PSD matrix constraints                  -> SDP/LMI（半定规划 / 线性矩阵不等式）
+finite horizon dynamic optimisation     -> MPC（模型预测控制）, often QP
 ```
 
 # LMI and Schur Complement
 
-## What Is an LMI?
+## What Is an LMI?（什么是线性矩阵不等式）
 
-LMI 是这样的约束：
+LMI（Linear Matrix Inequality，线性矩阵不等式）是这样的约束：
 
 $$
 F(x) = F_0 + x_1F_1 + \cdots + x_nF_n \succeq 0
 $$
 
-其中矩阵对变量是 affine 的。
+其中矩阵 $F(x)$ 对变量 $x$ 是 affine（仿射）的：变量只以 $x_iF_i$ 这种 linear / affine 方式进入矩阵。
 
-它重要是因为很多看起来 nonlinear 的 constraint 可以写成 PSD matrix constraint。
+它重要是因为很多看起来 nonlinear（非线性）的 constraint（约束）可以写成 PSD matrix constraint（正半定矩阵约束）。换句话说，LMI 把一些困难的 scalar nonlinear inequalities 转成 convex matrix inequality。
 
-## Schur Complement
+## Schur Complement（舒尔补）
 
 典型形式：
 
@@ -4432,15 +7942,15 @@ $$
 Q - S R^{-1}S^T \succ 0
 $$
 
-考试中 Schur complement 常用于：
+考试中 Schur complement（舒尔补）常用于：
 
-- 把 norm constraint 写成 LMI；
-- 把 quadratic inequality 写成 LMI；
-- 处理 stability 和 controller synthesis 中的 matrix inequalities。
+- 把 norm constraint（范数约束）写成 LMI；
+- 把 quadratic inequality（二次不等式）写成 LMI；
+- 处理 stability（稳定性）和 controller synthesis（控制器综合）中的 matrix inequalities（矩阵不等式）。
 
-易错点：使用 Schur complement 时必须检查 block 的 definiteness 条件。
+易错点：使用 Schur complement（舒尔补）时必须检查 block（分块矩阵）的 definiteness（正定 / 负定）条件。
 
-## Stability LMIs
+## Stability LMIs（稳定性线性矩阵不等式）
 
 Continuous-time system:
 
@@ -5530,18 +9040,18 @@ Tikhonov regularisation is useful when the penalty matrix encodes structure; an 
 
 重点题型：
 
-- prove convexity:
+- prove convexity（证明凸性）:
   - $C = \{x \mid Ax \le b\}$；
-  - intersection of convex sets；
-  - norm cone $\{(r,x) \mid \|x\| \le r\}$。
-- formulate as LP:
+  - intersection of convex sets（凸集交集）；
+  - norm cone（范数锥） $\{(r,x) \mid \|x\| \le r\}$。
+- formulate as LP（建模成线性规划）:
   - $\min \|Ax-b\|_\infty$；
   - $\min \|Ax-b\|_1$；
-  - use epigraph variables and linear inequalities。
+  - use epigraph variables（上图变量 / 辅助变量） and linear inequalities（线性不等式）。
 
 Lower priority:
 
-- S-procedure minimum-volume ellipsoid problem is beyond examination detail, but the idea that ellipsoid containment can become an SDP is useful.
+- S-procedure minimum-volume ellipsoid（最小体积椭球） problem is beyond examination detail, but the idea that ellipsoid containment（椭球包含关系） can become an SDP（半定规划） is useful.
 
 # Exam Templates and Common Mistakes
 
@@ -7590,11 +11100,11 @@ You should be able to answer these without notes:
 7. How does regularisation change bias and variance?
 8. When would you use Ridge, LASSO, ElasticNet, AIC/BIC, or cross-validation?
 9. Why does Roy prefer a low-dimensional parameterisation of the Tikhonov penalty matrix?
-10. What is a convex set?
-11. Why are affine equality constraints allowed in convex optimisation?
-12. What is the difference between LP, QP, SOCP, QCQP, and SDP?
-13. What is an LMI?
-14. What does the Schur complement help with?
+10. What is a convex set（凸集）?
+11. Why are affine equality constraints（仿射等式约束） allowed in convex optimisation（凸优化）?
+12. What is the difference between LP（线性规划）, QP（二次规划）, SOCP（二阶锥规划）, QCQP（二次约束二次规划）, and SDP（半定规划）?
+13. What is an LMI（线性矩阵不等式）?
+14. What does the Schur complement（舒尔补） help with?
 15. How do you write an MPC optimisation problem?
 16. Why does MPC apply only the first input?
 17. What is explicit MPC, and why does it not scale well?
@@ -7646,19 +11156,19 @@ $$
 \hat\theta = (\Phi^T\Phi + \eta I)^{-1}\Phi^T y
 $$
 
-- Convex set:
+- Convex set（凸集）:
 
 $$
 \gamma x_1 + (1-\gamma)x_2 \in C
 $$
 
-- PSD:
+- PSD（positive semidefinite，正半定）:
 
 $$
 X \succeq 0 \Leftrightarrow z^T X z \ge 0\quad \forall z
 $$
 
-- MPC loop:
+- MPC loop（模型预测控制循环）:
 
 ```text
 estimate state -> optimise horizon -> apply first input -> re-estimate -> repeat
