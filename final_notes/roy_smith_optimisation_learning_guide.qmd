@@ -6169,6 +6169,62 @@ ellipsoid method was used to prove that linear programming is polynomial-time so
 ellipsoid method is historically important because it gave a polynomial-time guarantee.
 ```
 
+#### What Does Polynomial Time Mean?（什么是多项式时间）
+
+Polynomial time（多项式时间）是计算复杂性里的概念。它不是说程序一定很快，而是说：
+
+```text
+as the problem size grows,
+the worst-case running time is bounded by a polynomial function of the input size.
+```
+
+比如 input size 记作 $N$。如果一个算法最坏情况下需要：
+
+$$
+O(N),\quad O(N^2),\quad O(N^3),\quad O(N^{10})
+$$
+
+这些都叫 polynomial time。因为运行时间像 $N$ 的某个固定次方增长。
+
+相反，如果最坏情况是：
+
+$$
+O(2^N),\quad O(3^N),\quad O(N!)
+$$
+
+这些通常叫 exponential / factorial time。它们随着 $N$ 变大增长得非常快。
+
+一个直观比较：
+
+| Problem size $N$ | $N^3$ | $2^N$ |
+|---:|---:|---:|
+| 10 | 1,000 | 1,024 |
+| 20 | 8,000 | 1,048,576 |
+| 50 | 125,000 | $1.13\times10^{15}$ |
+
+所以 polynomial time 的意义是：
+
+```text
+the algorithm scales in a controlled way in the worst case.
+```
+
+但注意两点：
+
+1. **Polynomial time does not mean fast in practice.**  
+   $O(N^{10})$ 也是 polynomial time，但可能完全不好用。
+
+2. **Not polynomial-time proof does not mean useless.**  
+   Simplex method（单纯形法）在最坏情况下不是 polynomial-time guarantee，但工程上长期非常好用。
+
+所以 Roy 说 ellipsoid method 重要，是指它给了 LP 一个 theoretical guarantee（理论保证）：
+
+```text
+linear programming can be solved in polynomial time.
+```
+
+这在理论上很重大，因为它说明 LP 不是那种最坏情况会爆炸到不可控的 optimization class。  
+但这不等于 ellipsoid method 是实际求 LP 时最快、最常用的方法。
+
 现代工程中，真正常用来解 LP / QP / SOCP / SDP / LMI 的通常是：
 
 ```text
@@ -7751,6 +7807,92 @@ linear programs are programming over the positive orthant cone
 
 的意思。
 
+### Why "Greater Than Zero" Means "Inside a Cone"（为什么“大于等于 0”就是在锥里）
+
+Roy 说：
+
+```text
+y - f is greater than zero
+greater than zero means it belongs to your cone
+```
+
+这里的关键是：他已经把 “$\ge0$” 的含义推广了。
+
+普通 scalar case（标量情况）：
+
+$$
+s\ge0
+\quad\Longleftrightarrow\quad
+s\in\mathbb{R}_+.
+$$
+
+这里 $\mathbb{R}_+$ 就是 nonnegative real line（非负实数轴），它本身是一个 cone。
+
+Vector case（向量情况）：
+
+$$
+\mathbf{s}\ge0
+$$
+
+通常不是说 vector 有大小，而是 shorthand（简写）：
+
+$$
+\mathbf{s}\in\mathbb{R}_+^m
+\quad\Longleftrightarrow\quad
+s_i\ge0,\ i=1,\ldots,m.
+$$
+
+也就是说：
+
+```text
+vector >= 0
+means every component is nonnegative
+means the vector lies in the positive orthant cone.
+```
+
+Cone programming 更进一步，把这个写法推广成：
+
+$$
+\mathbf{s}\succeq_K0
+\quad\Longleftrightarrow\quad
+\mathbf{s}\in K.
+$$
+
+这里 $K$ 是你选定的 cone。因此：
+
+| Cone $K$ | "$s\succeq_K0$" means |
+|---|---|
+| $\mathbb{R}_+$ | scalar $s\ge0$ |
+| $\mathbb{R}_+^m$ | vector entries all nonnegative |
+| second-order cone $\mathcal{Q}$ | $(t,\mathbf{x})$ satisfies $\|\mathbf{x}\|_2\le t$ |
+| PSD cone $S_+^n$ | matrix $X\succeq0$, i.e. positive semidefinite |
+
+所以在 Roy 那句话里，如果约束写成：
+
+$$
+f(x)\preceq_K y,
+$$
+
+把 $f(x)$ 移到另一边：
+
+$$
+y-f(x)\succeq_K0.
+$$
+
+这句话的意思不是 “$y-f(x)$ 是普通数字且大于 0”，而是：
+
+$$
+y-f(x)\in K.
+$$
+
+一句话：
+
+```text
+In cone language, "nonnegative" means "belonging to the chosen cone K".
+```
+
+这就是为什么 “greater than zero” 会变成 “inside this cone”。
+
 同理，LMI / SDP 用的不是 $\mathbb{R}_+^m$，而是 PSD cone（正半定锥）：
 
 $$
@@ -7786,6 +7928,63 @@ LMI / SDP:
 You may have learned LP constraints before,
 but Roy is re-framing constraints as membership in cones.
 That cone-language is what lets LP, SOCP, and LMI/SDP sit in one framework.
+```
+
+### Why Roy Introduces Cones（Roy 为什么要介绍 cone）
+
+Roy 后面明确解释了为什么要引入 cone language。核心不是为了增加抽象符号，而是两个原因：
+
+```text
+1. Cone constraints give more modelling generality.
+2. There is code/software that can solve optimisation problems written in cone form.
+```
+
+第一，cone 让 inequality constraints（不等式约束）更 general。以前我们熟悉的是 scalar inequality：
+
+$$
+f_i(x)\le0.
+$$
+
+这只是一个 number 小于等于 0。Cone view 允许 $f(x)$ 返回：
+
+- vector（向量）；
+- symmetric matrix（对称矩阵）；
+- norm expression（范数表达式）；
+- affine matrix expression（仿射矩阵表达式）。
+
+然后用：
+
+$$
+y-f(x)\in K
+$$
+
+统一表达约束。
+
+第二，cone language 不是纯理论，因为 solver 确实能处理这些标准 cone：
+
+| Cone | Problem class | What solver understands |
+|---|---|---|
+| nonnegative orthant $\mathbb{R}_+^m$ | LP | componentwise inequalities |
+| second-order cone $\mathcal{Q}$ | SOCP | norm constraints |
+| PSD cone $S_+^n$ | SDP / LMI | matrix positive semidefinite constraints |
+
+所以 Roy 的逻辑是：
+
+```text
+If cone constraints only looked elegant but could not be solved,
+they would not be useful.
+
+They are useful because modern optimisation software can solve
+problems written in standard cone form.
+```
+
+这也是为什么 CVX / CVXPY / YALMIP 这类 modelling tools 重要：你写的是数学形式，底层 solver 会识别 cone structure。
+
+对 ENEL445 来说，cone 的学习价值是：
+
+```text
+LP, SOCP, SDP, and LMI are not separate tricks.
+They are different cones inside one modelling language.
 ```
 
 ## Convex Optimisation Problem（凸优化问题）
@@ -7829,6 +8028,158 @@ $$
 
 例子：diet problem、logistics、Chebyshev center。
 
+### Chebyshev Center（切比雪夫中心：多面体内的最大球）
+
+Roy 这里说的：
+
+```text
+Chebyshev center (largest ball inside a polyhedron)
+```
+
+可以直译成：
+
+```text
+在一个 polyhedron / polytope 里面，找一个最大的 ball。
+```
+
+二维里 polyhedron / polytope 可以想成一个 polygon（多边形）。Chebyshev center 就是：
+
+```text
+找一个圆心 x_c 和半径 r，
+让整个圆都放在多边形里面，
+并且 r 尽可能大。
+```
+
+\begin{center}
+\begin{tikzpicture}[scale=1.0, >=stealth]
+  \coordinate (A) at (0.2,0.4);
+  \coordinate (B) at (3.7,0.15);
+  \coordinate (C) at (4.5,2.4);
+  \coordinate (D) at (2.4,3.35);
+  \coordinate (E) at (0.0,2.5);
+  \coordinate (O) at (2.25,1.7);
+
+  \fill[blue!7] (A)--(B)--(C)--(D)--(E)--cycle;
+  \draw[thick, blue] (A)--(B)--(C)--(D)--(E)--cycle;
+  \draw[thick, orange] (O) circle (1.08);
+  \fill[red] (O) circle (1.7pt);
+  \node[red, fill=white, inner sep=1pt] at (2.25,1.43) {$x_c$};
+  \draw[->, orange, thick] (O) -- ++(1.08,0) node[midway, below, fill=white, inner sep=1pt] {$r$};
+  \node[blue, fill=white, inner sep=1.5pt] at (3.25,3.0) {polytope};
+  \node[orange!80!black, fill=white, inner sep=1.5pt] at (2.55,0.65) {largest inscribed ball};
+\end{tikzpicture}
+\end{center}
+
+在三维里，这个 ball 就是真正的 sphere（球）。在更高维里，我们仍然叫 ball，只是无法画出来。
+
+#### Why Is This Useful?（为什么有用）
+
+Chebyshev center 可以理解成 feasible region 里最“安全”的点：
+
+```text
+it maximises the distance to the nearest constraint boundary.
+```
+
+如果 constraints 表示安全限制、设计公差、资源限制，那么 Chebyshev center 给出的点离所有边界都尽量远，所以 robustness / margin（鲁棒性 / 裕度）最大。
+
+例子：
+
+| Context | Chebyshev center means |
+|---|---|
+| robot motion | 在安全区域内找离障碍物边界最远的位置 |
+| control / robust design | 找一个离所有约束边界都有最大 margin 的 operating point |
+| parameter uncertainty | 在允许参数集合中找最不靠边的 nominal parameter |
+| manufacturing tolerance | 找一个对误差最不敏感的设计中心 |
+
+#### Why Is It an LP?（为什么它是线性规划）
+
+设 polyhedron 由 halfspaces 定义：
+
+$$
+P=\{\mathbf{x}\mid \mathbf{a}_i^T\mathbf{x}\le b_i,\ i=1,\ldots,m\}.
+$$
+
+每一条约束：
+
+$$
+\mathbf{a}_i^T\mathbf{x}\le b_i
+$$
+
+对应一条边界 hyperplane：
+
+$$
+\mathbf{a}_i^T\mathbf{x}=b_i.
+$$
+
+如果圆心是 $\mathbf{x}_c$，半径是 $r$，要保证半径为 $r$ 的 ball 全部在 polyhedron 里面，就需要圆心到每条边界的距离至少是 $r$。
+
+点 $\mathbf{x}_c$ 到第 $i$ 条边界的距离是：
+
+$$
+\frac{b_i-\mathbf{a}_i^T\mathbf{x}_c}{\|\mathbf{a}_i\|_2}.
+$$
+
+要求这个距离 $\ge r$：
+
+$$
+\frac{b_i-\mathbf{a}_i^T\mathbf{x}_c}{\|\mathbf{a}_i\|_2}
+\ge r.
+$$
+
+整理：
+
+$$
+\mathbf{a}_i^T\mathbf{x}_c+r\|\mathbf{a}_i\|_2\le b_i.
+$$
+
+注意这里 $\mathbf{a}_i$ 和 $b_i$ 是 problem data（已知数据），所以 $\|\mathbf{a}_i\|_2$ 是常数。Decision variables（决策变量）是：
+
+$$
+\mathbf{x}_c,\quad r.
+$$
+
+因此约束：
+
+$$
+\mathbf{a}_i^T\mathbf{x}_c+r\|\mathbf{a}_i\|_2\le b_i
+$$
+
+对 $\mathbf{x}_c$ 和 $r$ 是 linear constraint（线性约束）。
+
+Chebyshev center problem 就是：
+
+$$
+\begin{aligned}
+\max_{\mathbf{x}_c,r}\quad & r\\
+\text{subject to}\quad
+& \mathbf{a}_i^T\mathbf{x}_c+r\|\mathbf{a}_i\|_2\le b_i,
+\quad i=1,\ldots,m,\\
+& r\ge0.
+\end{aligned}
+$$
+
+这就是 LP：
+
+```text
+linear objective: maximise r
+linear constraints: one margin constraint per halfspace
+```
+
+所以 “多胞体最大球” 不是说把一个球变成多胞体，而是：
+
+```text
+inside a polytope/polyhedron,
+find the largest ball that fits inside it.
+```
+
+#### One-Sentence Memory（记忆）
+
+```text
+Chebyshev center:
+the point with the largest minimum distance
+to all constraint boundaries.
+```
+
 ## Quadratic Program（二次规划，QP）
 
 QP:
@@ -7851,6 +8202,552 @@ $$
 - constrained least squares（带约束最小二乘）；
 - portfolio optimisation（投资组合优化）；
 - simple MPC（简单模型预测控制）。
+
+### Contour Geometry: LP vs QP（等高线几何：LP vs QP）
+
+Roy 这里的图像很重要：LP 和 QP 可以画在同一个 polytopic feasible region（多胞体可行域）上，但 objective contours（目标函数等高线）形状不同。
+
+**LP: straight contour lines（LP：等高线是直线）**
+
+LP objective:
+
+$$
+c^T x+d.
+$$
+
+固定一个 objective value $\alpha$：
+
+$$
+c^Tx+d=\alpha.
+$$
+
+这是一条 hyperplane。在二维里就是一条直线。不同 $\alpha$ 的 contours 是一组 parallel lines（平行直线）。
+
+Minimisation 可以想成：
+
+```text
+slide the contour line in the decreasing direction
+until it first touches the feasible polytope.
+```
+
+通常情况下，first touch（第一次碰到）会发生在一个 vertex（顶点）。如果 contour line 正好和一条 edge（边）平行，也可能整条 edge 都是 optimal，解不唯一。
+
+**QP: curved contour lines（QP：等高线是曲线）**
+
+QP objective:
+
+$$
+\frac12 x^TPx+c^Tx+d.
+$$
+
+如果 $P\succ0$，它的 contours 通常是 ellipses（椭圆）：
+
+$$
+\frac12 x^TPx+c^Tx+d=\alpha.
+$$
+
+所以 QP 可以想成：
+
+```text
+grow/shrink a curved contour
+until it first touches the feasible polytope.
+```
+
+这次 first touch 不一定在 vertex。它可能在：
+
+- feasible region 内部；
+- 某条 edge 的中间；
+- 某个 vertex；
+- 多个点组成的 face 上。
+
+\begin{center}
+\begin{tikzpicture}[scale=0.95, >=stealth]
+  \begin{scope}
+    \coordinate (A) at (0.1,0.25);
+    \coordinate (B) at (2.8,0.15);
+    \coordinate (C) at (3.25,1.75);
+    \coordinate (D) at (1.7,2.55);
+    \coordinate (E) at (0.0,1.8);
+    \fill[blue!6] (A)--(B)--(C)--(D)--(E)--cycle;
+    \draw[thick, blue] (A)--(B)--(C)--(D)--(E)--cycle;
+    \foreach \p in {A,B,C,D,E}{\fill[blue] (\p) circle (1.2pt);}
+    \draw[gray, thick] (-0.15,2.35) -- (3.15,0.35);
+    \draw[gray, thick] (0.15,2.75) -- (3.45,0.75);
+    \draw[gray, thick] (0.45,3.15) -- (3.75,1.15);
+    \draw[->, red, thick] (2.65,2.45) -- (2.2,1.7) node[midway, right, fill=white, inner sep=1pt] {decrease};
+    \fill[red] (B) circle (2pt);
+    \node[red, fill=white, inner sep=1pt] at (2.55,-0.12) {vertex optimum};
+    \node[blue, fill=white, inner sep=1pt] at (1.55,-0.45) {LP};
+  \end{scope}
+
+  \begin{scope}[xshift=5.1cm]
+    \coordinate (A) at (0.1,0.25);
+    \coordinate (B) at (2.8,0.15);
+    \coordinate (C) at (3.25,1.75);
+    \coordinate (D) at (1.7,2.55);
+    \coordinate (E) at (0.0,1.8);
+    \fill[blue!6] (A)--(B)--(C)--(D)--(E)--cycle;
+    \draw[thick, blue] (A)--(B)--(C)--(D)--(E)--cycle;
+    \foreach \p in {A,B,C,D,E}{\fill[blue] (\p) circle (1.2pt);}
+    \draw[gray, thick] (1.55,1.25) ellipse (0.55 and 0.33);
+    \draw[gray, thick] (1.55,1.25) ellipse (0.9 and 0.55);
+    \draw[gray, thick] (1.55,1.25) ellipse (1.25 and 0.78);
+    \fill[red] (1.9,0.2) circle (2pt);
+    \node[red, fill=white, inner sep=1pt] at (2.65,-0.22) {edge optimum};
+    \node[blue, fill=white, inner sep=1pt] at (1.35,-0.52) {QP};
+  \end{scope}
+\end{tikzpicture}
+\end{center}
+
+这就是 Roy 说 “LP 以前很多算法沿着 vertices 找，QP 的 curved contours 不一定落在 vertex” 的意思。
+
+#### Why This Matters（为什么这重要）
+
+同样是 linear constraints：
+
+$$
+Gx\le h,\qquad Ax=b,
+$$
+
+feasible region 都可以是 polytope / polyhedron。
+
+差别在 objective：
+
+| Problem | Contours | Typical optimum location |
+|---|---|---|
+| LP | parallel lines / hyperplanes | usually a vertex; sometimes an edge/face |
+| QP | ellipses / curved level sets | interior, edge, or vertex |
+
+所以不要把 “linear constraints” 和 “LP” 混同。  
+QP 也可以有 linear constraints；它之所以是 QP，是因为 objective 是 quadratic。
+
+### How OLS Becomes a QP（OLS 如何变成 QP）
+
+Roy 这里说的例子是 least squares：
+
+$$
+\min_{\theta}\ \|\Phi\theta-y\|_2^2.
+$$
+
+这就是 ordinary least squares（OLS）的 optimisation form。
+
+把平方展开：
+
+$$
+\begin{aligned}
+\|\Phi\theta-y\|_2^2
+&=
+(\Phi\theta-y)^T(\Phi\theta-y)\\
+&=
+\theta^T\Phi^T\Phi\theta
+-2y^T\Phi\theta
++y^Ty.
+\end{aligned}
+$$
+
+QP 的标准 objective 是：
+
+$$
+\frac{1}{2}x^TPx+c^Tx+d.
+$$
+
+把 $x$ 换成 $\theta$，OLS 可以写成：
+
+$$
+\frac{1}{2}\theta^TP\theta+c^T\theta+d
+$$
+
+其中：
+
+$$
+P=2\Phi^T\Phi,\qquad
+c=-2\Phi^Ty,\qquad
+d=y^Ty.
+$$
+
+所以：
+
+```text
+OLS is an unconstrained QP.
+```
+
+更准确地说，OLS 是：
+
+```text
+quadratic cost
+no constraints
+```
+
+如果 $\Phi^T\Phi$ invertible（可逆），它有 closed-form solution（闭式解）：
+
+$$
+\hat{\theta}
+=
+(\Phi^T\Phi)^{-1}\Phi^Ty.
+$$
+
+这就是 normal equations 给出的 OLS 解。
+
+#### Constrained Least Squares（带约束最小二乘）
+
+Roy 接着说，可以给 $\theta$ 加 lower / upper bounds：
+
+$$
+\mathbf{L}\le\theta\le\mathbf{U}.
+$$
+
+这表示每个 parameter（参数）必须落在允许范围内。例如：
+
+```text
+parameter 1 cannot be negative
+parameter 2 must be less than a physical maximum
+parameter 3 must stay within an engineering tolerance
+```
+
+这时问题变成：
+
+$$
+\begin{aligned}
+\min_{\theta}\quad & \|\Phi\theta-y\|_2^2\\
+\text{subject to}\quad
+& \mathbf{L}\le\theta\le\mathbf{U}.
+\end{aligned}
+$$
+
+Bounds 可以写成 linear inequalities：
+
+$$
+\theta\le\mathbf{U},
+\qquad
+-\theta\le-\mathbf{L}.
+$$
+
+所以 constrained least squares 是：
+
+```text
+quadratic cost + linear constraints -> QP
+```
+
+这就是它和 QP 的联系。
+
+#### Why No Normal Equation Closed Form?（为什么没有普通正规方程闭式解）
+
+Unconstrained OLS 的最优点满足：
+
+$$
+\nabla_{\theta}\|\Phi\theta-y\|_2^2=0.
+$$
+
+这给出 normal equations：
+
+$$
+\Phi^T\Phi\theta=\Phi^Ty.
+$$
+
+但 constrained LS 不能只让 gradient 等于 0，因为最优点可能卡在 boundary（边界）上。
+
+例如一维问题：
+
+$$
+\min_{\theta}\ (\theta-3)^2
+\quad
+\text{subject to}\quad
+0\le\theta\le2.
+$$
+
+没有约束时，最优解是：
+
+$$
+\theta=3.
+$$
+
+但 $\theta=3$ 不满足 $\theta\le2$。所以 constrained optimum 是：
+
+$$
+\theta^\star=2.
+$$
+
+注意在 $\theta=2$：
+
+$$
+\frac{d}{d\theta}(\theta-3)^2
+=
+2(\theta-3)
+=-2
+\neq0.
+$$
+
+所以 constrained optimum 不一定满足 “gradient = 0”。它满足的是：
+
+```text
+no feasible direction can improve the objective.
+```
+
+这就是为什么 constrained least squares 一般不能直接用 ordinary normal equations 闭式求解，而要用 QP solver / active-set / interior-point / projected methods。
+
+#### Cost vs Constraint（目标二次 vs 约束二次）
+
+Roy 口头说 “quadratic constraint” 这里容易误解。Least squares 本身通常是：
+
+```text
+quadratic cost
+```
+
+不是 quadratic constraint。
+
+分类上：
+
+| Problem | Objective | Constraints | Class |
+|---|---|---|---|
+| ordinary least squares | quadratic | none | unconstrained QP |
+| bounded least squares | quadratic | linear bounds | QP |
+| constrained least squares with $G\theta\le h$ | quadratic | linear inequalities | QP |
+| least squares with constraint $\|\Phi\theta-y\|_2^2\le\rho$ | maybe linear/other | quadratic constraint | QCQP/SOCP form |
+
+所以记忆：
+
+```text
+Least-squares objective is quadratic in theta.
+Adding linear bounds turns OLS into a constrained QP.
+Adding quadratic constraints would move the problem toward QCQP.
+```
+
+### Portfolio Optimisation as QP（投资组合优化为什么是 QP）
+
+Roy 提到 portfolio optimisation（投资组合优化）时，关键是这句话：
+
+```text
+risk can be modelled by variance,
+and variance enters as a quadratic term.
+```
+
+#### Decision Variables（决策变量）
+
+假设有 $n$ 个 assets / stocks（资产 / 股票）。令：
+
+$$
+x_i=\text{fraction of money invested in asset } i.
+$$
+
+把所有权重写成 vector：
+
+$$
+\mathbf{x}
+=
+\begin{bmatrix}
+x_1\\
+\vdots\\
+x_n
+\end{bmatrix}.
+$$
+
+例如：
+
+```text
+x1 = 0.30  -> 30% of money in stock 1
+x2 = 0.20  -> 20% of money in stock 2
+...
+```
+
+常见 constraints 是 linear constraints：
+
+$$
+\sum_{i=1}^n x_i=1,
+\qquad
+x_i\ge0.
+$$
+
+意思是：
+
+- all money is allocated（钱全部分配出去）；
+- no short selling（不做空）；
+- 也可以加 upper bounds，例如 $x_i\le0.3$，表示任何单一股票最多 30%。
+
+这些都是 Roy 说的 polytopic constraints（多胞体约束），因为它们是 linear equalities / inequalities。
+
+#### Expected Return（预期回报）
+
+令 $\mu_i$ 是 asset $i$ 的 expected return（预期收益率）。Portfolio 的 expected return 是加权平均：
+
+$$
+\mathbb{E}[R_p]
+=
+\mu^T\mathbf{x}.
+$$
+
+这是 linear expression（线性表达式）。
+
+所以如果你想 maximize expected return：
+
+$$
+\max_{\mathbf{x}}\ \mu^T\mathbf{x},
+$$
+
+这是 linear objective。
+
+#### Risk as Variance（用方差衡量风险）
+
+真正让 portfolio optimisation 变成 QP 的，是 risk（风险）。
+
+令 random return vector（随机收益向量）为：
+
+$$
+\mathbf{R}
+=
+\begin{bmatrix}
+R_1\\
+\vdots\\
+R_n
+\end{bmatrix}.
+$$
+
+Portfolio return 是：
+
+$$
+R_p=\mathbf{x}^T\mathbf{R}.
+$$
+
+Risk 通常用 portfolio return 的 variance（方差）表示：
+
+$$
+\operatorname{Var}(R_p)
+=
+\operatorname{Var}(\mathbf{x}^T\mathbf{R}).
+$$
+
+如果 $\Sigma$ 是 asset returns 的 covariance matrix（协方差矩阵）：
+
+$$
+\Sigma
+=
+\operatorname{Cov}(\mathbf{R}),
+$$
+
+那么：
+
+$$
+\operatorname{Var}(R_p)
+=
+\mathbf{x}^T\Sigma\mathbf{x}.
+$$
+
+这就是 quadratic term（二次项）。所以 Roy 说 variance comes in as a quadratic term。
+
+#### Why Covariance Matters（为什么相关性很重要）
+
+如果两个 stocks 独立，风险比较容易理解。但现实里很多 returns 不是 independent（独立）的，而是 correlated（相关的）。
+
+例如 Roy 的石油公司例子：
+
+```text
+oil company A and oil company B may move together
+because both are affected by fuel prices or geopolitical events.
+```
+
+数学上，相关性进入 covariance matrix 的 off-diagonal entries（非对角项）：
+
+$$
+\Sigma
+=
+\begin{bmatrix}
+\sigma_1^2 & \sigma_{12}\\
+\sigma_{12} & \sigma_2^2
+\end{bmatrix}.
+$$
+
+两资产 portfolio 的 variance 是：
+
+$$
+\operatorname{Var}(R_p)
+=
+x_1^2\sigma_1^2
++x_2^2\sigma_2^2
++2x_1x_2\sigma_{12}.
+$$
+
+最后一项：
+
+$$
+2x_1x_2\sigma_{12}
+$$
+
+就是 correlation / covariance 带来的 coupling term（耦合项）。
+
+如果 $\sigma_{12}>0$，两只股票倾向于一起涨跌，diversification benefit（分散化收益）较弱。  
+如果 $\sigma_{12}<0$，一只涨时另一只可能跌，组合风险可能被抵消一部分。
+
+#### Standard Mean-Variance Form（标准均值-方差形式）
+
+一个常见 portfolio QP 是：
+
+$$
+\begin{aligned}
+\min_{\mathbf{x}}\quad
+& \mathbf{x}^T\Sigma\mathbf{x}\\
+\text{subject to}\quad
+& \mu^T\mathbf{x}\ge r_{\min}\\
+& \mathbf{1}^T\mathbf{x}=1\\
+& \mathbf{x}\ge0.
+\end{aligned}
+$$
+
+解释：
+
+| Term | Meaning |
+|---|---|
+| $\mathbf{x}^T\Sigma\mathbf{x}$ | portfolio variance / risk |
+| $\mu^T\mathbf{x}\ge r_{\min}$ | expected return at least target |
+| $\mathbf{1}^T\mathbf{x}=1$ | invest all money |
+| $\mathbf{x}\ge0$ | no short selling |
+
+这就是 QP：
+
+```text
+quadratic objective: portfolio variance
+linear constraints: return target, budget, bounds
+```
+
+也可以写成 risk-return tradeoff（风险-收益权衡）：
+
+$$
+\min_{\mathbf{x}}\quad
+\mathbf{x}^T\Sigma\mathbf{x}
+-
+\lambda\mu^T\mathbf{x}
+\quad
+\text{subject to}\quad
+\mathbf{1}^T\mathbf{x}=1,\ \mathbf{x}\ge0.
+$$
+
+这里 $\lambda$ 控制你有多重视 return：
+
+- larger $\lambda$: 更追求 expected return；
+- smaller $\lambda$: 更保守，更重视 low variance。
+
+#### Engineering Reading（工程理解）
+
+Portfolio optimisation 的核心不是“预测哪只股票一定涨”，而是：
+
+```text
+allocate weights under constraints
+while balancing expected return and correlated risk.
+```
+
+这和 Roy 的其他例子很像：
+
+| Optimisation example | Decision variables | Constraints | Quadratic part |
+|---|---|---|---|
+| constrained LS | parameters $\theta$ | bounds / linear constraints | squared residual |
+| portfolio optimisation | investment weights $\mathbf{x}$ | budget / no-short / bounds | return variance |
+| MPC | future control inputs | dynamics / actuator limits | tracking error + control effort |
+
+一句话记忆：
+
+```text
+Portfolio QP = choose investment weights;
+risk is variance x^T Sigma x;
+budget and allocation limits are linear constraints.
+```
 
 ## Second-order Cone Problem（二阶锥规划，SOCP）
 
@@ -7913,82 +8810,1690 @@ finite horizon dynamic optimisation     -> MPC（模型预测控制）, often QP
 
 # LMI and Schur Complement
 
+## Epigraph Trick: 为什么 "linear cost is universal"
+
+Roy 在 Lec 9 反复用一个小技巧：几乎所有 problem class 写出来都是 **linear cost**（线性目标），即使你真正关心的 cost $J(x)$ 是 quadratic 甚至更怪。原因是任何 cost 都能用一个辅助变量 $\gamma$ 搬进约束里：
+
+$$
+\min_x\ J(x)
+\quad\Longleftrightarrow\quad
+\min_{x,\gamma}\ \gamma
+\quad\text{subject to}\quad
+J(x)\le\gamma
+$$
+
+直觉：$\gamma$ 是 cost 的"上界"，最小化 $\gamma$ 就是把这个上界压到 $J(x)$ 的最小值。这叫 **epigraph form**（上图形式，epigraph = 函数图像上方的区域）。
+
+为什么重要：
+
+- solver（尤其商业 solver）常假设 **linear cost**。epigraph trick 让你把任意 convex cost 塞进它能处理的形式。
+- 它把"最小化一个复杂 cost"变成"最小化 $\gamma$ + 一条约束 $J(x)\le\gamma$"。如果那条约束本身能写成 LMI，整个问题就是 SDP/LMI。
+- 后面 minimise spectral norm、minimise LQR cost 全都用这个套路：`min γ s.t. (某个 LMI in x and γ)`。
+
+记忆钩子：
+
+```text
+Want to minimise a hard cost J(x)?
+-> minimise gamma, subject to J(x) <= gamma.
+-> if "J(x) <= gamma" is an LMI, you have an SDP.
+```
+
 ## What Is an LMI?（什么是线性矩阵不等式）
 
-LMI（Linear Matrix Inequality，线性矩阵不等式）是这样的约束：
+### Generalized Inequality 与 Cone 视角
+
+Lec 9 把 inequality（不等式）推广了：约束不再只是"标量函数 $\le 0$"，而可以是 **向量值或矩阵值**，并用一个 cone（锥）$K$ 表达：
+
+$$
+f(x)\preceq_K y
+\quad\Longleftrightarrow\quad
+y-f(x)\in K
+$$
+
+也可以写成：
+
+$$
+y-f(x)\succeq_K0.
+$$
+
+这里的 “$\succeq_K0$” 就是 cone-relative nonnegative（相对于锥 $K$ 的非负）：
+
+```text
+greater than zero with respect to K
+= belongs to K
+```
+
+两个最有用的 cone：
+
+- **positive orthant（正卦限）** $K=\mathbb{R}^N_+$：$x\in K \iff x_i\ge0$，逐元素非负。
+- **positive semidefinite cone（正半定锥）** $S^N_+=\{X\in S^N\mid X\succeq0\}$：$X$ 是 symmetric 且所有 eigenvalue（特征值）$\ge0$。
+
+关键区别：matrix 在 PSD cone 里，**不是**"每个元素 $\ge0$"，而是"所有特征值 $\ge0$"。这比 element-wise（逐元素）强大得多，也是 LMI 表达力的来源。
+
+### LMI 定义
+
+semidefinite program（SDP，半定规划）的核心约束就是 LMI：
+
+$$
+\min_x\ c^Tx
+\quad\text{subject to}\quad
+x_1F_1+\cdots+x_NF_N+G\preceq0,\quad Ax=b
+$$
+
+其中 $F_i,G$ 是给定的 symmetric matrices。约束
 
 $$
 F(x) = F_0 + x_1F_1 + \cdots + x_nF_n \succeq 0
 $$
 
-其中矩阵 $F(x)$ 对变量 $x$ 是 affine（仿射）的：变量只以 $x_iF_i$ 这种 linear / affine 方式进入矩阵。
+里，矩阵 $F(x)$ 对变量 $x$ 是 **affine（仿射）** 的：变量只以 $x_iF_i$ 这种 linear 方式进入矩阵。
 
-它重要是因为很多看起来 nonlinear（非线性）的 constraint（约束）可以写成 PSD matrix constraint（正半定矩阵约束）。换句话说，LMI 把一些困难的 scalar nonlinear inequalities 转成 convex matrix inequality。
+它重要是因为很多看起来 **nonlinear（非线性）** 的 constraint 可以写成这种 PSD matrix constraint（正半定矩阵约束）—— LMI 把困难的 scalar nonlinear inequalities 转成 convex matrix inequality，而 convex 就意味着 solver 可靠、local optimum 即 global optimum。Roy 的原话大意：如果你是 control engineer，你学过的几乎所有控制理论都能写成 LMI。
+
+### Multiple LMIs → 堆成对角块
+
+如果有多条 LMI 要同时满足，可以堆到一个 block-diagonal（分块对角）矩阵的对角线上：
+
+$$
+F_i(x)\preceq0,\ i=1,\ldots,N
+\quad\Longleftrightarrow\quad
+\begin{bmatrix}
+F_1(x) & & \\
+& \ddots & \\
+& & F_N(x)
+\end{bmatrix}\preceq0
+$$
+
+因为 block-diagonal 矩阵的 eigenvalue 就是各块 eigenvalue 的并集。**概念上** 它是一条大约束；**实践中** solver 会把它拆开分别处理（大矩阵里全是零，单独算更快）。所以"一条 LMI"和"多条 LMI"没有本质区别。
+
+## Block Matrix Basics for LMI（矩阵分块基础）
+
+LMI 里大量出现这种写法：
+
+$$
+\begin{bmatrix}
+Q & S\\
+S^T & R
+\end{bmatrix},
+\qquad
+\begin{bmatrix}
+-P & A^TP\\
+PA & -P
+\end{bmatrix},
+\qquad
+\begin{bmatrix}
+tI & y\\
+y^T & t
+\end{bmatrix}.
+$$
+
+这些不是新的矩阵类型，只是把一个大矩阵按行列切成 smaller matrices（小矩阵块）。这样做的目的：
+
+```text
+large matrix algebra becomes ordinary algebra on blocks,
+as long as dimensions match.
+```
+
+### 1. Block Dimensions Must Match（先看维度）
+
+假设
+
+$$
+Q\in\mathbb{R}^{m\times m},\quad
+R\in\mathbb{R}^{n\times n},\quad
+S\in\mathbb{R}^{m\times n}.
+$$
+
+那么
+
+$$
+\begin{bmatrix}
+Q&S\\
+S^T&R
+\end{bmatrix}
+$$
+
+整体是 $(m+n)\times(m+n)$。为什么 $S^T$ 在左下角？因为左下角必须是 $n\times m$，这样整体矩阵才 symmetric。
+
+具体例子：如果 $x\in\mathbb{R}^2$，quadratic LMI
+
+$$
+\begin{bmatrix}
+c+b^Tx & x^T\\
+x & -Q^{-1}
+\end{bmatrix}\preceq0
+$$
+
+就是 $3\times3$：
+
+| Block | Size |
+|---|---:|
+| $c+b^Tx$ | $1\times1$ |
+| $x^T$ | $1\times2$ |
+| $x$ | $2\times1$ |
+| $-Q^{-1}$ | $2\times2$ |
+
+所以分块第一步永远是问：
+
+```text
+each block has what size?
+can these blocks sit next to each other?
+```
+
+### 2. Block Addition（分块加法）
+
+同样分块方式的矩阵可以逐块相加：
+
+$$
+\begin{bmatrix}
+A&B\\
+C&D
+\end{bmatrix}
++
+\begin{bmatrix}
+E&F\\
+G&H
+\end{bmatrix}
+=
+\begin{bmatrix}
+A+E&B+F\\
+C+G&D+H
+\end{bmatrix}.
+$$
+
+前提：对应 block 尺寸一致。
+
+### 3. Block Transpose（分块转置）
+
+转置会做两件事：
+
+1. 每个 block 自己转置；
+2. block 的位置沿主对角线交换。
+
+$$
+\begin{bmatrix}
+A&B\\
+C&D
+\end{bmatrix}^T
+=
+\begin{bmatrix}
+A^T&C^T\\
+B^T&D^T
+\end{bmatrix}.
+$$
+
+所以
+
+$$
+\begin{bmatrix}
+Q&S\\
+S^T&R
+\end{bmatrix}^T
+=
+\begin{bmatrix}
+Q^T&S\\
+S^T&R^T
+\end{bmatrix}.
+$$
+
+如果 $Q=Q^T$ 且 $R=R^T$，整体就是 symmetric。注意 $S$ 本身不需要 symmetric，因为它可能甚至不是 square matrix。
+
+### 4. Block Multiplication（分块乘法）
+
+分块乘法和普通矩阵乘法一样，只是把 scalar multiplication 换成 matrix multiplication：
+
+$$
+\begin{bmatrix}
+A&B\\
+C&D
+\end{bmatrix}
+\begin{bmatrix}
+E&F\\
+G&H
+\end{bmatrix}
+=
+\begin{bmatrix}
+AE+BG & AF+BH\\
+CE+DG & CF+DH
+\end{bmatrix}.
+$$
+
+每一项都必须维度匹配。比如 $AE$ 能乘，$BG$ 也能乘，而且 $AE$ 和 $BG$ 的结果尺寸要一样，才能相加。
+
+这个公式就是后面 congruence transformation 手算的基础。
+
+### 5. Block Diagonal Matrix（分块对角矩阵）
+
+如果非对角 block 都是 zero：
+
+$$
+\begin{bmatrix}
+A&0\\
+0&D
+\end{bmatrix},
+$$
+
+这叫 block diagonal matrix。它的好处是很多性质可以逐块看：
+
+$$
+\begin{bmatrix}
+A&0\\
+0&D
+\end{bmatrix}\succeq0
+\quad\Longleftrightarrow\quad
+A\succeq0,\quad D\succeq0.
+$$
+
+多个 LMI 堆成一条大 LMI，就是利用这个性质：
+
+$$
+F_1(x)\preceq0,\quad F_2(x)\preceq0
+\quad\Longleftrightarrow\quad
+\begin{bmatrix}
+F_1(x)&0\\
+0&F_2(x)
+\end{bmatrix}\preceq0.
+$$
+
+### 6. Multiplying by a Block Diagonal Matrix
+
+LMI 里经常乘
+
+$$
+T=
+\begin{bmatrix}
+I&0\\
+0&P
+\end{bmatrix}.
+$$
+
+它的作用很直观：左上 block 不变，右下方向被 $P$ 缩放。
+
+例如：
+
+$$
+\begin{bmatrix}
+-P&A^T\\
+A&-P^{-1}
+\end{bmatrix}
+\begin{bmatrix}
+I&0\\
+0&P
+\end{bmatrix}
+=
+\begin{bmatrix}
+-P&A^TP\\
+A&-I
+\end{bmatrix}.
+$$
+
+再从左边乘一次同样的 block diagonal matrix：
+
+$$
+\begin{bmatrix}
+I&0\\
+0&P
+\end{bmatrix}
+\begin{bmatrix}
+-P&A^TP\\
+A&-I
+\end{bmatrix}
+=
+\begin{bmatrix}
+-P&A^TP\\
+PA&-P
+\end{bmatrix}.
+$$
+
+这就是 Roy 在 congruence transformation 里做的逐块运算。
+
+### 7. Block Matrix Quadratic Form
+
+如果
+
+$$
+M=
+\begin{bmatrix}
+Q&S\\
+S^T&R
+\end{bmatrix},
+\qquad
+z=
+\begin{bmatrix}
+u\\v
+\end{bmatrix},
+$$
+
+那么
+
+$$
+z^TMz
+=
+\begin{bmatrix}u^T&v^T\end{bmatrix}
+\begin{bmatrix}
+Q&S\\
+S^T&R
+\end{bmatrix}
+\begin{bmatrix}
+u\\v
+\end{bmatrix}
+=u^TQu+2u^TSv+v^TRv.
+$$
+
+这解释了为什么 off-diagonal block 会产生 cross term（交叉项）。标量二次函数里 $bt$ 要写成两个 $\tfrac{b}{2}t$，本质就是这个 $2u^TSv$。
+
+### 8. Why Schur Complement Is a Block Operation
+
+Schur complement 从
+
+$$
+\begin{bmatrix}
+Q&S\\
+S^T&R
+\end{bmatrix}
+$$
+
+里"消去"右下角 block $R$，得到：
+
+$$
+Q-SR^{-1}S^T.
+$$
+
+所以它天然依赖 block partitioning。你必须先决定：
+
+```text
+which block is Q?
+which block is S?
+which block is R?
+which block will be inverted/eliminated?
+```
+
+这也是为什么 LMI 题常常先考你会不会把矩阵正确分块。
+
+### 9. Common Mistakes（常见错误）
+
+1. **Dimension mismatch（维度不匹配）**  
+   比如 $S$ 是 $m\times n$，那么左下角必须是 $S^T$，尺寸 $n\times m$。
+
+2. **Forgetting block transpose（忘记分块转置）**  
+   $\begin{bmatrix}A&B\\C&D\end{bmatrix}^T$ 不是 $\begin{bmatrix}A^T&B^T\\C^T&D^T\end{bmatrix}$，而是 $\begin{bmatrix}A^T&C^T\\B^T&D^T\end{bmatrix}$。
+
+3. **Treating blocks as scalars when multiplication order matters（把矩阵块当标量）**  
+   一般 $AB\ne BA$。所以 $A^TP$ 和 $PA$ 不是同一个东西。
+
+4. **Ignoring symmetry（忽略对称性）**  
+   LMI/PSD 约束里的矩阵必须 symmetric。写 block matrix 时要检查右上和左下是否互为 transpose。
+
+5. **Confusing block diagonal with diagonal matrix（分块对角不等于普通对角）**  
+   block diagonal 的每个 block 本身可以是大矩阵，不必是 scalar。
 
 ## Schur Complement（舒尔补）
 
-典型形式：
+Schur complement 是把 LMI 里"看起来二次 / 带逆"的东西线性化的 **核心技巧**，考试出现频率很高。
+
+典型形式（symmetric block matrix，$Q,R$ symmetric，$S$ 不必）：
 
 $$
 \begin{bmatrix}
 Q & S \\
 S^T & R
 \end{bmatrix} \succ 0
+\quad\Longleftrightarrow\quad
+R\succ0,\quad Q - S R^{-1}S^T \succ 0
 $$
 
-在 $R \succ 0$ 时，等价于：
+而且对 **affine combinations（仿射组合）** 也成立：如果 $Q,S,R$ 都是优化变量 $x$ 的仿射函数，
 
 $$
-Q - S R^{-1}S^T \succ 0
+\begin{bmatrix}
+Q(x) & S(x) \\
+S(x)^T & R(x)
+\end{bmatrix} \succ 0
+\quad\Longleftrightarrow\quad
+R(x)\succ0,\quad Q(x) - S(x) R(x)^{-1}S(x)^T \succ 0
 $$
 
-考试中 Schur complement（舒尔补）常用于：
+注意右边 $Q-SR^{-1}S^T$ 对 $x$ 是 **非线性** 的（有乘积、有逆），但左边的 block matrix 对 $x$ 是 **线性** 的。所以 Schur complement 让我们把一条非线性约束"升维"成一条线性 matrix 约束 —— 这正是能交给 SDP solver 的形式。
 
-- 把 norm constraint（范数约束）写成 LMI；
-- 把 quadratic inequality（二次不等式）写成 LMI；
-- 处理 stability（稳定性）和 controller synthesis（控制器综合）中的 matrix inequalities（矩阵不等式）。
+### 标量直觉：它到底在算什么
 
-易错点：使用 Schur complement（舒尔补）时必须检查 block（分块矩阵）的 definiteness（正定 / 负定）条件。
+Roy 用一个一维例子解释 Schur complement 的本质。考虑标量二次函数
+
+$$
+q(t)=a t^2+b t+c,\qquad a>0
+$$
+
+问：它对所有 $t$ 都 $\ge0$ 吗？Roy 画的就是下面这种图：开口向上的 convex quadratic（凸二次函数），但它是否处处非负，取决于最低点有没有掉到 $0$ 以下。
+
+\begin{center}
+\begin{tikzpicture}[scale=0.95, >=stealth]
+  \draw[->] (-2.8,0) -- (3.05,0) node[right] {$t$};
+  \draw[->] (0,-0.6) -- (0,4.15) node[above] {$q(t)$};
+  \draw[thick, red, domain=-2.15:2.65, smooth, samples=90] plot (\x,{0.55*(\x-0.45)^2+0.65});
+  \draw[thick, purple] (-2.55,0.65) -- (2.75,0.65) node[right] {$q_{\min}>0$};
+  \fill[green!55!black] (0.45,0.65) circle (2.2pt);
+  \node[fill=white, inner sep=1.5pt, anchor=north west] at (0.55,0.55) {$t^\star=-\dfrac{b}{2a}$};
+  \node[red, fill=white, inner sep=1.5pt] at (2.0,3.25) {$q(t)=at^2+bt+c$};
+  \node[align=center, fill=white, inner sep=1.5pt] at (-1.35,2.9) {$a>0$\\opens upward};
+  \draw[->, green!45!black, thick] (-1.05,-0.22) -- (0.35,0.62);
+  \node[green!45!black, fill=white, inner sep=1pt] at (-1.35,-0.32) {minimum above zero};
+\end{tikzpicture}
+\end{center}
+
+做法是求最小值：$q'(t)=2at+b=0\Rightarrow t^\star=-\tfrac{b}{2a}$，代回得
+
+$$
+q(t^\star)=c-\frac{b^2}{4a}
+$$
+
+所以 "$q(t)\ge0$ 对所有 $t$" $\iff a\ge0$ 且 $c-\dfrac{b^2}{4a}\ge0$。
+
+把它写成 block matrix（$Q=c,\ S=\tfrac{b}{2},\ R=a$）：
+
+$$
+\begin{bmatrix}
+c & \tfrac{b}{2}\\[2pt]
+\tfrac{b}{2} & a
+\end{bmatrix}\succeq0
+\quad\Longleftrightarrow\quad
+a\ge0,\quad c-\frac{b}{2}\,a^{-1}\,\frac{b}{2}\ge0
+$$
+
+为什么这里是 $S=\tfrac{b}{2}$，不是 $b$？因为 block matrix 对应的是 quadratic form：
+
+$$
+\begin{bmatrix}1&t\end{bmatrix}
+\begin{bmatrix}
+c & \tfrac{b}{2}\\[2pt]
+\tfrac{b}{2} & a
+\end{bmatrix}
+\begin{bmatrix}1\\ t\end{bmatrix}
+=c+2\left(\frac{b}{2}\right)t+at^2
+=at^2+bt+c
+$$
+
+交叉项会出现两次：左上到右下一次，右下到左上一次。所以 $bt$ 在矩阵里要拆成两个 $\tfrac{b}{2}t$。
+
+右边正是"求导、找最小、代回"得到的同一个判据。**Schur complement 就是"先对一部分变量做最优消去"的矩阵版**：$Q-SR^{-1}S^T$ 是把 $R$ 那部分变量最优化掉之后剩下的 effective term（有效项）。把这个标量论证推广到矩阵 / 向量，就得到一般 Schur complement。
+
+### How to Map $Q,R,S$ into a QP Constraint
+
+这里最容易混淆的是 notation（记号）。Roy 在 Schur complement 里写的
+
+$$
+\begin{bmatrix}
+Q & S\\
+S^T & R
+\end{bmatrix}
+$$
+
+只是 block names（分块名字）。但 QP 里很多教材也用 $Q$ 表示 Hessian / quadratic-cost matrix。**这两个 $Q$ 不一定是同一个东西。** 为了减少混淆，下面把 QP 的二次矩阵写成 $H$。
+
+实用判断法：
+
+| Schur block | 怎么找 | 直觉 |
+|---|---|---|
+| $R$ | 放你想通过 $R^{-1}$ 产生的 curvature / Hessian block | 被消去变量的二次项 |
+| $S$ | 放 cross term（交叉项）的一半或对应线性表达式 | 因为 $S$ 会在 $SR^{-1}S^T$ 里平方起来 |
+| $Q$ | 放剩下的 constant / affine part | Schur 后留下 $Q-SR^{-1}S^T$ |
+
+标量例子：
+
+$$
+at^2+bt+c\ge0\quad\text{for all }t
+$$
+
+对应
+
+$$
+R=a,\qquad S=\frac{b}{2},\qquad Q=c
+$$
+
+因为 Schur complement 给出
+
+$$
+Q-SR^{-1}S^T
+=c-\frac{b}{2}a^{-1}\frac{b}{2}
+=c-\frac{b^2}{4a}
+$$
+
+这正是凸二次函数的 minimum value（最小值）。
+
+QP constraint 里常见的是
+
+$$
+x^T H x+b^T x+c\le0,\qquad H\succ0
+$$
+
+要把它写成 LMI，先把它改写成
+
+$$
+-(x^T Hx+b^Tx+c)\ge0
+$$
+
+现在我们希望 Schur complement 产生 $-x^THx$。选择
+
+$$
+R=H^{-1},\qquad S=x^T,\qquad Q=-(b^Tx+c)
+$$
+
+则
+
+$$
+Q-SR^{-1}S^T
+=-(b^Tx+c)-x^THx
+\ge0
+$$
+
+所以得到一条 LMI：
+
+$$
+\begin{bmatrix}
+-(b^Tx+c) & x^T\\
+x & H^{-1}
+\end{bmatrix}\succeq0
+$$
+
+等价地，也可以写成 guide 后面表格里的 negative semidefinite 形式：
+
+$$
+\begin{bmatrix}
+c+b^Tx & x^T\\
+x & -H^{-1}
+\end{bmatrix}\preceq0
+$$
+
+这里 off-diagonal 写 $x$ 或 $-x$ 都会给出同一个二次项，因为 Schur complement 里它以 $S(\cdot)^{-1}S^T$ 的形式成对出现。
+
+一句话记忆：**先展开 block matrix 的 quadratic form，看交叉项有没有少一半；再做 Schur complement，检查 $Q-SR^{-1}S^T$ 是否正好还原原来的二次不等式。**
+
+重要提醒：上面的 "$Q$ 放剩下的 constant / affine part" 是针对 **scalar quadratic constraint** 的读法。更一般地，$Q,S,R$ 是你构造的 block matrix 的三个块；它们的角色要由
+
+$$
+Q-SR^{-1}S^T
+$$
+
+能否还原目标 inequality 来判断。也就是说，**不要先问原式里有没有常数项；要先问 Schur 后想得到什么式子。** Spectral norm 例子就是这种情况。
+
+考试常用场景：把 norm constraint、quadratic inequality 写成 LMI；处理 stability 和 controller synthesis 里的 matrix inequalities。
+
+易错点：用 Schur complement 必须先确认被消去那块（$R$ 或 $Q$）的 definiteness，且整个 block 必须 symmetric。
+
+## Worked LMI #1: Minimise the Spectral Norm（最小化最大奇异值）
+
+矩阵的 2-norm（spectral norm，谱范数）$\|A\|_2$ 就是最大 singular value（最大奇异值），也就是矩阵作为线性映射的"最大增益"。控制里它常代表 disturbance → error 的最坏放大（例如风力 → 自动驾驶转向误差），我们想把它压小。
+
+问题：$\displaystyle\min_x\ \|A(x)\|_2$，其中 $A(x)$ 对 $x$ 仿射。
+
+用 epigraph trick 引入 $\gamma$：约束 $\|A\|_2<\gamma$。这里的意思是：
+
+$$
+\text{largest singular value of }A(x) < \gamma
+$$
+
+因为 singular values 的平方是 $A(x)A(x)^T$ 的 eigenvalues，所以
+
+$$
+\|A(x)\|_2<\gamma
+\quad\Longleftrightarrow\quad
+\lambda_{\max}(A(x)A(x)^T)<\gamma^2
+\quad\Longleftrightarrow\quad
+\gamma^2I-A(x)A(x)^T\succ0
+$$
+
+这个式子还是有 $A(x)A(x)^T$，对 $x$ 是 quadratic / nonlinear。Schur complement 的目的，就是把它改写成一个更大的 **linear matrix inequality**：
+
+$$
+\begin{bmatrix}
+\gamma I & A(x)\\
+A(x)^T & \gamma I
+\end{bmatrix}\succ0
+$$
+
+这时按 Schur complement 的 block notation：
+
+$$
+Q=\gamma I,\qquad S=A(x),\qquad R=\gamma I
+$$
+
+注意：这里 $Q$ 不是 $0$。因为 $Q$ 是 **block matrix 的左上角**，而我们主动把左上角设计成 $\gamma I$。为什么要这样设计？因为 Schur complement 会给出
+
+$$
+Q-SR^{-1}S^T
+=\gamma I-A(x)(\gamma I)^{-1}A(x)^T
+=\gamma I-\frac{1}{\gamma}A(x)A(x)^T
+$$
+
+再加上 $R=\gamma I\succ0$，也就是 $\gamma>0$，两边乘以正数 $\gamma$：
+
+$$
+\gamma\left(\gamma I-\frac{1}{\gamma}A(x)A(x)^T\right)
+=\gamma^2I-A(x)A(x)^T\succ0
+$$
+
+这就回到了 $\|A(x)\|_2<\gamma$。
+
+这里确实有 "cross term"（交叉项），只是它不是 $x$ 和常数的交叉项，而是 block matrix quadratic form 里的两个 test vectors 之间的交叉项：
+
+$$
+\begin{bmatrix}u\\v\end{bmatrix}^T
+\begin{bmatrix}
+\gamma I & A\\
+A^T & \gamma I
+\end{bmatrix}
+\begin{bmatrix}u\\v\end{bmatrix}
+=
+\gamma\|u\|_2^2+2u^TAv+\gamma\|v\|_2^2
+$$
+
+中间的 $2u^TAv$ 就来自 off-diagonal block $S=A$ 和 $S^T=A^T$。Schur complement 把这个交叉项"消去"，留下 $AA^T$。
+
+一维数值例子最清楚。令 $A=[a]$ 是一个标量，则 $\|A\|_2=|a|$。约束 $|a|<\gamma$ 可以写成：
+
+$$
+\begin{bmatrix}
+\gamma & a\\
+a & \gamma
+\end{bmatrix}\succ0
+$$
+
+对右下角 $R=\gamma$ 做 Schur complement：
+
+$$
+\gamma>0,\qquad
+\gamma-a\gamma^{-1}a>0
+\quad\Longleftrightarrow\quad
+\gamma^2-a^2>0
+\quad\Longleftrightarrow\quad
+|a|<\gamma
+$$
+
+例如 $a=3,\gamma=5$：
+
+$$
+\begin{bmatrix}5&3\\3&5\end{bmatrix}
+$$
+
+的 eigenvalues 是 $8$ 和 $2$，所以 positive definite；这对应 $|3|<5$。  
+如果 $a=6,\gamma=5$，矩阵
+
+$$
+\begin{bmatrix}5&6\\6&5\end{bmatrix}
+$$
+
+的 eigenvalues 是 $11$ 和 $-1$，不是 positive definite；这对应 $|6|<5$ 不成立。
+
+所以等价的 LMI 问题是：
+
+$$
+\min_{x,\gamma}\ \gamma
+\quad\text{subject to}\quad
+\begin{bmatrix}
+\gamma I & A(x)\\
+A(x)^T & \gamma I
+\end{bmatrix}\succ0
+$$
+
+这个约束对 $x$ 和 $\gamma$ 都 **线性**。解出来的 $\gamma$ 就是最小的最大奇异值，对应的 $x$ 就是达成它的设计。
+
+## Worked LMI #2: Point Inside an Ellipsoid（点在椭球内）
+
+椭球 $E=\{x\mid (x-x_c)^TP^{-1}(x-x_c)\le1\}$，$P\succ0$。判断 $x\in E$ 看似要算 $P^{-1}$ 的二次型，但用 Schur complement 就是一条 LMI：
+
+$$
+x\in E
+\quad\Longleftrightarrow\quad
+\begin{bmatrix}
+1 & (x_c-x)^T\\
+(x_c-x) & P
+\end{bmatrix}\succeq0
+$$
+
+（对右下块 $P\succ0$ 做 Schur：top-left $1-(x_c-x)^TP^{-1}(x_c-x)\ge0$，正是椭球定义。）
+
+威力在于：这条约束对 $x$ 仿射，**同时对 center $x_c$ 和 shape $P$ 也仿射**。所以"给定若干点，找一个包住它们的椭球"——优化 $x_c,P$——就是一个 SDP。这正是 convex exercise 里 minimum-volume ellipsoid 那类题的内核。
+
+## What Does "Linear in $x$ and $\gamma$" Mean?（矩阵里怎么看 linear）
+
+Roy 多次说：
+
+```text
+this constraint is linear in x and linear in gamma
+it is linear in the centers and linear in the scaling P
+```
+
+这里的 linear 不是说 Schur complement 展开后的式子是线性的。展开后经常会出现：
+
+$$
+\gamma^2 I-A(x)A(x)^T,\qquad
+1-(x-x_c)^TP^{-1}(x-x_c)
+$$
+
+这些明显不是 linear。Roy 的意思是：**看 LMI 左边那个 matrix 的每一个 entry（矩阵元素）是不是 decision variables 的 affine expression（仿射表达式）**。
+
+Affine / linear in optimisation language 通常允许：
+
+$$
+\text{constant}+\alpha_1 z_1+\alpha_2 z_2+\cdots+\alpha_k z_k
+$$
+
+不允许：
+
+$$
+z_1z_2,\qquad z_1^2,\qquad \frac{1}{z_1},\qquad P^{-1}.
+$$
+
+所以判断步骤是：
+
+1. 写出 LMI matrix。
+2. 把每个 block 展开成 matrix entries。
+3. 看每个 entry 是否只是变量的一次项加常数。
+4. 如果没有变量乘变量、平方、倒数、矩阵逆，就叫 affine / linear in those variables。
+
+### Example 1: Spectral Norm LMI
+
+$$
+\begin{bmatrix}
+\gamma I & A(x)\\
+A(x)^T & \gamma I
+\end{bmatrix}\succ0
+$$
+
+如果
+
+$$
+A(x)=A_0+x_1A_1+x_2A_2+\cdots+x_kA_k,
+$$
+
+那么 $A(x)$ 的每个元素都是：
+
+$$
+a_{ij}(x)=a_{ij,0}+x_1a_{ij,1}+x_2a_{ij,2}+\cdots+x_ka_{ij,k}.
+$$
+
+这是 affine in $x$。而 $\gamma I$ 的元素是：
+
+$$
+(\gamma I)_{ij}=
+\begin{cases}
+\gamma, & i=j,\\
+0, & i\ne j.
+\end{cases}
+$$
+
+这也是 affine in $\gamma$。所以整个 block matrix 对 $x$ 和 $\gamma$ 都是 affine。
+
+注意对比 Schur 展开后的式子：
+
+$$
+\gamma^2I-A(x)A(x)^T\succ0
+$$
+
+这里有 $\gamma^2$ 和 $A(x)A(x)^T$，所以它不是 linear。**Schur complement 的价值正是：把展开后非线性的约束，改写成 entry-wise affine 的 LMI。**
+
+一个具体标量例子：
+
+$$
+A(x)=2+x,\qquad \gamma \text{ is a variable}.
+$$
+
+原来的 norm constraint 是：
+
+$$
+|2+x|<\gamma
+$$
+
+平方后是：
+
+$$
+\gamma^2-(2+x)^2>0
+$$
+
+这对 $x,\gamma$ 都不是 linear。但 LMI 写成：
+
+$$
+\begin{bmatrix}
+\gamma & 2+x\\
+2+x & \gamma
+\end{bmatrix}\succ0
+$$
+
+矩阵元素分别是 $\gamma$、$2+x$、$2+x$、$\gamma$，每个都是变量的一次表达式。所以这是 linear in $x$ and $\gamma$。
+
+### Example 2: Point Inside an Ellipsoid
+
+$$
+\begin{bmatrix}
+1 & (x_c-x)^T\\
+(x_c-x) & P
+\end{bmatrix}\succeq0
+$$
+
+如果 $x$ 是变量，$x_c$ 也是变量，那么 entry 是：
+
+$$
+(x_c-x)_i=x_{c,i}-x_i
+$$
+
+这是 affine in both $x$ and $x_c$。如果 $P$ 也是变量，那么右下角每个元素就是 $P_{ij}$ 本身，也是 linear in $P_{ij}$。
+
+所以 Roy 说它 linear in $x$、linear in the centers、linear in scaling $P$，意思是：
+
+```text
+the LMI matrix entries contain x, x_c, and P only to first order.
+```
+
+对比原始 ellipsoid condition：
+
+$$
+(x-x_c)^TP^{-1}(x-x_c)\le1
+$$
+
+这里同时有 $P^{-1}$ 和 $(x-x_c)$ 的二次型。如果直接看它，就很难说它对 $x_c$ 或 $P$ 是 linear。Schur complement 把它换成 LMI 后，solver 看到的是一个 entry-wise affine matrix。
+
+一句话记忆：
+
+```text
+In LMI, "linear" means the matrix entries are affine in the decision variables.
+Do not judge linearity after expanding the Schur complement back into products/inverses.
+```
+
+## Generality of SDP: 把别的约束都写成 LMI
+
+Roy 给了一张"翻译表"，说明前面的 problem class 都能塞进 LMI（这也是为什么我们集中精力在 LMI 上）：
+
+| Constraint | 等价 LMI |
+|---|---|
+| linear $Ax\le b$ | $\mathrm{diag}(Ax)\preceq\mathrm{diag}(b)$（放到对角线） |
+| convex quadratic $x^TQx+b^Tx+c\le0,\ Q\succ0$ | $\begin{bmatrix} c+b^Tx & x^T\\ x & -Q^{-1}\end{bmatrix}\preceq0$ |
+| second-order cone $\|Ax+b\|_2\le c^Tx+d$ | $\begin{bmatrix}(c^Tx+d)I & Ax+b\\ (Ax+b)^T & c^Tx+d\end{bmatrix}\succeq0$ |
+
+记忆：**LP / QP / SOCP / QCQP 都是 SDP 的特例**，反过来不一定。所以分类题里如果一个约束能写成"仿射矩阵表达式 $\succeq0$"，它就是 LMI / SDP。
+
+### Practice: Convert Standard Constraints to LMIs（考试风格练习）
+
+这张 slide 不适合死记。考试更可能给你一个具体约束，让你把它改写成 LMI。下面题目先给 constraint，答案放后面；建议先自己写 block matrix，再核对。
+
+#### Practice A: Linear Constraints
+
+**A1.** Let $x=(x_1,x_2)^T$. Write the following linear inequalities as one diagonal LMI:
+
+$$
+2x_1-x_2\le3,\qquad -x_1+4x_2\le5.
+$$
+
+**A2.** Write the box constraints as a diagonal LMI:
+
+$$
+-1\le x_1\le2,\qquad x_2\le4.
+$$
+
+答案：
+
+For A1,
+
+$$
+\begin{bmatrix}
+2x_1-x_2 & 0\\
+0 & -x_1+4x_2
+\end{bmatrix}
+\preceq
+\begin{bmatrix}
+3&0\\
+0&5
+\end{bmatrix}
+$$
+
+也可以写成：
+
+$$
+\begin{bmatrix}
+3-(2x_1-x_2) & 0\\
+0 & 5-(-x_1+4x_2)
+\end{bmatrix}\succeq0.
+$$
+
+For A2, 先把 lower bound 改成 upper-bound style：
+
+$$
+-1\le x_1 \iff -x_1\le1.
+$$
+
+所以：
+
+$$
+\begin{bmatrix}
+x_1 & 0 & 0\\
+0 & -x_1 & 0\\
+0 & 0 & x_2
+\end{bmatrix}
+\preceq
+\begin{bmatrix}
+2&0&0\\
+0&1&0\\
+0&0&4
+\end{bmatrix}.
+$$
+
+#### Practice B: Quadratic Constraints
+
+Use the slide formula:
+
+$$
+x^TQx+b^Tx+c\le0,\quad Q\succ0
+\quad\Longleftrightarrow\quad
+\begin{bmatrix}
+c+b^Tx & x^T\\
+x & -Q^{-1}
+\end{bmatrix}\preceq0.
+$$
+
+**B1.** Convert the scalar quadratic constraint to an LMI:
+
+$$
+2x^2-3x-1\le0.
+$$
+
+**B2.** Let $x=(x_1,x_2)^T$. Convert the following quadratic constraint to an LMI:
+
+$$
+x^T
+\begin{bmatrix}
+2&0\\
+0&1
+\end{bmatrix}
+x+
+\begin{bmatrix}
+-4&2
+\end{bmatrix}x
++1\le0.
+$$
+
+答案：
+
+For B1,
+
+$$
+Q=2,\qquad b=-3,\qquad c=-1,\qquad Q^{-1}=\frac12.
+$$
+
+所以：
+
+$$
+\begin{bmatrix}
+-1-3x & x\\
+x & -\frac12
+\end{bmatrix}\preceq0.
+$$
+
+For B2,
+
+第一步，先把题目对齐到标准形式：
+
+$$
+x^TQx+b^Tx+c\le0.
+$$
+
+题目里：
+
+$$
+Q=
+\begin{bmatrix}
+2&0\\
+0&1
+\end{bmatrix},
+\qquad
+Q^{-1}=
+\begin{bmatrix}
+\frac12&0\\
+0&1
+\end{bmatrix},
+\qquad
+b^Tx=-4x_1+2x_2.
+$$
+
+这里 $x$ 是 2-vector，所以 Schur LMI 会是 $1+2=3$ 维的 block matrix：
+
+$$
+\begin{bmatrix}
+\text{scalar block} & \text{row block}\\
+\text{column block} & \text{matrix block}
+\end{bmatrix}
+$$
+
+按照公式：
+
+$$
+\begin{bmatrix}
+c+b^Tx & x^T\\
+x & -Q^{-1}
+\end{bmatrix}\preceq0.
+$$
+
+逐块填进去：
+
+$$
+c+b^Tx=1-4x_1+2x_2,
+\qquad
+x^T=\begin{bmatrix}x_1&x_2\end{bmatrix},
+\qquad
+x=\begin{bmatrix}x_1\\x_2\end{bmatrix},
+$$
+
+and
+
+$$
+-Q^{-1}=
+-\begin{bmatrix}
+\frac12&0\\
+0&1
+\end{bmatrix}
+=
+\begin{bmatrix}
+-\frac12&0\\
+0&-1
+\end{bmatrix}.
+$$
+
+所以最终 LMI 是：
+
+$$
+\begin{bmatrix}
+1-4x_1+2x_2 & x_1 & x_2\\
+x_1 & -\frac12 & 0\\
+x_2 & 0 & -1
+\end{bmatrix}\preceq0.
+$$
+
+为什么这等价？对右下角 $-Q^{-1}\prec0$ 做 Schur complement。对 negative definite block 的版本，条件等价于：
+
+$$
+c+b^Tx-x^T(-Q^{-1})^{-1}x\le0.
+$$
+
+因为
+
+$$
+(-Q^{-1})^{-1}=-Q,
+$$
+
+所以：
+
+$$
+c+b^Tx-x^T(-Q)x
+=c+b^Tx+x^TQx
+\le0.
+$$
+
+这正好回到原来的 quadratic constraint。
+
+#### Practice C: Second-Order Cone Constraints
+
+Use the slide formula:
+
+$$
+\|Ax+b\|_2\le c^Tx+d.
+$$
+
+Let
+
+$$
+y=Ax+b,\qquad t=c^Tx+d.
+$$
+
+Then the LMI is:
+
+$$
+\begin{bmatrix}
+tI & y\\
+y^T & t
+\end{bmatrix}\succeq0.
+$$
+
+Some slides write the negative version with $\preceq0$; both are equivalent after multiplying the whole matrix by $-1$. The important condition is $t\ge0$ and $\|y\|_2\le t$.
+
+**C1.** Convert this SOCP constraint to an LMI:
+
+$$
+\left\|
+\begin{bmatrix}
+x_1+1\\
+2x_2
+\end{bmatrix}
+\right\|_2
+\le
+3-x_1.
+$$
+
+**C2.** Convert this scalar absolute-value constraint to an LMI:
+
+$$
+|2+x|\le\gamma.
+$$
+
+答案：
+
+For C1,
+
+$$
+y=
+\begin{bmatrix}
+x_1+1\\
+2x_2
+\end{bmatrix},
+\qquad
+t=3-x_1.
+$$
+
+Because $y\in\mathbb{R}^2$, $tI$ is $2\times2$:
+
+$$
+\begin{bmatrix}
+3-x_1 & 0 & x_1+1\\
+0 & 3-x_1 & 2x_2\\
+x_1+1 & 2x_2 & 3-x_1
+\end{bmatrix}\succeq0.
+$$
+
+For C2, this is the one-dimensional version of SOC:
+
+$$
+y=2+x,\qquad t=\gamma.
+$$
+
+Thus:
+
+$$
+\begin{bmatrix}
+\gamma & 2+x\\
+2+x & \gamma
+\end{bmatrix}\succeq0.
+$$
+
+This is the same scalar example used above for the spectral norm: it enforces $\gamma^2-(2+x)^2\ge0$, with $\gamma\ge0$.
+
+## CVX 实务（disciplined convex）
+
+CVX（MATLAB / Python 都有，Python 版是 `cvxpy`）让你几乎照着数学写 LMI。Roy 给的最小距离例子（两椭球间最短距离）：
+
+```matlab
+cvx_begin sdp
+    variable x1(n), x2(n)
+    minimize( norm(x1 - x2) )
+    subject to
+        [1, (xc1 - x1)';
+         (xc1 - x1), P1] >= 0
+        [1, (xc2 - x2)';
+         (xc2 - x2), P2] >= 0
+cvx_end
+```
+
+要点：
+
+- **`sdp` flag 很关键**：它让 `>=` 被解释成"矩阵在 PSD cone 里"，而不是 MATLAB 默认的 **element-by-element（逐元素）**。忘了它，矩阵约束含义就错了。
+- CVX 只接受 **disciplined convex**：它有一套语法规则检查你写的东西能否被证明 convex（convex 的单调函数、affine 等）。覆盖范围很大，但确实有些 convex 问题它的语法写不出来。
+- **别随便平方**：CVX 建议保留 norm / conic 形式，不要写成 squared。原因（转录里 Roy 解释）：solver 内部用 conic / cutting-plane 方法，norm 在零点的不可微对它没影响，反而平方有时数值更差。只有当你要手算 gradient / normal equations / Lagrangian 时，平方才是"对的写法"。
 
 ## Stability LMIs（稳定性线性矩阵不等式）
 
-Continuous-time system:
+控制理论里"系统稳定"可以直接写成 LMI 的 feasibility problem（可行性问题）：找不到 $P\succ0$ 满足某条 LMI，就不稳定。
+
+### Background: What Is a Lyapunov Equation?（无控制背景版）
+
+控制里最基本的 linear system（线性系统）可以写成：
 
 $$
-\frac{d}{dt}x(t) = A x(t)
+\dot x(t)=Ax(t)
 $$
 
-stable iff exists $P \succ 0$ such that:
+这里：
+
+- $x(t)$ 是 state vector（状态向量），例如位置、速度、温度、电压等；
+- $\dot x(t)$ 是 state 的变化率；
+- $A$ 描述系统自身如何演化；
+- 没有 input 时，这叫 autonomous system（自治系统）。
+
+稳定性想问的是：
+
+```text
+If the state is slightly away from zero, will it naturally decay back to zero?
+```
+
+如果会回到零，系统稳定；如果越跑越大，系统不稳定。
+
+Lyapunov 的想法很像 energy method（能量法）。不要直接解微分方程，而是构造一个像"能量"一样的函数：
 
 $$
-A^T P + P A \prec 0
+V(x)=x^TPx,\qquad P\succ0.
 $$
 
-Discrete-time system:
+为什么要求 $P\succ0$？因为这样 $V(x)>0$ for $x\ne0$，而且 $V(0)=0$。也就是说，$V(x)$ 可以像 energy / distance-to-zero 一样衡量 state 离零有多远。
+
+稳定的直觉是：
+
+```text
+energy should keep decreasing along the system trajectory.
+```
+
+对 continuous-time 系统 $\dot x=Ax$，沿轨迹求导：
 
 $$
-x_{k+1} = A x_k
+\begin{aligned}
+\dot V(x)
+&=\frac{d}{dt}(x^TPx)\\
+&=\dot x^TPx+x^TP\dot x\\
+&=(Ax)^TPx+x^TP(Ax)\\
+&=x^T(A^TP+PA)x.
+\end{aligned}
 $$
 
-stable iff exists $P \succ 0$ such that:
+如果
 
 $$
-A^T P A - P \prec 0
+A^TP+PA\prec0,
 $$
 
-State feedback:
+那么对所有 $x\ne0$ 都有 $\dot V(x)<0$，energy 一直下降，所以 state 会往零走。这就是 Lyapunov stability condition（Lyapunov 稳定性条件）。
+
+Lyapunov equation 和 Lyapunov inequality 的区别：
+
+| Name | Form | Meaning |
+|---|---|---|
+| Lyapunov inequality | $A^TP+PA\prec0$ | 找某个 $P\succ0$ 证明系统稳定 |
+| Lyapunov equation | $A^TP+PA=-Q,\ Q\succ0$ | 给定 $Q$，求 $P$；若解 $P\succ0$，也证明稳定 |
+
+所以 Roy 说 "write it as equals and you are solving a Lyapunov equation"，意思是：
+
+```text
+Instead of only asking whether A^T P + P A is negative,
+choose a positive Q and solve A^T P + P A = -Q.
+```
+
+最常见选择是 $Q=I$：
 
 $$
-u_k = Kx_k
+A^TP+PA=-I.
 $$
 
-closed-loop:
+如果这个方程解出来的 $P\succ0$，那就说明系统稳定。
+
+一个一维例子：
 
 $$
-x_{k+1} = (A + BK)x_k
+\dot x=ax,\qquad V(x)=px^2,\quad p>0.
 $$
 
-控制设计中常用变量替换，例如 $V = KY$，把对 $K$ 和 Lyapunov matrix 的非线性耦合变成 LMI。
+则
+
+$$
+\dot V=2apx^2.
+$$
+
+要 $\dot V<0$，需要 $2ap<0$。因为 $p>0$，所以必须 $a<0$。这正是一维系统 $\dot x=ax$ 稳定的条件：$a<0$ 时 $x(t)$ 会指数衰减。
+
+对应 Lyapunov equation，如果取 $Q=1$：
+
+$$
+2ap=-1
+\quad\Rightarrow\quad
+p=-\frac{1}{2a}.
+$$
+
+只有当 $a<0$ 时，$p>0$。这和稳定条件完全一致。
+
+Discrete-time（离散时间）系统是：
+
+$$
+x_{k+1}=Ax_k.
+$$
+
+这时不是看 derivative，而是看下一步 energy 是否变小：
+
+$$
+V(x_{k+1})-V(x_k)
+=x_k^T(A^TPA-P)x_k.
+$$
+
+所以离散时间的 Lyapunov condition 是：
+
+$$
+A^TPA-P\prec0.
+$$
+
+一句话记忆：
+
+```text
+Lyapunov method proves stability by finding a positive energy function V(x)=x^T P x
+that decreases along the system trajectory.
+```
+
+在本课里，关键不是控制理论证明本身，而是：这些 stability conditions 可以写成 matrix inequalities，然后用 LMI / SDP solver 去找 $P$。
+
+**Continuous-time（连续时间）** $\dot x(t)=Ax(t)$：
+
+$$
+\text{stable}\iff \exists\,P\succ0:\ A^TP+PA\prec0
+$$
+
+（这是 Lyapunov 不等式；写成等式 $A^TP+PA=-\,$给定，就是 Lyapunov equation。）
+
+**Discrete-time（离散时间）** $x_{k+1}=Ax_k$：
+
+$$
+\text{stable}\iff \exists\,P\succ0:\ A^TPA-P\prec0
+$$
+
+离散情形里 $A^TPA$ 对 $A$ 是二次的。要把它变成对 $P$ 的 LMI，用 Schur complement：
+
+$$
+A^TPA-P\prec0
+\quad\Longleftrightarrow\quad
+\begin{bmatrix}-P & A^T\\ A & -P^{-1}\end{bmatrix}\prec0
+\quad\Longleftrightarrow\quad
+\begin{bmatrix}-P & A^TP\\ PA & -P\end{bmatrix}\prec0
+$$
+
+最后一式对 $P$ 是线性的（对 $A$ 也是线性的 —— 所以"给 $A$ 求 $P$"或"给 $P$ 求 $A$"都能当 LMI 解）。
+
+### Background: Congruence Transformation（合同变换）
+
+Roy 说的 congruence transformation 是 LMI 推导里非常常用的一步。形式是：
+
+$$
+M \quad\longmapsto\quad T^TMT
+$$
+
+其中 $M$ 是 symmetric matrix，$T$ 是 invertible matrix（可逆矩阵）。
+
+关键性质：
+
+$$
+M\succ0
+\quad\Longleftrightarrow\quad
+T^TMT\succ0
+$$
+
+同理也保持 $\prec0,\succeq0,\preceq0$。为什么？因为对任意非零向量 $z$，
+
+$$
+z^T(T^TMT)z=(Tz)^TM(Tz).
+$$
+
+如果 $T$ 可逆，那么 $z\ne0\Rightarrow Tz\ne0$。所以 $M$ 对所有非零向量给正值，$T^TMT$ 也对所有非零向量给正值。负定同理。
+
+一维直觉更简单：如果 $m<0$，且 $t\ne0$，那么
+
+$$
+tmt=t^2m<0.
+$$
+
+因为 $t^2>0$，所以符号不变。矩阵版就是同一个想法。
+
+注意：congruence transformation 不是随便左乘或右乘。必须是：
+
+$$
+T^TMT
+$$
+
+也就是左右配套地乘，才能保证 definiteness 不变。
+
+#### Why Roy Uses It Here
+
+在 discrete-time stability 里，Schur complement 先给出：
+
+$$
+\begin{bmatrix}
+-P & A^T\\
+A & -P^{-1}
+\end{bmatrix}\prec0.
+$$
+
+这个矩阵里有 $P^{-1}$，不是 linear in $P$。Roy 的做法是用
+
+$$
+T=
+\begin{bmatrix}
+I&0\\
+0&P
+\end{bmatrix}
+$$
+
+做 congruence transformation：
+
+$$
+T^T
+\begin{bmatrix}
+-P & A^T\\
+A & -P^{-1}
+\end{bmatrix}
+T
+\prec0.
+$$
+
+这里 $P=P^T$ 不是额外假设，而是来自 $P\succ0$ 的约定：在 real matrix LMI 里，$P\succ0$ 表示 $P$ 是 symmetric positive definite（对称正定）矩阵。因此 Lyapunov matrix $P$ 本来就是 symmetric。
+
+所以：
+
+$$
+T^T=
+\begin{bmatrix}
+I^T&0\\
+0&P^T
+\end{bmatrix}
+=
+\begin{bmatrix}
+I&0\\
+0&P
+\end{bmatrix}
+=T.
+$$
+
+然后逐块乘：
+
+$$
+\begin{bmatrix}
+I&0\\
+0&P
+\end{bmatrix}
+\begin{bmatrix}
+-P & A^T\\
+A & -P^{-1}
+\end{bmatrix}
+\begin{bmatrix}
+I&0\\
+0&P
+\end{bmatrix}
+=
+\begin{bmatrix}
+-P & A^TP\\
+PA & -P
+\end{bmatrix}\prec0.
+$$
+
+你可以看到右下角：
+
+$$
+P(-P^{-1})P=-P.
+$$
+
+这就是 Roy 说 "the first $P$ cancels that one, and then this $P$ makes a $P$" 的意思。这样 $P^{-1}$ 消失了，矩阵元素变成 linear in $P$。
+
+#### Second Use: Change $P$ into $Y=P^{-1}$
+
+状态反馈设计里会出现：
+
+$$
+\begin{bmatrix}
+-P & (A+BK)^TP\\
+P(A+BK) & -P
+\end{bmatrix}\prec0.
+$$
+
+这里的问题不是 $P^{-1}$，而是 $P$ 和 $K$ 乘在一起：
+
+$$
+P(A+BK)=PA+PBK.
+$$
+
+如果 $P$ 和 $K$ 都未知，这不是 LMI。于是用另一个 congruence transformation，把 $P$ 换成 $Y=P^{-1}$。令
+
+$$
+T=
+\begin{bmatrix}
+P^{-1}&0\\
+0&P^{-1}
+\end{bmatrix}
+=
+\begin{bmatrix}
+Y&0\\
+0&Y
+\end{bmatrix}.
+$$
+
+对上面的矩阵做 $T^TMT$，会得到等价形式（差一个整体负号和 off-diagonal 的符号；这些不改变核心可行性）：
+
+$$
+\begin{bmatrix}
+Y & Y(A+BK)^T\\
+(A+BK)Y & Y
+\end{bmatrix}\succ0.
+$$
+
+现在乘积变成：
+
+$$
+(A+BK)Y=AY+BKY.
+$$
+
+这时令
+
+$$
+V=KY,
+$$
+
+就得到 $AY+BV$，对新变量 $Y,V$ 是 linear。解完之后再还原：
+
+$$
+K=VY^{-1}.
+$$
+
+一句话记忆：
+
+```text
+Congruence transformation is a legal way to pre/post multiply an LMI
+without changing positive/negative definiteness.
+It is used to remove inverses or prepare a change of variables.
+```
+
+## State Feedback Design via LMI（状态反馈设计）
+
+这是 Lec 9 的高潮，也是最可能考的推导。系统
+
+$$
+x_{k+1}=Ax_k+Bu_k,\qquad u_k=Kx_k
+\quad\Rightarrow\quad
+x_{k+1}=(A+BK)x_k
+$$
+
+目标：设计 feedback gain $K$ 使闭环稳定。把离散稳定性 LMI 里的 $A$ 换成 $A+BK$：
+
+$$
+\begin{bmatrix}-P & (A+BK)^TP\\ P(A+BK) & -P\end{bmatrix}\prec0
+$$
+
+问题来了：$P$ 和 $K$ **都未知**，而 $P(A+BK)=PA+PBK$ 里出现了 $P$ 与 $K$ 的乘积 —— **非线性**，不能直接当 LMI。
+
+**关键技巧（两步）：**
+
+1. **Congruence transformation + 换元 $Y=P^{-1}$。** 用 $\mathrm{diag}(P^{-1},P^{-1})$ 左右同乘（congruence，不改变 definiteness），把条件改写成只含 $Y=P^{-1}$ 的形式：
+
+$$
+\begin{bmatrix}Y & Y(A+BK)^T\\ (A+BK)Y & Y\end{bmatrix}\succ0
+$$
+
+2. **换元 $V=KY$。** 现在 $KY$ 整体出现，令 $V=KY$，得到一条 **线性** LMI：
+
+$$
+\begin{bmatrix}Y & YA^T+V^TB^T\\ AY+BV & Y\end{bmatrix}\succ0
+$$
+
+优化变量是 $Y$ 和 $V$（都不含乘积）。解出后 **还原** gain：
+
+$$
+K=VY^{-1}
+$$
+
+记忆钩子：
+
+```text
+P*K is nonlinear -> change variables.
+Y = P^{-1}, V = KY  =>  the LMI becomes linear in (Y, V).
+Recover the controller: K = V Y^{-1}.
+```
+
+## LQR via LMI（线性二次型调节器）
+
+加上 performance（不只是稳定）。系统 $x_{k+1}=Ax_k+Bu_k+Fw_k$，cost
+
+$$
+J(x)=\sum_{k=0}^{\infty}\big(x_k^TQx_k+u_k^TRu_k\big)
+=\sum_k x_k^T
+\begin{bmatrix}Q^{1/2} & K^TR^{1/2}\end{bmatrix}
+\begin{bmatrix}Q^{1/2}\\ R^{1/2}K\end{bmatrix}x_k
+$$
+
+**定理（LMI 形式）**：$J(x)<\gamma$ 当且仅当存在 symmetric $W,P$ 使
+
+$$
+\mathrm{trace}(W)<\gamma,\qquad
+\begin{bmatrix}
+W & \begin{bmatrix}Q^{1/2}\\ R^{1/2}K\end{bmatrix}P\\[6pt]
+P\begin{bmatrix}Q^{1/2} & K^TR^{1/2}\end{bmatrix} & P
+\end{bmatrix}\succ0,
+$$
+
+并且
+
+$$
+\begin{bmatrix}
+P & (A+BK)P & F\\
+P(A+BK)^T & P & 0\\
+F^T & 0 & I
+\end{bmatrix}\succ0.
+$$
+
+同样地，$(A+BK)P$ 和 $KP$ 含 $K\cdot P$ 乘积 —— 用同一招 $V=KP$ 线性化（注意：这里这个 $P$ 扮演的就是上一节 $Y=P^{-1}$ 的角色，是 inverse Lyapunov matrix；Roy 的 slides 在两页之间换了记号，别被绕进去）。最终 design optimisation：
+
+$$
+\min_{W,P,V}\ \gamma
+\quad\text{subject to}\quad
+\mathrm{trace}(W)<\gamma,
+$$
+
+$$
+\begin{bmatrix}W & \begin{bmatrix}Q^{1/2}\\ R^{1/2}V\end{bmatrix}\\[4pt] \begin{bmatrix}Q^{1/2}&V^TR^{1/2}\end{bmatrix} & P\end{bmatrix}\succ0,\qquad
+\begin{bmatrix}P & AP+BV & F\\ PA^T+V^TB^T & P & 0\\ F^T & 0 & I\end{bmatrix}\succ0
+$$
+
+变量是 $W,P,V$（$W,P\succ0$，$V$ 不必），解完用 $K=VP^{-1}$ 得到最优状态反馈。这整套可以几乎照抄成 CVX 代码（`trace` 能直接进 CVX）。
+
+考试理解重点：
+
+- LQR 你可能已从别的课见过（解 Riccati equation）。这里展示的是 **另一条路：写成 LMI / SDP 求解**。
+- 核心永远是同一个把戏：**乘积 $K\cdot P$ 非线性 → 换元 $V=KP$ → LMI → 解完 $K=VP^{-1}$ 还原**。
+- 这种方法的真正价值是 **可扩展**：把目标换成别的 LMI 就能做更多设计（见下）。
+
+## LMI-based Control Design（还能做什么）
+
+Roy 列出 LMI 框架能统一处理的控制设计 / 分析问题（不需要手推，知道"这些都能写成 LMI"即可）：
+
+- pole placement（极点配置，在 s-平面 / z-平面的某个 region 内）；
+- 最小化闭环增益（$H_\infty$ norm 或 $H_2$ norm）；
+- Kalman filter 设计（从测量最优估计 state 的 filter）；
+- robust stability / robust performance 分析（$A,B$ 有 ±10% 变动还稳不稳）；
+- robust control design（系统带 uncertainty 的设计）。
+
+一句话：**经典控制理论的大半都能翻译成 LMI 约束，再交给 SDP solver。** 把一个新的控制目标第一次写成 LMI，本身就能发论文。
 
 # Model Predictive Control
 
@@ -8019,6 +10524,28 @@ J(u,x) =
 \left(x_i^T Q x_i + u_i^T R u_i\right)
 + x_M^T Q_{\text{terminal}} x_M
 $$
+
+Roy 说 "Deviation from the desired state, quadratic is usually a pretty good choice" 的意思是：如果你真正关心的是 state $x_i$ 离 desired state / reference state（期望状态）$x_{\text{ref}}$ 有多远，cost 通常写成 tracking error（跟踪误差）的二次型：
+
+$$
+(x_i-x_{\text{ref}})^TQ(x_i-x_{\text{ref}}).
+$$
+
+如果目标状态就是 zero，例如希望系统回到平衡点 $x=0$，那它就退化成：
+
+$$
+x_i^TQx_i.
+$$
+
+为什么二次型常用？
+
+- 偏差为 0 时 cost 最小；
+- 正负偏差同样惩罚，例如 $+2$ 和 $-2$ 都是 error magnitude 2；
+- 大偏差惩罚更重，例如 error 从 1 到 2，cost 从 1 到 4；
+- $Q\succeq0$ 可以给不同 state 不同权重，例如位置误差比速度误差更重要；
+- quadratic cost + linear dynamics / linear constraints 通常得到 QP，solver 很成熟。
+
+但 Roy 也提醒：不是所有 cost 都必须 quadratic。比如 energy / money 这类 economic cost（经济成本）可能更像 linear cost；steering input 有时只需要加 hard bound，不一定需要在 objective 里惩罚。
 
 Typical MPC problem:
 
@@ -8078,6 +10605,365 @@ Online MPC 每个 time step 求解 optimisation。Explicit MPC 先离线解 para
 - 高维系统；
 - long horizon；
 - constraints 很多导致 regions 爆炸。
+
+### Worked Example: One-Step Explicit MPC via KKT
+
+Roy 用一个 one-step-ahead example 展示 explicit MPC 为什么会得到 piecewise affine controller（分段仿射控制器）。这里 horizon 只有一步，input 是 scalar（单输入）：
+
+$$
+x_{k+1}=Ax_k+Bu_k.
+$$
+
+目标是选 $u_k$，让下一步 state 和 input cost 小，同时满足 input bounds：
+
+$$
+u_{\text{lbnd}}\le u_k\le u_{\text{ubnd}}.
+$$
+
+对应 optimisation problem：
+
+$$
+\begin{aligned}
+\min_{u_k}\quad
+& x_{k+1}^TQx_{k+1}+u_k^TRu_k\\
+\text{subject to}\quad
+& x_{k+1}=Ax_k+Bu_k,\\
+& u_k-u_{\text{ubnd}}\le0,\\
+& u_{\text{lbnd}}-u_k\le0.
+\end{aligned}
+$$
+
+#### Physical Meaning of $A,B,Q,R$（这些符号通常代表什么）
+
+题目里给 $A,B,Q,R$ 时，它们首先是数学对象；但在控制工程里，它们通常不是随便来的。
+
+Dynamics matrices:
+
+- $A$ 是 state transition matrix（状态转移矩阵）。它描述 **如果不额外控制，当前状态 $x_k$ 会怎样自然演化到下一步**。例如位置、速度、温度、库存量、电压等状态之间的自然耦合，都藏在 $A$ 里。
+- $B$ 是 input matrix / control matrix（输入矩阵、控制矩阵）。它描述 **control input $u_k$ 能怎样影响下一步状态**。例如电机电压对转速的影响、加速度命令对位置和速度的影响、加热功率对室温的影响。
+
+Cost matrices:
+
+- $Q$ 是 state penalty / tracking-error weight（状态误差权重）。它回答：**哪些 state deviation 更重要？** 如果某个状态不能偏离太多，就给它更大的权重。
+- $R$ 是 input penalty / control-effort weight（输入努力权重）。它回答：**我们愿不愿意用很大的控制动作？** $R$ 越大，controller 越保守，越不愿意猛踩油门、猛加热、猛打方向。
+
+Input bounds:
+
+- $u_{\text{lbnd}},u_{\text{ubnd}}$ 是 actuator limits（执行器限制）。它们通常来自真实硬件：最大电压、最大力矩、最大阀门开度、最大充放电功率等。
+
+所以这个 one-step MPC problem 的工程直觉是：
+
+> 在系统动力学 $x_{k+1}=Ax_k+Bu_k$ 和 actuator limits 允许的范围内，选择一个控制动作 $u_k$，让下一步状态尽量好，同时不要用太激烈的控制。
+
+一个常见 trade-off：
+
+- $Q$ 大、$R$ 小：更 aggressive，愿意用大输入快速压低 state error；
+- $Q$ 小、$R$ 大：更 conservative，动作平滑，但 state error 可能消得慢；
+- bounds 很紧：即使 $Q$ 很大，controller 也不能超过硬件极限。
+
+Roy 笔记里的 typo 要注意：
+
+- dynamics 里应是 $x_{k+1}$，不是 $x_{k+t}$；
+- 展开 quadratic term 时应是 $B^TQB+R$，不是漏掉 $Q$ 的 $B^TB+R$。
+
+#### KKT Sign Convention（为什么约束要这样写）
+
+KKT 里最常见的 inequality convention 是：
+
+$$
+g_i(u)\le0,
+\qquad
+\lambda_i\ge0,
+$$
+
+然后 Lagrangian 写成：
+
+$$
+L(u,\lambda)=f(u)+\sum_i\lambda_i g_i(u).
+$$
+
+所以这里必须先把 input bounds 改写成 "$\le0$" 的形式。
+
+Upper bound:
+
+$$
+u_k\le u_{\text{ubnd}}
+\quad\Longleftrightarrow\quad
+g_u(u_k)=u_k-u_{\text{ubnd}}\le0.
+$$
+
+Lower bound:
+
+$$
+u_k\ge u_{\text{lbnd}}
+\quad\Longleftrightarrow\quad
+u_{\text{lbnd}}-u_k\le0
+\quad\Longleftrightarrow\quad
+g_l(u_k)=u_{\text{lbnd}}-u_k\le0.
+$$
+
+因此 Lagrangian 里出现：
+
+$$
++\lambda_u(u_k-u_{\text{ubnd}})
++\lambda_l(u_{\text{lbnd}}-u_k),
+\qquad
+\lambda_u,\lambda_l\ge0.
+$$
+
+注意：在 feasible region 里面，$g_i(u)\le0$ 确实通常是负数或 0。active constraint（活跃约束）时 $g_i(u)=0$；inactive 时 $g_i(u)<0$，由 complementarity 得 $\lambda_i=0$。
+
+如果你换另一种 convention，把约束写成 $h_i(u)\ge0$，那 Lagrangian 通常要写成 $f(u)-\mu_i h_i(u)$ 且 $\mu_i\ge0$。两套写法等价，但不要混用。本 guide 统一使用：
+
+```text
+constraint <= 0, multiplier >= 0, L = f + lambda * constraint
+```
+
+#### Step 1: Write the Lagrangian
+
+对 upper bound $u_k-u_{\text{ubnd}}\le0$ 加 multiplier $\lambda_u\ge0$；对 lower bound $u_{\text{lbnd}}-u_k\le0$ 加 multiplier $\lambda_l\ge0$：
+
+$$
+L(x,u,\lambda)
+=x_{k+1}^TQx_{k+1}
++u_k^TRu_k
++\lambda_u(u_k-u_{\text{ubnd}})
++\lambda_l(u_{\text{lbnd}}-u_k).
+$$
+
+把 dynamics $x_{k+1}=Ax_k+Bu_k$ 代入：
+
+$$
+\begin{aligned}
+x_{k+1}^TQx_{k+1}
+&=(Ax_k+Bu_k)^TQ(Ax_k+Bu_k)\\
+&=x_k^TA^TQAx_k
++2x_k^TA^TQBu_k
++u_k^TB^TQBu_k.
+\end{aligned}
+$$
+
+所以 Lagrangian 变成：
+
+$$
+\begin{aligned}
+L
+=&\ x_k^TA^TQAx_k
++2x_k^TA^TQBu_k
++u_k^T(B^TQB+R)u_k\\
+&+\lambda_u(u_k-u_{\text{ubnd}})
++\lambda_l(u_{\text{lbnd}}-u_k).
+\end{aligned}
+$$
+
+为了让后面式子短一点，定义
+
+$$
+H=B^TQB+R,\qquad g=B^TQA.
+$$
+
+单输入时 $H$ 是 scalar，且通常 $H>0$；$g x_k$ 是 scalar。
+
+#### Step 2: KKT Conditions
+
+KKT conditions 包括四类：
+
+**1. Stationarity（对 $u_k$ 求导为 0）**
+
+$$
+\frac{\partial L}{\partial u_k}
+=2B^TQAx_k+2(B^TQB+R)u_k+\lambda_u-\lambda_l=0.
+$$
+
+用 $H,g$ 记：
+
+$$
+2gx_k+2Hu_k+\lambda_u-\lambda_l=0.
+$$
+
+**2. Primal feasibility（原约束满足）**
+
+$$
+u_k-u_{\text{ubnd}}\le0,\qquad
+u_{\text{lbnd}}-u_k\le0.
+$$
+
+也就是：
+
+$$
+u_{\text{lbnd}}\le u_k\le u_{\text{ubnd}}.
+$$
+
+**3. Dual feasibility（乘子非负）**
+
+$$
+\lambda_u\ge0,\qquad \lambda_l\ge0.
+$$
+
+**4. Complementarity（互补松弛）**
+
+$$
+\lambda_u(u_k-u_{\text{ubnd}})=0,
+\qquad
+\lambda_l(u_{\text{lbnd}}-u_k)=0.
+$$
+
+互补松弛的意思是：
+
+```text
+either the constraint is active and its multiplier may be positive,
+or the constraint is inactive and its multiplier must be zero.
+```
+
+因为 $u_k$ 不可能同时等于 upper bound 和 lower bound（除非两个 bound 相等），所以只有三种 case：
+
+1. upper bound active；
+2. lower bound active；
+3. neither active, so input is inside the bounds。
+
+#### Case 1: Upper Bound Active
+
+Upper bound active means:
+
+$$
+u_k=u_{\text{ubnd}},\qquad
+\lambda_u\ge0,\qquad
+\lambda_l=0.
+$$
+
+代入 stationarity：
+
+$$
+2gx_k+2Hu_{\text{ubnd}}+\lambda_u=0.
+$$
+
+所以：
+
+$$
+\lambda_u=-2gx_k-2Hu_{\text{ubnd}}.
+$$
+
+因为 $\lambda_u\ge0$，得到 region condition：
+
+$$
+-2gx_k-2Hu_{\text{ubnd}}\ge0
+\quad\Longleftrightarrow\quad
+gx_k\le -Hu_{\text{ubnd}}.
+$$
+
+因此在这个 state-space region 里，optimal control 是：
+
+$$
+u_k^\star=u_{\text{ubnd}}.
+$$
+
+这就是一个 saturation region（饱和区域）：unconstrained control 想超过 upper bound，所以最优解被卡在上界。
+
+#### Case 2: Lower Bound Active
+
+Lower bound active means:
+
+$$
+u_k=u_{\text{lbnd}},\qquad
+\lambda_u=0,\qquad
+\lambda_l\ge0.
+$$
+
+代入 stationarity：
+
+$$
+2gx_k+2Hu_{\text{lbnd}}-\lambda_l=0.
+$$
+
+所以：
+
+$$
+\lambda_l=2gx_k+2Hu_{\text{lbnd}}.
+$$
+
+因为 $\lambda_l\ge0$，得到：
+
+$$
+2gx_k+2Hu_{\text{lbnd}}\ge0
+\quad\Longleftrightarrow\quad
+gx_k\ge -Hu_{\text{lbnd}}.
+$$
+
+因此在这个 region 里：
+
+$$
+u_k^\star=u_{\text{lbnd}}.
+$$
+
+#### Case 3: No Bound Active（Interior Region）
+
+No bound active means:
+
+$$
+\lambda_u=0,\qquad \lambda_l=0,
+\qquad
+u_{\text{lbnd}}<u_k<u_{\text{ubnd}}.
+$$
+
+Stationarity 变成：
+
+$$
+2gx_k+2Hu_k=0.
+$$
+
+所以：
+
+$$
+u_k^\star=-H^{-1}gx_k.
+$$
+
+这就是一个 linear state feedback law：
+
+$$
+u_k^\star=Kx_k,\qquad K=-H^{-1}g=-(B^TQB+R)^{-1}B^TQA.
+$$
+
+它只在满足 input bounds 时有效：
+
+$$
+u_{\text{lbnd}}\le -H^{-1}gx_k\le u_{\text{ubnd}}.
+$$
+
+因为 $H>0$，可以写成 state-space 条件：
+
+$$
+-Hu_{\text{ubnd}}\le gx_k\le -Hu_{\text{lbnd}}.
+$$
+
+#### Final Explicit Controller
+
+把三种情况合在一起：
+
+$$
+u_k^\star(x_k)=
+\begin{cases}
+u_{\text{ubnd}}, & gx_k\le -Hu_{\text{ubnd}},\\[4pt]
+-H^{-1}gx_k, & -Hu_{\text{ubnd}}\le gx_k\le -Hu_{\text{lbnd}},\\[4pt]
+u_{\text{lbnd}}, & gx_k\ge -Hu_{\text{lbnd}}.
+\end{cases}
+$$
+
+这就是 explicit MPC 的核心形状：
+
+```text
+state space is split into regions;
+inside each region, the optimal input is either constant or affine in the state.
+```
+
+在这个简单例子里只有 3 个 regions：
+
+| Region | Condition | Optimal input |
+|---|---|---|
+| upper saturation | $gx_k\le -Hu_{\text{ubnd}}$ | $u_{\text{ubnd}}$ |
+| interior feedback | $-Hu_{\text{ubnd}}\le gx_k\le -Hu_{\text{lbnd}}$ | $-H^{-1}gx_k$ |
+| lower saturation | $gx_k\ge -Hu_{\text{lbnd}}$ | $u_{\text{lbnd}}$ |
+
+这也是 Roy 说的：online 时不必每一步重新跑 optimiser；只需要判断当前 $x_k$ 落在哪个 region，然后套对应公式。
 
 # Tutorial and Exercise Route
 
@@ -9254,6 +12140,36 @@ A(\gamma x_1 + (1-\gamma)x_2)
 \le \gamma b + (1-\gamma)b
 = b
 $$
+
+## Template: Rewrite a Constraint as an LMI (Schur Complement)
+
+Use this when asked to express a quadratic / norm / "minimise the gain" condition as an LMI.
+
+1. **Epigraph if needed.** If the goal is $\min J(x)$, introduce $\gamma$: $\min\gamma$ s.t. $J(x)\le\gamma$.
+2. **Get a single scalar / matrix inequality**, e.g. $\gamma^2 I - A(x)A(x)^T\succ0$, or $x^TQx+b^Tx+c\le0$.
+3. **Identify the $\begin{bmatrix}Q&S\\S^T&R\end{bmatrix}$ blocks** so that $Q-SR^{-1}S^T$ reproduces your inequality. Pick $R$ to be the easy-to-invert block ($\gamma I$, $-Q^{-1}$, $P$, …).
+4. **Write the block matrix** and state the sign ($\succ0$ / $\prec0$) and which block must be definite.
+5. **Check linearity in the variables** — that is the whole point: the block matrix must be affine in $x$ (and $\gamma$).
+
+Worked patterns to quote:
+
+$$
+\|A(x)\|_2<\gamma
+\ \Longleftrightarrow\
+\begin{bmatrix}\gamma I & A(x)\\ A(x)^T & \gamma I\end{bmatrix}\succ0,
+\qquad
+x\in E
+\ \Longleftrightarrow\
+\begin{bmatrix}1 & (x_c-x)^T\\ (x_c-x) & P\end{bmatrix}\succeq0
+$$
+
+Controller-synthesis trap: a product like $P(A+BK)$ or $K\cdot P$ is **not** linear — change variables ($Y=P^{-1}$, $V=KY$ or $V=KP$), solve the LMI, then recover $K=VY^{-1}$ (resp. $K=VP^{-1}$).
+
+Common mistakes:
+
+- forgetting the definiteness condition on the block being eliminated ($R\succ0$);
+- leaving a product of two unknowns ($PK$) and calling it an LMI;
+- in CVX, omitting the `sdp` flag so `>=` is read element-wise instead of as a PSD cone.
 
 ## Template: Formulate MPC
 
