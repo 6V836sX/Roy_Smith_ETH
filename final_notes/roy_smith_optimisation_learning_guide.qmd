@@ -199,57 +199,111 @@ Can I trust the data-derived model that I am about to optimise over?
 | Should know | nonlinear LS linearisation, ellipsoid method idea, Schur complement, stability/state-feedback LMI ideas, explicit MPC |
 | Recognise only | S-procedure details in convex exercise problem 3, deep implementation details of CVX/YALMIP |
 
-# Mindmap-based Learning Path
+# Guide Architecture: How This Book Is Organised
 
-学习顺序建议如下：
-
-1. **Least squares as optimisation**: 先理解 $y = \Phi\theta + \epsilon$、residual、normal equations。
-2. **Least squares as statistics**: 再理解 $\hat\theta$ 是随机变量，所以要看 bias、variance、MSE。
-3. **Regularisation**: 之后看为什么最小 training residual 不等于最好 prediction。
-4. **Convex foundations**: 学 convex set、cone、PSD cone、ellipsoid。
-5. **Problem classes**: 把 LP、QP、SOCP、QCQP、SDP/LMI 放在同一张分类图里。
-6. **LMI tools**: 用 Schur complement 和 PSD cone 理解 matrix constraints。
-7. **MPC**: 把前面 optimisation framework 用到 control：finite horizon、constraints、replanning。
-
-## Tomorrow's Reading Route for Lectures 6--7
-
-如果明天直接用这份 guide 复习 least squares，不建议从头到尾等权阅读。建议按下面路线走：
+这份 guide 现在按“从数据估计到优化建模，再到 LMI/MPC”的逻辑组织，而不是按视频出现顺序机械排列。这样复习时每一章都回答一个明确问题：
 
 ```text
-Pass 1: Core mechanics
-    model y = Phi theta + epsilon
-    -> build Phi
-    -> normal equations
-    -> geometric projection
-    -> basis functions and nonlinear LS
+Part I   Estimation model:
+         What are we estimating, and what is Phi?
 
-Pass 2: Statistical meaning
-    theta_hat is random
-    -> unbiasedness
-    -> variance / MSE / consistency
-    -> standard errors / confidence intervals / significance
-    -> BLUE and inverse-variance weighting
-    -> correlated-noise BLUE
+Part II  Statistical meaning:
+         What does the estimator mean under noise?
 
-Pass 3: Prediction and practice
-    bias-variance tradeoff
-    -> regularisation
-    -> validation
-    -> do the Lecture 6--7 practice set
+Part III Stabilisation and prediction:
+         When LS is unstable or over-flexible, how do regularisation and validation help?
+
+Part IV  Convex structure:
+         What geometric structure makes an optimisation problem tractable?
+
+Part V   Conic/LMI modelling:
+         How do LP, QP, SOCP, SDP and LMI fit into one language?
+
+Part VI  MPC:
+         How is this optimisation machinery used repeatedly in control?
 ```
 
-For exam preparation, the high-frequency least-squares items are:
+## Dependency Map（学习依赖图）
+
+不要把这些章节看成孤立公式。它们之间的依赖关系是：
+
+```text
+Phi / model structure
+  -> least-squares objective
+  -> normal equations / projection
+  -> estimator as random variable
+  -> bias, variance, MSE, BLUE
+  -> regularisation and validation
+  -> convex optimisation language
+  -> cones and PSD cone
+  -> Schur complement and LMI
+  -> MPC formulation and explicit MPC KKT
+```
+
+也就是说，前半部分回答：
+
+```text
+How do we estimate a model from data?
+```
+
+后半部分回答：
+
+```text
+How do we put models, constraints, and objectives into solvable optimisation form?
+```
+
+这也是 Roy 这组 lectures 的主线：从 noisy data / least squares 出发，走到 convex optimisation、LMI 和 MPC。
+
+## Exam Reading Route（考试复习路线）
+
+如果只剩有限时间，不建议从头到尾等权阅读。按下面三轮走：
+
+**Pass 1: Core mechanics（会算）**
+
+```text
+build Phi
+-> derive normal equations
+-> prove OLS unbiased / covariance
+-> derive ridge solution
+-> write KKT/Lagrangian
+-> use Schur complement for simple LMI conversions
+-> formulate MPC
+```
+
+**Pass 2: Structure recognition（会分类）**
+
+```text
+LS vs nonlinear LS
+LP vs QP vs SOCP vs SDP/LMI
+convex set vs convex function
+cone vs convex cone vs PSD cone
+MPC as repeated constrained optimisation
+```
+
+**Pass 3: Exam answers（会写）**
+
+```text
+definition
+-> formulation
+-> derivation
+-> short interpretation
+-> common mistake
+```
+
+## High-Frequency Roy Smith Skills
 
 | Priority | You should be able to do |
 |---|---|
 | Very high | build $\Phi$, derive normal equations, explain projection/residual orthogonality |
 | Very high | prove OLS unbiased under $E[\epsilon]=0$ and fixed $\Phi$ |
 | Very high | derive inverse-variance weights and explain BLUE |
-| High | handle correlated noise using $(\Phi^TR^{-1}\Phi)^{-1}\Phi^TR^{-1}y$ |
-| High | explain MSE = bias$^2$ + variance and why regularisation can reduce MSE |
-| High | interpret standard error, confidence interval, and coefficient significance |
+| Very high | derive ridge solution and explain stability / variance reduction |
+| Very high | use Schur complement to rewrite a quadratic or norm constraint as an LMI |
+| High | interpret standard error, confidence interval, coefficient significance, and MSE |
+| High | classify LP/QP/SOCP/SDP/LMI from objective and constraints |
+| High | formulate MPC from dynamics, cost, horizon, and constraints |
 | Medium | explain nonlinear LS / Gauss-Newton as repeated linearised LS |
-| Medium | discuss rank, condition number, pseudo-inverse, and why normal equations may be numerically poor |
+| Medium | explain ellipsoid method as cutting-plane / uncertainty-region shrinking |
 
 # Least Squares: Core Formulation
 
@@ -5401,896 +5455,6 @@ $$
 
 如果 $P$ 的某些方向 eigenvalue（特征值）大，ellipsoid 在那些方向更长；eigenvalue 小，ellipsoid 在那些方向更短。
 
-### Ellipsoidal Algorithm（椭球算法）
-
-Roy 截图里的 ellipsoidal algorithm（椭球算法）是在讲一种 optimisation strategy（优化策略）：
-
-```text
-Keep an ellipsoid that is guaranteed to contain the optimum.
-At each step, cut away half that cannot contain the optimum.
-Wrap the remaining half with a smaller ellipsoid.
-Repeat.
-```
-
-它不是 gradient descent。Gradient descent 是：
-
-```text
-current point -> take a step -> next point
-```
-
-Ellipsoid method 更像：
-
-```text
-current uncertainty region -> cut it -> smaller uncertainty region
-```
-
-所以它关心的是：
-
-```text
-Where can the optimum still be?
-```
-
-而不是：
-
-```text
-Which direction should I step right now?
-```
-
-#### Reparametrised Form（重参数化形式）
-
-前面 Roy 已经讲过 equality constraint 的处理：
-
-$$
-\mathbf{x}=\mathbf{x}_0+F\mathbf{z}.
-$$
-
-这里 $\mathbf{x}_0$ 是一个 particular feasible point（特解），$F\mathbf{z}$ 是 null-space directions（零空间方向）。这样 equality constraints 已经自动满足。
-
-所以原来的 problem 可以写成 $\mathbf{z}$ 空间里的问题：
-
-$$
-\min_{\mathbf{z}}\ \phi(\mathbf{z})
-\quad
-\text{subject to}
-\quad
-\psi_i(\mathbf{z})\le0,\quad i=1,\ldots,m,
-$$
-
-其中：
-
-$$
-\phi(\mathbf{z})=f_0(F\mathbf{z}+\mathbf{x}_0),
-\qquad
-\psi_i(\mathbf{z})=f_i(F\mathbf{z}+\mathbf{x}_0).
-$$
-
-意思是：
-
-```text
-z is the free variable after equality constraints are removed.
-x = Fz + x0 maps z back to the original variable x.
-phi(z) is the objective expressed in z.
-psi_i(z) are the inequality constraints expressed in z.
-```
-
-所以椭球算法是在 $\mathbf{z}$ 空间里工作：它维护一个 ellipsoid，认为 optimum $\mathbf{z}^\star$ 在里面。
-
-#### Step 1: Start With a Big Ellipsoid（先用大椭球包住最优点）
-
-先假设我们知道一个很大的 ellipsoid：
-
-$$
-E_0
-=
-\{\mathbf{z}\mid(\mathbf{z}-\mathbf{c}_0)^TP_0^{-1}(\mathbf{z}-\mathbf{c}_0)\le1\}
-$$
-
-并且确信：
-
-$$
-\mathbf{z}^\star\in E_0.
-$$
-
-这里：
-
-- $\mathbf{c}_0$ 是 ellipsoid center（椭球中心）；
-- $P_0$ 决定 ellipsoid 的 shape / size（形状 / 大小）；
-- $\mathbf{z}^\star$ 是最优解。
-
-直觉：
-
-```text
-I do not know where the optimum is,
-but I know it is somewhere inside this big ellipsoid.
-```
-
-#### Step 2: Evaluate at the Center（在中心点计算函数与约束）
-
-在当前椭球中心 $\mathbf{c}$ 处，计算：
-
-$$
-\phi(\mathbf{c}),
-\qquad
-\psi_i(\mathbf{c}).
-$$
-
-如果暂时只看 unconstrained problem（无约束问题），就只看 objective $\phi$。
-
-如果有 constraints，则还要看有没有 violated constraint（被违反的约束）：
-
-$$
-\psi_i(\mathbf{c})>0.
-$$
-
-Roy 这里先说 “focus on just the cost function”，也就是先忽略 constraints，只用 objective 的 gradient / subgradient 来切椭球。
-
-#### Gradient and Subgradient（梯度与次梯度）
-
-如果 $\phi$ differentiable（可微），我们用 gradient：
-
-$$
-\nabla\phi(\mathbf{c}).
-$$
-
-Gradient 指向 function 增加最快的方向。对 convex function，有一条重要 inequality：
-
-$$
-\phi(\mathbf{z})
-\ge
-\phi(\mathbf{c})
-+
-\nabla\phi(\mathbf{c})^T(\mathbf{z}-\mathbf{c}).
-$$
-
-这条式子的意思是：在 $\mathbf{c}$ 点的 tangent plane（切平面）永远在 convex function 的 graph 下面。
-
-如果函数不可微，比如有 kink（尖点）：
-
-$$
-f(x)=|x|
-$$
-
-在 $x=0$ 没有唯一 gradient。这时可以用 subgradient（次梯度）。
-
-Subgradient $g$ 的定义是：
-
-$$
-f(y)\ge f(x)+g^T(y-x)
-\quad
-\text{for all } y.
-$$
-
-也就是说，$g$ 定义了一条仍然在函数下面的 supporting line / supporting hyperplane（支撑线 / 支撑超平面）。
-
-\begin{center}
-\begin{tikzpicture}[scale=0.9, >=stealth]
-  \draw[->] (-3.2,0) -- (3.2,0) node[right] {$x$};
-  \draw[->] (0,-0.3) -- (0,3.2) node[above] {$f(x)$};
-
-  \draw[thick, blue] (-2.7,2.7) -- (0,0) -- (2.7,2.7);
-  \fill[red] (0,0) circle (1.6pt) node[below right] {kink};
-
-  \draw[thin, green!45!black] (-2.4,-1.2) -- (2.4,1.2);
-  \draw[thin, green!45!black] (-2.4,0) -- (2.4,0);
-  \draw[thin, green!45!black] (-2.4,1.2) -- (2.4,-1.2);
-  \node[green!35!black, align=center, fill=white, inner sep=1.5pt] at (1.75,1.55) {many supporting lines\\many subgradients};
-  \node[blue, fill=white, inner sep=1.5pt] at (-1.9,2.35) {$f(x)=|x|$};
-\end{tikzpicture}
-\end{center}
-
-所以 Roy 说：
-
-```text
-replace the gradient with a set of gradients.
-Those are called sub-gradients.
-```
-
-#### Step 3: Use Gradient/Subgradient to Cut the Ellipsoid（用梯度切掉一半）
-
-设当前中心是 $\mathbf{c}$，取一个 gradient 或 subgradient：
-
-$$
-\mathbf{g}\in\partial\phi(\mathbf{c}).
-$$
-
-对 convex function，如果 $\mathbf{g}^T(\mathbf{z}-\mathbf{c})>0$，那么由 subgradient inequality：
-
-$$
-\phi(\mathbf{z})
-\ge
-\phi(\mathbf{c})+\mathbf{g}^T(\mathbf{z}-\mathbf{c})
->
-\phi(\mathbf{c}).
-$$
-
-这说明这些点的 objective value 比中心点还大。既然中心点 $\mathbf{c}$ 已经在椭球里，最优点不可能在这个 “higher side”（更高的一侧）。所以 minimizer 必须在另一侧：
-
-$$
-\mathbf{g}^T(\mathbf{z}-\mathbf{c})\le0.
-$$
-
-这就是一个 halfspace cut（半空间切割）。
-
-```text
-gradient/subgradient gives a separating hyperplane through the center.
-one side cannot contain the minimizer.
-keep the other side.
-```
-
-\begin{center}
-\begin{tikzpicture}[scale=0.95, >=stealth]
-  \draw[->] (-0.6,0) -- (6.8,0) node[right] {$z_1$};
-  \draw[->] (0,-0.6) -- (0,4.5) node[above] {$z_2$};
-
-  \begin{scope}[rotate around={-18:(3,2)}]
-    \fill[orange!12] (3,2) ellipse (2.55 and 1.25);
-    \draw[thick, orange] (3,2) ellipse (2.55 and 1.25);
-  \end{scope}
-
-  \coordinate (C) at (3,2);
-  \fill[red] (C) circle (1.8pt) node[below left] {$\mathbf{c}$};
-  \draw[->, thick, purple] (C) -- ++(1.25,1.05) node[above right] {$\mathbf{g}$};
-
-  \draw[thick, red] (1.2,4.0) -- (5.5,0.15);
-  \node[red, fill=white, inner sep=1.5pt] at (5.25,0.7) {cut};
-  \node[align=center, fill=white, inner sep=1.5pt] at (4.95,3.25) {discard:\\$\mathbf{g}^T(\mathbf{z}-\mathbf{c})>0$};
-  \node[align=center, fill=white, inner sep=1.5pt] at (1.75,1.1) {keep:\\$\mathbf{g}^T(\mathbf{z}-\mathbf{c})\le0$};
-\end{tikzpicture}
-\end{center}
-
-这张图对应 Roy 的话：
-
-```text
-if the gradient points this way,
-cut the ellipse in two,
-then the minimizer has to lie in this one.
-```
-
-#### Step 4: Wrap the Remaining Half With a Smaller Ellipsoid（用更小椭球包住剩下的一半）
-
-切完之后，剩下的集合是：
-
-$$
-E\cap\{\mathbf{z}\mid \mathbf{g}^T(\mathbf{z}-\mathbf{c})\le0\}.
-$$
-
-它不是一个 ellipsoid，而是 half-ellipsoid（半个椭球）。为了继续用同样算法，我们找一个 new ellipsoid（新椭球）把它包住：
-
-```text
-old ellipsoid
--> cut by halfspace
--> half ellipsoid
--> smallest-volume enclosing ellipsoid
--> new smaller ellipsoid
-```
-
-这个 “smallest volume ellipse enclosing the half ellipse” 就是 Roy 截图第 3 步。
-
-#### A Concrete 2D Cut Example（二维数值例子：椭圆怎么切半空间）
-
-先不要看复杂公式。用最简单的二维例子：
-
-$$
-E_k=\{\mathbf{z}\mid \mathbf{z}^T\mathbf{z}\le1\}.
-$$
-
-这就是 unit disk（单位圆），也可以看成一个特殊的 ellipse：
-
-$$
-\mathbf{c}_k=
-\begin{bmatrix}
-0\\
-0
-\end{bmatrix},
-\qquad
-P_k=
-\begin{bmatrix}
-1&0\\
-0&1
-\end{bmatrix}.
-$$
-
-假设在中心点算出来的 gradient 是：
-
-$$
-\mathbf{g}_k=
-\begin{bmatrix}
-1\\
-0
-\end{bmatrix}.
-$$
-
-这表示 objective 沿着 positive $z_1$ direction（向右）增加最快。对 convex objective 来说，右半边的点满足：
-
-$$
-\mathbf{g}_k^T(\mathbf{z}-\mathbf{c}_k)>0.
-$$
-
-代入数字：
-
-$$
-\begin{bmatrix}1&0\end{bmatrix}
-\begin{bmatrix}z_1\\ z_2\end{bmatrix}
->0
-\quad\Longleftrightarrow\quad
-z_1>0.
-$$
-
-也就是说，右半边 $z_1>0$ 的 objective 一定比中心点更高。既然中心点已经是一个 candidate，minimizer 不需要去右半边找。我们保留：
-
-$$
-\mathbf{g}_k^T(\mathbf{z}-\mathbf{c}_k)\le0
-\quad\Longleftrightarrow\quad
-z_1\le0.
-$$
-
-所以这一步的 halfspace cut 很具体：
-
-```text
-old region: unit disk
-discard:    right half, z1 > 0
-keep:       left half,  z1 <= 0
-```
-
-\begin{center}
-\begin{tikzpicture}[scale=1.12, >=stealth]
-  \draw[->] (-2.15,0) -- (2.25,0) node[right] {$z_1$};
-  \draw[->] (0,-1.65) -- (0,1.75) node[above] {$z_2$};
-
-  \fill[green!12] (0,0) -- (90:1.15) arc (90:270:1.15) -- cycle;
-  \fill[red!9] (0,0) -- (-90:1.15) arc (-90:90:1.15) -- cycle;
-  \draw[thick, orange] (0,0) circle (1.15);
-  \draw[thick, red] (0,-1.35) -- (0,1.35);
-
-  \fill[black] (0,0) circle (1.4pt);
-  \node[fill=white, inner sep=1pt] at (0.28,-0.28) {$\mathbf{c}_k$};
-  \draw[->, thick, purple] (0,0) -- (1.05,0);
-  \node[purple, fill=white, inner sep=1pt] at (1.18,-0.24) {$\mathbf{g}_k$};
-
-  \node[align=center, fill=white, inner sep=1.5pt] at (-0.95,0.82) {keep\\$z_1\le0$};
-  \node[align=center, fill=white, inner sep=1.5pt] at (1.08,0.82) {discard\\$z_1>0$};
-  \node[red, fill=white, inner sep=1.5pt] at (0.45,-1.27) {cut line: $z_1=0$};
-\end{tikzpicture}
-\end{center}
-
-这个例子里的 “line” 是 $z_1=0$。在更高维里，它就是 hyperplane：
-
-$$
-\mathbf{g}_k^T(\mathbf{z}-\mathbf{c}_k)=0.
-$$
-
-而保留下来的那一侧是 halfspace：
-
-$$
-\mathbf{g}_k^T(\mathbf{z}-\mathbf{c}_k)\le0.
-$$
-
-注意：保留下来的 half-disk 不是 ellipse。所以算法下一步要找一个 new ellipse 把它包起来。
-
-#### Roy's Ellipse Update Formula（Roy 的椭球更新公式）
-
-Roy 截图里的 ellipsoid 通常写成：
-
-$$
-E_k=
-\{
-\mathbf{z}\mid
-(\mathbf{z}-\mathbf{v}_k)^TP_k^{-1}(\mathbf{z}-\mathbf{v}_k)\le1
-\}.
-$$
-
-这里：
-
-- $\mathbf{v}_k$ is the centre（中心）；
-- $P_k$ is the shape matrix（形状矩阵）；
-- $P_k$ 的 eigenvectors 决定椭球朝向；
-- $P_k$ 的 eigenvalues 决定各方向的半轴长度平方。
-
-Roy 的更新分三步。
-
-**1. Normalize the gradient with respect to $P_k$（按椭球几何归一化梯度）**
-
-$$
-\tilde{\mathbf{g}}
-=
-\frac{\mathbf{g}_k}
-{\sqrt{\mathbf{g}_k^TP_k\mathbf{g}_k}}.
-$$
-
-这一步不是普通 Euclidean normalization（不是简单除以 $\|\mathbf{g}\|_2$）。它是在当前 ellipse 的 geometry 下 normalize。
-
-为什么要这样做？因为同一个 gradient direction，在一个长扁椭圆里，沿不同轴方向切，实际切掉的几何尺度不同。$P_k$ 告诉我们当前椭圆在各方向有多宽。
-
-所以 Roy 说：
-
-```text
-you normalize the gradient with respect to P,
-because you only care about its direction.
-```
-
-**2. Move the centre（移动中心）**
-
-$$
-\mathbf{v}_{k+1}
-=
-\mathbf{v}_k
--
-\frac{P_k\tilde{\mathbf{g}}}{n+1}.
-$$
-
-这里 $n$ 是 dimension（维度）。如果是二维平面，$n=2$，所以 denominator 是 $3$。
-
-直觉：
-
-```text
-gradient points toward the discarded side.
-new centre moves away from that side.
-```
-
-也就是说，如果 gradient 指向右边，而右边被切掉，新椭圆中心就会往左移。
-
-**3. Update the shape matrix（更新椭球形状）**
-
-$$
-P_{k+1}
-=
-\frac{n^2}{n^2-1}
-\left(
-P_k
--
-\frac{2}{n+1}
-P_k\tilde{\mathbf{g}}\tilde{\mathbf{g}}^TP_k
-\right).
-$$
-
-这条式子看起来复杂，但含义可以拆成两层：
-
-```text
-P_k
-  old ellipse shape
-
-P_k gtilde gtilde^T P_k
-  rank-1 correction in the cut direction
-
-n^2/(n^2-1)
-  rescaling so the new ellipsoid still encloses the kept half
-```
-
-为什么 Roy 说它是 rank 1 update？
-
-因为：
-
-$$
-\tilde{\mathbf{g}}\tilde{\mathbf{g}}^T
-$$
-
-是一个 outer product（外积）。一个 vector 乘它自己的 transpose，会得到一个 rank-1 matrix。它只主要改变一个方向：cut direction（切割方向）。
-
-#### Numerical Update Example（把二维数字代进去算一次）
-
-继续用上面的例子：
-
-$$
-n=2,\qquad
-\mathbf{v}_k=
-\begin{bmatrix}0\\0\end{bmatrix},
-\qquad
-P_k=
-\begin{bmatrix}1&0\\0&1\end{bmatrix},
-\qquad
-\mathbf{g}_k=
-\begin{bmatrix}1\\0\end{bmatrix}.
-$$
-
-Step 1:
-
-$$
-\sqrt{\mathbf{g}_k^TP_k\mathbf{g}_k}
-=
-\sqrt{
-\begin{bmatrix}1&0\end{bmatrix}
-\begin{bmatrix}1&0\\0&1\end{bmatrix}
-\begin{bmatrix}1\\0\end{bmatrix}
-}
-=1.
-$$
-
-所以：
-
-$$
-\tilde{\mathbf{g}}
-=
-\begin{bmatrix}1\\0\end{bmatrix}.
-$$
-
-Step 2:
-
-$$
-\mathbf{v}_{k+1}
-=
-\begin{bmatrix}0\\0\end{bmatrix}
--
-\frac{1}{3}
-\begin{bmatrix}1&0\\0&1\end{bmatrix}
-\begin{bmatrix}1\\0\end{bmatrix}
-=
-\begin{bmatrix}
--1/3\\
-0
-\end{bmatrix}.
-$$
-
-新中心移动到了左边，因为我们保留的是 $z_1\le0$。
-
-Step 3:
-
-$$
-\tilde{\mathbf{g}}\tilde{\mathbf{g}}^T
-=
-\begin{bmatrix}1\\0\end{bmatrix}
-\begin{bmatrix}1&0\end{bmatrix}
-=
-\begin{bmatrix}1&0\\0&0\end{bmatrix}.
-$$
-
-因为 $P_k=I$：
-
-$$
-P_k\tilde{\mathbf{g}}\tilde{\mathbf{g}}^TP_k
-=
-\begin{bmatrix}1&0\\0&0\end{bmatrix}.
-$$
-
-代入：
-
-$$
-P_{k+1}
-=
-\frac{4}{3}
-\left(
-\begin{bmatrix}1&0\\0&1\end{bmatrix}
--
-\frac{2}{3}
-\begin{bmatrix}1&0\\0&0\end{bmatrix}
-\right).
-$$
-
-括号里是：
-
-$$
-\begin{bmatrix}1&0\\0&1\end{bmatrix}
--
-\begin{bmatrix}2/3&0\\0&0\end{bmatrix}
-=
-\begin{bmatrix}1/3&0\\0&1\end{bmatrix}.
-$$
-
-所以：
-
-$$
-P_{k+1}
-=
-\begin{bmatrix}
-4/9&0\\
-0&4/3
-\end{bmatrix}.
-$$
-
-这说明新椭圆是：
-
-$$
-\frac{(z_1+1/3)^2}{4/9}
-+
-\frac{z_2^2}{4/3}
-\le1.
-$$
-
-读这个式子：
-
-- centre is $(-1/3,0)$；
-- horizontal semi-axis 是 $\sqrt{4/9}=2/3$；
-- vertical semi-axis 是 $\sqrt{4/3}\approx1.155$。
-
-所以新椭圆向左移动，并且变得更竖、更窄。它刚好包住左半圆。
-
-\begin{center}
-\begin{tikzpicture}[scale=1.12, >=stealth]
-  \draw[->] (-2.2,0) -- (1.95,0) node[right] {$z_1$};
-  \draw[->] (0,-1.75) -- (0,1.75) node[above] {$z_2$};
-
-  \fill[green!10] (0,0) -- (90:1.0) arc (90:270:1.0) -- cycle;
-  \draw[thick, orange] (0,0) circle (1.0);
-  \draw[thick, red] (0,-1.25) -- (0,1.25);
-
-  \begin{scope}[shift={(-0.333,0)}]
-    \draw[thick, blue] (0,0) ellipse (0.667 and 1.155);
-  \end{scope}
-
-  \fill[black] (0,0) circle (1.3pt);
-  \node[fill=white, inner sep=1pt] at (0.28,-0.2) {$\mathbf{v}_k$};
-  \fill[blue] (-0.333,0) circle (1.3pt);
-  \node[blue, fill=white, inner sep=1pt] at (-0.72,-0.28) {$\mathbf{v}_{k+1}$};
-  \node[orange, fill=white, inner sep=1.5pt] at (1.05,-0.9) {old circle};
-  \node[blue, fill=white, inner sep=1.5pt] at (-1.35,1.3) {new ellipse};
-  \node[green!45!black, fill=white, inner sep=1.5pt] at (-1.08,-0.78) {kept half};
-\end{tikzpicture}
-\end{center}
-
-这个例子就是 Roy 公式的实际含义：
-
-```text
-cut line says which side to keep.
-centre update moves toward the kept side.
-shape update stretches/shrinks the ellipse to cover the kept half.
-```
-
-#### Volume Reduction（体积缩小保证）
-
-Roy 说：
-
-$$
-\operatorname{vol}(E_{k+1})
-<
-e^{-\frac{1}{2n}}
-\operatorname{vol}(E_k).
-$$
-
-这句话不是说每次都切掉 exactly 50%。它说的是：更新后的 enclosing ellipsoid 的 volume 有一个 guaranteed shrink factor（保证缩小因子）。
-
-当 $n=2$：
-
-$$
-e^{-1/(2n)}
-=
-e^{-1/4}
-\approx0.779.
-$$
-
-所以：
-
-$$
-\operatorname{vol}(E_{k+1})
-<
-0.779\operatorname{vol}(E_k).
-$$
-
-也就是 new ellipse 的面积最多约为旧面积的 $77.9\%$，大约减少 $22.1\%$。
-
-Roy 口头说 “volume drops by 77%” 容易让人误解。更准确地读应该是：
-
-```text
-the remaining volume is about 77% of the old volume for n = 2
-```
-
-不是减少 77%，而是变成约 77%。重点是：每一步都有数学保证，不会只是在经验上变小。
-
-算法反复做：
-
-```text
-1. Evaluate objective/constraints at ellipsoid center.
-2. Use gradient/subgradient or violated constraint to define a cut.
-3. Keep the half that must contain the optimum.
-4. Enclose that half with a smaller ellipsoid.
-5. Repeat.
-```
-
-关键性质：
-
-```text
-the volume of each ellipsoid shrinks by at least a specified factor.
-```
-
-也就是说，每一步都能保证 uncertainty region（不确定区域）变小。只要一直切下去，包含最优点的 ellipsoid 会越来越小。
-
-#### What If There Are Constraints?（如果有约束怎么办）
-
-Roy 截图里也有 constraints：
-
-$$
-\psi_i(\mathbf{z})\le0.
-$$
-
-如果当前中心 $\mathbf{c}$ violate（违反）某个 constraint：
-
-$$
-\psi_i(\mathbf{c})>0,
-$$
-
-那么用这个 constraint 的 subgradient 也可以做 cut。
-
-对于 convex constraint function $\psi_i$，如果：
-
-$$
-\psi_i(\mathbf{c})>0,
-$$
-
-则当前中心不可行。最优可行点必须在让 $\psi_i$ 变小的一侧。于是可以用：
-
-$$
-\mathbf{g}_i^T(\mathbf{z}-\mathbf{c})\le0,
-\qquad
-\mathbf{g}_i\in\partial\psi_i(\mathbf{c})
-$$
-
-来切掉不可能含有 feasible optimum（可行最优点）的一半。
-
-所以 ellipsoid method 可以同时处理：
-
-```text
-objective cut:
-  center is feasible, use objective subgradient
-
-constraint cut:
-  center violates a constraint, use constraint subgradient
-```
-
-#### 80/20 Intuition（80/20 直觉）
-
-Ellipsoidal algorithm 的核心不是要你手算更新公式，而是理解：
-
-```text
-Convexity gives valid cuts.
-Ellipsoids keep a compact uncertainty region.
-Each cut removes a region that cannot contain the optimum.
-Each enclosing ellipsoid is smaller.
-Repeated cuts converge toward the global optimum.
-```
-
-和前面 quasi-convex bisection 的思想类似：
-
-```text
-Do not only ask:
-  what is the gradient step?
-
-Ask:
-  what region can still contain the optimum?
-```
-
-一句话：
-
-```text
-Ellipsoid method is geometry-driven optimisation:
-use gradients/subgradients as certificates to cut away impossible regions.
-```
-
-#### Historical Status and Exam Perspective（历史地位与考试角度）
-
-Ellipsoid method 不是最近的新算法。它是 convex optimisation 里很经典的 old algorithm（老算法），主要价值偏 theory / foundations（理论基础），不是现代工程里最常用的高效 solver。
-
-它出名的历史原因是：
-
-```text
-ellipsoid method was used to prove that linear programming is polynomial-time solvable.
-```
-
-更精确地说，通常把这个里程碑归到 Khachiyan 1979 对 linear programming（线性规划）多项式时间可解的证明。Roy 口头提到 1984，可能是在简化这段历史；1984 更常和 Karmarkar's interior-point method（内点法）联系在一起。对本课来说，不需要背优化史细节，但要知道：
-
-```text
-ellipsoid method is historically important because it gave a polynomial-time guarantee.
-```
-
-#### What Does Polynomial Time Mean?（什么是多项式时间）
-
-Polynomial time（多项式时间）是计算复杂性里的概念。它不是说程序一定很快，而是说：
-
-```text
-as the problem size grows,
-the worst-case running time is bounded by a polynomial function of the input size.
-```
-
-比如 input size 记作 $N$。如果一个算法最坏情况下需要：
-
-$$
-O(N),\quad O(N^2),\quad O(N^3),\quad O(N^{10})
-$$
-
-这些都叫 polynomial time。因为运行时间像 $N$ 的某个固定次方增长。
-
-相反，如果最坏情况是：
-
-$$
-O(2^N),\quad O(3^N),\quad O(N!)
-$$
-
-这些通常叫 exponential / factorial time。它们随着 $N$ 变大增长得非常快。
-
-一个直观比较：
-
-| Problem size $N$ | $N^3$ | $2^N$ |
-|---:|---:|---:|
-| 10 | 1,000 | 1,024 |
-| 20 | 8,000 | 1,048,576 |
-| 50 | 125,000 | $1.13\times10^{15}$ |
-
-所以 polynomial time 的意义是：
-
-```text
-the algorithm scales in a controlled way in the worst case.
-```
-
-但注意两点：
-
-1. **Polynomial time does not mean fast in practice.**  
-   $O(N^{10})$ 也是 polynomial time，但可能完全不好用。
-
-2. **Not polynomial-time proof does not mean useless.**  
-   Simplex method（单纯形法）在最坏情况下不是 polynomial-time guarantee，但工程上长期非常好用。
-
-所以 Roy 说 ellipsoid method 重要，是指它给了 LP 一个 theoretical guarantee（理论保证）：
-
-```text
-linear programming can be solved in polynomial time.
-```
-
-这在理论上很重大，因为它说明 LP 不是那种最坏情况会爆炸到不可控的 optimization class。  
-但这不等于 ellipsoid method 是实际求 LP 时最快、最常用的方法。
-
-现代工程中，真正常用来解 LP / QP / SOCP / SDP / LMI 的通常是：
-
-```text
-simplex method
-interior-point methods
-active-set methods
-first-order / proximal methods
-ADMM
-commercial solvers: Gurobi, MOSEK, CPLEX
-modeling tools: CVX, CVXPY, YALMIP
-```
-
-所以 Roy 讲 ellipsoid method，大概率不是让你以后手写它作为主要求解器，而是为了建立这几个思想：
-
-| Roy 想传达的思想 | 中文理解 |
-|---|---|
-| convexity gives valid cuts | 凸性让我们能安全切掉不可能含有最优点的区域 |
-| gradient/subgradient as certificate | 梯度/次梯度不只是 descent direction，也能作为排除区域的证据 |
-| optimisation as shrinking uncertainty region | 优化可以理解为不断缩小“最优点可能在哪里”的区域 |
-| cutting-plane idea | 很多算法不是沿梯度走，而是用 halfspace 切 feasible/optimal region |
-| polynomial-time guarantee | 算法复杂度也可以被严格证明 |
-
-**Will this be an exam question?（是否可能作为考题？）**
-
-参考 Roy 给的 `Convex_Opt_exercises.pdf`，exercise 说明里已经说这些题：
-
-```text
-generally relevant, but harder than the ENEL445 examination
-```
-
-而 convex exercise 里和 ellipsoid 相关的题主要是：
-
-```text
-minimum-volume ellipsoid containing another ellipsoid and finite points
-```
-
-它要求用 SDP / LMI / S-procedure formulation 来表达，不是要求完整手推 ellipsoid method 的迭代公式。
-
-所以我的考试风险判断是：
-
-| 内容 | 考试可能性 | 备注 |
-|---|---:|---|
-| 解释 ellipsoid / halfspace / gradient cut 的几何直觉 | High | Roy 课堂讲得很具体，适合短答题 |
-| 给出 ellipsoid method 的 4-step summary | Medium-High | 可能问 “describe the idea” |
-| 判断 minimizer 在 cut 的哪一侧 | Medium | 可用 subgradient inequality 解释 |
-| 记住完整 $P_{k+1}$ 更新公式并手算 | Low-Medium | exercise 难度高于考试；更像 coding / theory extension |
-| 证明 LP polynomial time | Low | 应知道历史意义，不太可能要求证明 |
-| minimum-volume ellipsoid as SDP/LMI | Medium for advanced exercise, lower for exam | 可能作为理解 SDP/LMI 建模的延伸 |
-
-**考试版最小记忆：**
-
-```text
-Ellipsoid method keeps an ellipsoid containing the optimum.
-At the centre, evaluate objective/constraints.
-A gradient, subgradient, or violated constraint gives a cutting hyperplane.
-Discard the side that cannot contain the optimum.
-Wrap the remaining region in a smaller ellipsoid.
-Repeat until the uncertainty region is small enough.
-```
-
-对 ENEL445 来说，最重要的不是背公式，而是能说清楚：
-
-```text
-Convexity turns local gradient/subgradient information into global geometric exclusion.
-```
-
 ### Why This Matters for Optimisation（为什么这对优化重要）
 
 Optimisation problem 里的 constraint（约束）本质上就是在定义 feasible region（可行域）：
@@ -7490,6 +6654,897 @@ First ask: what is the structure of this problem?
 ```
 
 这也是从 “data science 做模型” 走向 “optimisation and decision science 做系统” 的重要思维转变。
+
+
+## Cutting-plane Algorithms: Ellipsoid Method（切平面算法：椭球法）
+
+Roy 截图里的 ellipsoidal algorithm（椭球算法）是在讲一种 optimisation strategy（优化策略）：
+
+```text
+Keep an ellipsoid that is guaranteed to contain the optimum.
+At each step, cut away half that cannot contain the optimum.
+Wrap the remaining half with a smaller ellipsoid.
+Repeat.
+```
+
+它不是 gradient descent。Gradient descent 是：
+
+```text
+current point -> take a step -> next point
+```
+
+Ellipsoid method 更像：
+
+```text
+current uncertainty region -> cut it -> smaller uncertainty region
+```
+
+所以它关心的是：
+
+```text
+Where can the optimum still be?
+```
+
+而不是：
+
+```text
+Which direction should I step right now?
+```
+
+#### Reparametrised Form（重参数化形式）
+
+前面 Roy 已经讲过 equality constraint 的处理：
+
+$$
+\mathbf{x}=\mathbf{x}_0+F\mathbf{z}.
+$$
+
+这里 $\mathbf{x}_0$ 是一个 particular feasible point（特解），$F\mathbf{z}$ 是 null-space directions（零空间方向）。这样 equality constraints 已经自动满足。
+
+所以原来的 problem 可以写成 $\mathbf{z}$ 空间里的问题：
+
+$$
+\min_{\mathbf{z}}\ \phi(\mathbf{z})
+\quad
+\text{subject to}
+\quad
+\psi_i(\mathbf{z})\le0,\quad i=1,\ldots,m,
+$$
+
+其中：
+
+$$
+\phi(\mathbf{z})=f_0(F\mathbf{z}+\mathbf{x}_0),
+\qquad
+\psi_i(\mathbf{z})=f_i(F\mathbf{z}+\mathbf{x}_0).
+$$
+
+意思是：
+
+```text
+z is the free variable after equality constraints are removed.
+x = Fz + x0 maps z back to the original variable x.
+phi(z) is the objective expressed in z.
+psi_i(z) are the inequality constraints expressed in z.
+```
+
+所以椭球算法是在 $\mathbf{z}$ 空间里工作：它维护一个 ellipsoid，认为 optimum $\mathbf{z}^\star$ 在里面。
+
+#### Step 1: Start With a Big Ellipsoid（先用大椭球包住最优点）
+
+先假设我们知道一个很大的 ellipsoid：
+
+$$
+E_0
+=
+\{\mathbf{z}\mid(\mathbf{z}-\mathbf{c}_0)^TP_0^{-1}(\mathbf{z}-\mathbf{c}_0)\le1\}
+$$
+
+并且确信：
+
+$$
+\mathbf{z}^\star\in E_0.
+$$
+
+这里：
+
+- $\mathbf{c}_0$ 是 ellipsoid center（椭球中心）；
+- $P_0$ 决定 ellipsoid 的 shape / size（形状 / 大小）；
+- $\mathbf{z}^\star$ 是最优解。
+
+直觉：
+
+```text
+I do not know where the optimum is,
+but I know it is somewhere inside this big ellipsoid.
+```
+
+#### Step 2: Evaluate at the Center（在中心点计算函数与约束）
+
+在当前椭球中心 $\mathbf{c}$ 处，计算：
+
+$$
+\phi(\mathbf{c}),
+\qquad
+\psi_i(\mathbf{c}).
+$$
+
+如果暂时只看 unconstrained problem（无约束问题），就只看 objective $\phi$。
+
+如果有 constraints，则还要看有没有 violated constraint（被违反的约束）：
+
+$$
+\psi_i(\mathbf{c})>0.
+$$
+
+Roy 这里先说 “focus on just the cost function”，也就是先忽略 constraints，只用 objective 的 gradient / subgradient 来切椭球。
+
+#### Gradient and Subgradient（梯度与次梯度）
+
+如果 $\phi$ differentiable（可微），我们用 gradient：
+
+$$
+\nabla\phi(\mathbf{c}).
+$$
+
+Gradient 指向 function 增加最快的方向。对 convex function，有一条重要 inequality：
+
+$$
+\phi(\mathbf{z})
+\ge
+\phi(\mathbf{c})
++
+\nabla\phi(\mathbf{c})^T(\mathbf{z}-\mathbf{c}).
+$$
+
+这条式子的意思是：在 $\mathbf{c}$ 点的 tangent plane（切平面）永远在 convex function 的 graph 下面。
+
+如果函数不可微，比如有 kink（尖点）：
+
+$$
+f(x)=|x|
+$$
+
+在 $x=0$ 没有唯一 gradient。这时可以用 subgradient（次梯度）。
+
+Subgradient $g$ 的定义是：
+
+$$
+f(y)\ge f(x)+g^T(y-x)
+\quad
+\text{for all } y.
+$$
+
+也就是说，$g$ 定义了一条仍然在函数下面的 supporting line / supporting hyperplane（支撑线 / 支撑超平面）。
+
+\begin{center}
+\begin{tikzpicture}[scale=0.9, >=stealth]
+  \draw[->] (-3.2,0) -- (3.2,0) node[right] {$x$};
+  \draw[->] (0,-0.3) -- (0,3.2) node[above] {$f(x)$};
+
+  \draw[thick, blue] (-2.7,2.7) -- (0,0) -- (2.7,2.7);
+  \fill[red] (0,0) circle (1.6pt) node[below right] {kink};
+
+  \draw[thin, green!45!black] (-2.4,-1.2) -- (2.4,1.2);
+  \draw[thin, green!45!black] (-2.4,0) -- (2.4,0);
+  \draw[thin, green!45!black] (-2.4,1.2) -- (2.4,-1.2);
+  \node[green!35!black, align=center, fill=white, inner sep=1.5pt] at (1.75,1.55) {many supporting lines\\many subgradients};
+  \node[blue, fill=white, inner sep=1.5pt] at (-1.9,2.35) {$f(x)=|x|$};
+\end{tikzpicture}
+\end{center}
+
+所以 Roy 说：
+
+```text
+replace the gradient with a set of gradients.
+Those are called sub-gradients.
+```
+
+#### Step 3: Use Gradient/Subgradient to Cut the Ellipsoid（用梯度切掉一半）
+
+设当前中心是 $\mathbf{c}$，取一个 gradient 或 subgradient：
+
+$$
+\mathbf{g}\in\partial\phi(\mathbf{c}).
+$$
+
+对 convex function，如果 $\mathbf{g}^T(\mathbf{z}-\mathbf{c})>0$，那么由 subgradient inequality：
+
+$$
+\phi(\mathbf{z})
+\ge
+\phi(\mathbf{c})+\mathbf{g}^T(\mathbf{z}-\mathbf{c})
+>
+\phi(\mathbf{c}).
+$$
+
+这说明这些点的 objective value 比中心点还大。既然中心点 $\mathbf{c}$ 已经在椭球里，最优点不可能在这个 “higher side”（更高的一侧）。所以 minimizer 必须在另一侧：
+
+$$
+\mathbf{g}^T(\mathbf{z}-\mathbf{c})\le0.
+$$
+
+这就是一个 halfspace cut（半空间切割）。
+
+```text
+gradient/subgradient gives a separating hyperplane through the center.
+one side cannot contain the minimizer.
+keep the other side.
+```
+
+\begin{center}
+\begin{tikzpicture}[scale=0.95, >=stealth]
+  \draw[->] (-0.6,0) -- (6.8,0) node[right] {$z_1$};
+  \draw[->] (0,-0.6) -- (0,4.5) node[above] {$z_2$};
+
+  \begin{scope}[rotate around={-18:(3,2)}]
+    \fill[orange!12] (3,2) ellipse (2.55 and 1.25);
+    \draw[thick, orange] (3,2) ellipse (2.55 and 1.25);
+  \end{scope}
+
+  \coordinate (C) at (3,2);
+  \fill[red] (C) circle (1.8pt) node[below left] {$\mathbf{c}$};
+  \draw[->, thick, purple] (C) -- ++(1.25,1.05) node[above right] {$\mathbf{g}$};
+
+  \draw[thick, red] (1.2,4.0) -- (5.5,0.15);
+  \node[red, fill=white, inner sep=1.5pt] at (5.25,0.7) {cut};
+  \node[align=center, fill=white, inner sep=1.5pt] at (4.95,3.25) {discard:\\$\mathbf{g}^T(\mathbf{z}-\mathbf{c})>0$};
+  \node[align=center, fill=white, inner sep=1.5pt] at (1.75,1.1) {keep:\\$\mathbf{g}^T(\mathbf{z}-\mathbf{c})\le0$};
+\end{tikzpicture}
+\end{center}
+
+这张图对应 Roy 的话：
+
+```text
+if the gradient points this way,
+cut the ellipse in two,
+then the minimizer has to lie in this one.
+```
+
+#### Step 4: Wrap the Remaining Half With a Smaller Ellipsoid（用更小椭球包住剩下的一半）
+
+切完之后，剩下的集合是：
+
+$$
+E\cap\{\mathbf{z}\mid \mathbf{g}^T(\mathbf{z}-\mathbf{c})\le0\}.
+$$
+
+它不是一个 ellipsoid，而是 half-ellipsoid（半个椭球）。为了继续用同样算法，我们找一个 new ellipsoid（新椭球）把它包住：
+
+```text
+old ellipsoid
+-> cut by halfspace
+-> half ellipsoid
+-> smallest-volume enclosing ellipsoid
+-> new smaller ellipsoid
+```
+
+这个 “smallest volume ellipse enclosing the half ellipse” 就是 Roy 截图第 3 步。
+
+#### A Concrete 2D Cut Example（二维数值例子：椭圆怎么切半空间）
+
+先不要看复杂公式。用最简单的二维例子：
+
+$$
+E_k=\{\mathbf{z}\mid \mathbf{z}^T\mathbf{z}\le1\}.
+$$
+
+这就是 unit disk（单位圆），也可以看成一个特殊的 ellipse：
+
+$$
+\mathbf{c}_k=
+\begin{bmatrix}
+0\\
+0
+\end{bmatrix},
+\qquad
+P_k=
+\begin{bmatrix}
+1&0\\
+0&1
+\end{bmatrix}.
+$$
+
+假设在中心点算出来的 gradient 是：
+
+$$
+\mathbf{g}_k=
+\begin{bmatrix}
+1\\
+0
+\end{bmatrix}.
+$$
+
+这表示 objective 沿着 positive $z_1$ direction（向右）增加最快。对 convex objective 来说，右半边的点满足：
+
+$$
+\mathbf{g}_k^T(\mathbf{z}-\mathbf{c}_k)>0.
+$$
+
+代入数字：
+
+$$
+\begin{bmatrix}1&0\end{bmatrix}
+\begin{bmatrix}z_1\\ z_2\end{bmatrix}
+>0
+\quad\Longleftrightarrow\quad
+z_1>0.
+$$
+
+也就是说，右半边 $z_1>0$ 的 objective 一定比中心点更高。既然中心点已经是一个 candidate，minimizer 不需要去右半边找。我们保留：
+
+$$
+\mathbf{g}_k^T(\mathbf{z}-\mathbf{c}_k)\le0
+\quad\Longleftrightarrow\quad
+z_1\le0.
+$$
+
+所以这一步的 halfspace cut 很具体：
+
+```text
+old region: unit disk
+discard:    right half, z1 > 0
+keep:       left half,  z1 <= 0
+```
+
+\begin{center}
+\begin{tikzpicture}[scale=1.12, >=stealth]
+  \draw[->] (-2.15,0) -- (2.25,0) node[right] {$z_1$};
+  \draw[->] (0,-1.65) -- (0,1.75) node[above] {$z_2$};
+
+  \fill[green!12] (0,0) -- (90:1.15) arc (90:270:1.15) -- cycle;
+  \fill[red!9] (0,0) -- (-90:1.15) arc (-90:90:1.15) -- cycle;
+  \draw[thick, orange] (0,0) circle (1.15);
+  \draw[thick, red] (0,-1.35) -- (0,1.35);
+
+  \fill[black] (0,0) circle (1.4pt);
+  \node[fill=white, inner sep=1pt] at (0.28,-0.28) {$\mathbf{c}_k$};
+  \draw[->, thick, purple] (0,0) -- (1.05,0);
+  \node[purple, fill=white, inner sep=1pt] at (1.18,-0.24) {$\mathbf{g}_k$};
+
+  \node[align=center, fill=white, inner sep=1.5pt] at (-0.95,0.82) {keep\\$z_1\le0$};
+  \node[align=center, fill=white, inner sep=1.5pt] at (1.08,0.82) {discard\\$z_1>0$};
+  \node[red, fill=white, inner sep=1.5pt] at (0.45,-1.27) {cut line: $z_1=0$};
+\end{tikzpicture}
+\end{center}
+
+这个例子里的 “line” 是 $z_1=0$。在更高维里，它就是 hyperplane：
+
+$$
+\mathbf{g}_k^T(\mathbf{z}-\mathbf{c}_k)=0.
+$$
+
+而保留下来的那一侧是 halfspace：
+
+$$
+\mathbf{g}_k^T(\mathbf{z}-\mathbf{c}_k)\le0.
+$$
+
+注意：保留下来的 half-disk 不是 ellipse。所以算法下一步要找一个 new ellipse 把它包起来。
+
+#### Roy's Ellipse Update Formula（Roy 的椭球更新公式）
+
+Roy 截图里的 ellipsoid 通常写成：
+
+$$
+E_k=
+\{
+\mathbf{z}\mid
+(\mathbf{z}-\mathbf{v}_k)^TP_k^{-1}(\mathbf{z}-\mathbf{v}_k)\le1
+\}.
+$$
+
+这里：
+
+- $\mathbf{v}_k$ is the centre（中心）；
+- $P_k$ is the shape matrix（形状矩阵）；
+- $P_k$ 的 eigenvectors 决定椭球朝向；
+- $P_k$ 的 eigenvalues 决定各方向的半轴长度平方。
+
+Roy 的更新分三步。
+
+**1. Normalize the gradient with respect to $P_k$（按椭球几何归一化梯度）**
+
+$$
+\tilde{\mathbf{g}}
+=
+\frac{\mathbf{g}_k}
+{\sqrt{\mathbf{g}_k^TP_k\mathbf{g}_k}}.
+$$
+
+这一步不是普通 Euclidean normalization（不是简单除以 $\|\mathbf{g}\|_2$）。它是在当前 ellipse 的 geometry 下 normalize。
+
+为什么要这样做？因为同一个 gradient direction，在一个长扁椭圆里，沿不同轴方向切，实际切掉的几何尺度不同。$P_k$ 告诉我们当前椭圆在各方向有多宽。
+
+所以 Roy 说：
+
+```text
+you normalize the gradient with respect to P,
+because you only care about its direction.
+```
+
+**2. Move the centre（移动中心）**
+
+$$
+\mathbf{v}_{k+1}
+=
+\mathbf{v}_k
+-
+\frac{P_k\tilde{\mathbf{g}}}{n+1}.
+$$
+
+这里 $n$ 是 dimension（维度）。如果是二维平面，$n=2$，所以 denominator 是 $3$。
+
+直觉：
+
+```text
+gradient points toward the discarded side.
+new centre moves away from that side.
+```
+
+也就是说，如果 gradient 指向右边，而右边被切掉，新椭圆中心就会往左移。
+
+**3. Update the shape matrix（更新椭球形状）**
+
+$$
+P_{k+1}
+=
+\frac{n^2}{n^2-1}
+\left(
+P_k
+-
+\frac{2}{n+1}
+P_k\tilde{\mathbf{g}}\tilde{\mathbf{g}}^TP_k
+\right).
+$$
+
+这条式子看起来复杂，但含义可以拆成两层：
+
+```text
+P_k
+  old ellipse shape
+
+P_k gtilde gtilde^T P_k
+  rank-1 correction in the cut direction
+
+n^2/(n^2-1)
+  rescaling so the new ellipsoid still encloses the kept half
+```
+
+为什么 Roy 说它是 rank 1 update？
+
+因为：
+
+$$
+\tilde{\mathbf{g}}\tilde{\mathbf{g}}^T
+$$
+
+是一个 outer product（外积）。一个 vector 乘它自己的 transpose，会得到一个 rank-1 matrix。它只主要改变一个方向：cut direction（切割方向）。
+
+#### Numerical Update Example（把二维数字代进去算一次）
+
+继续用上面的例子：
+
+$$
+n=2,\qquad
+\mathbf{v}_k=
+\begin{bmatrix}0\\0\end{bmatrix},
+\qquad
+P_k=
+\begin{bmatrix}1&0\\0&1\end{bmatrix},
+\qquad
+\mathbf{g}_k=
+\begin{bmatrix}1\\0\end{bmatrix}.
+$$
+
+Step 1:
+
+$$
+\sqrt{\mathbf{g}_k^TP_k\mathbf{g}_k}
+=
+\sqrt{
+\begin{bmatrix}1&0\end{bmatrix}
+\begin{bmatrix}1&0\\0&1\end{bmatrix}
+\begin{bmatrix}1\\0\end{bmatrix}
+}
+=1.
+$$
+
+所以：
+
+$$
+\tilde{\mathbf{g}}
+=
+\begin{bmatrix}1\\0\end{bmatrix}.
+$$
+
+Step 2:
+
+$$
+\mathbf{v}_{k+1}
+=
+\begin{bmatrix}0\\0\end{bmatrix}
+-
+\frac{1}{3}
+\begin{bmatrix}1&0\\0&1\end{bmatrix}
+\begin{bmatrix}1\\0\end{bmatrix}
+=
+\begin{bmatrix}
+-1/3\\
+0
+\end{bmatrix}.
+$$
+
+新中心移动到了左边，因为我们保留的是 $z_1\le0$。
+
+Step 3:
+
+$$
+\tilde{\mathbf{g}}\tilde{\mathbf{g}}^T
+=
+\begin{bmatrix}1\\0\end{bmatrix}
+\begin{bmatrix}1&0\end{bmatrix}
+=
+\begin{bmatrix}1&0\\0&0\end{bmatrix}.
+$$
+
+因为 $P_k=I$：
+
+$$
+P_k\tilde{\mathbf{g}}\tilde{\mathbf{g}}^TP_k
+=
+\begin{bmatrix}1&0\\0&0\end{bmatrix}.
+$$
+
+代入：
+
+$$
+P_{k+1}
+=
+\frac{4}{3}
+\left(
+\begin{bmatrix}1&0\\0&1\end{bmatrix}
+-
+\frac{2}{3}
+\begin{bmatrix}1&0\\0&0\end{bmatrix}
+\right).
+$$
+
+括号里是：
+
+$$
+\begin{bmatrix}1&0\\0&1\end{bmatrix}
+-
+\begin{bmatrix}2/3&0\\0&0\end{bmatrix}
+=
+\begin{bmatrix}1/3&0\\0&1\end{bmatrix}.
+$$
+
+所以：
+
+$$
+P_{k+1}
+=
+\begin{bmatrix}
+4/9&0\\
+0&4/3
+\end{bmatrix}.
+$$
+
+这说明新椭圆是：
+
+$$
+\frac{(z_1+1/3)^2}{4/9}
++
+\frac{z_2^2}{4/3}
+\le1.
+$$
+
+读这个式子：
+
+- centre is $(-1/3,0)$；
+- horizontal semi-axis 是 $\sqrt{4/9}=2/3$；
+- vertical semi-axis 是 $\sqrt{4/3}\approx1.155$。
+
+所以新椭圆向左移动，并且变得更竖、更窄。它刚好包住左半圆。
+
+\begin{center}
+\begin{tikzpicture}[scale=1.12, >=stealth]
+  \draw[->] (-2.2,0) -- (1.95,0) node[right] {$z_1$};
+  \draw[->] (0,-1.75) -- (0,1.75) node[above] {$z_2$};
+
+  \fill[green!10] (0,0) -- (90:1.0) arc (90:270:1.0) -- cycle;
+  \draw[thick, orange] (0,0) circle (1.0);
+  \draw[thick, red] (0,-1.25) -- (0,1.25);
+
+  \begin{scope}[shift={(-0.333,0)}]
+    \draw[thick, blue] (0,0) ellipse (0.667 and 1.155);
+  \end{scope}
+
+  \fill[black] (0,0) circle (1.3pt);
+  \node[fill=white, inner sep=1pt] at (0.28,-0.2) {$\mathbf{v}_k$};
+  \fill[blue] (-0.333,0) circle (1.3pt);
+  \node[blue, fill=white, inner sep=1pt] at (-0.72,-0.28) {$\mathbf{v}_{k+1}$};
+  \node[orange, fill=white, inner sep=1.5pt] at (1.05,-0.9) {old circle};
+  \node[blue, fill=white, inner sep=1.5pt] at (-1.35,1.3) {new ellipse};
+  \node[green!45!black, fill=white, inner sep=1.5pt] at (-1.08,-0.78) {kept half};
+\end{tikzpicture}
+\end{center}
+
+这个例子就是 Roy 公式的实际含义：
+
+```text
+cut line says which side to keep.
+centre update moves toward the kept side.
+shape update stretches/shrinks the ellipse to cover the kept half.
+```
+
+#### Volume Reduction（体积缩小保证）
+
+Roy 说：
+
+$$
+\operatorname{vol}(E_{k+1})
+<
+e^{-\frac{1}{2n}}
+\operatorname{vol}(E_k).
+$$
+
+这句话不是说每次都切掉 exactly 50%。它说的是：更新后的 enclosing ellipsoid 的 volume 有一个 guaranteed shrink factor（保证缩小因子）。
+
+当 $n=2$：
+
+$$
+e^{-1/(2n)}
+=
+e^{-1/4}
+\approx0.779.
+$$
+
+所以：
+
+$$
+\operatorname{vol}(E_{k+1})
+<
+0.779\operatorname{vol}(E_k).
+$$
+
+也就是 new ellipse 的面积最多约为旧面积的 $77.9\%$，大约减少 $22.1\%$。
+
+Roy 口头说 “volume drops by 77%” 容易让人误解。更准确地读应该是：
+
+```text
+the remaining volume is about 77% of the old volume for n = 2
+```
+
+不是减少 77%，而是变成约 77%。重点是：每一步都有数学保证，不会只是在经验上变小。
+
+算法反复做：
+
+```text
+1. Evaluate objective/constraints at ellipsoid center.
+2. Use gradient/subgradient or violated constraint to define a cut.
+3. Keep the half that must contain the optimum.
+4. Enclose that half with a smaller ellipsoid.
+5. Repeat.
+```
+
+关键性质：
+
+```text
+the volume of each ellipsoid shrinks by at least a specified factor.
+```
+
+也就是说，每一步都能保证 uncertainty region（不确定区域）变小。只要一直切下去，包含最优点的 ellipsoid 会越来越小。
+
+#### What If There Are Constraints?（如果有约束怎么办）
+
+Roy 截图里也有 constraints：
+
+$$
+\psi_i(\mathbf{z})\le0.
+$$
+
+如果当前中心 $\mathbf{c}$ violate（违反）某个 constraint：
+
+$$
+\psi_i(\mathbf{c})>0,
+$$
+
+那么用这个 constraint 的 subgradient 也可以做 cut。
+
+对于 convex constraint function $\psi_i$，如果：
+
+$$
+\psi_i(\mathbf{c})>0,
+$$
+
+则当前中心不可行。最优可行点必须在让 $\psi_i$ 变小的一侧。于是可以用：
+
+$$
+\mathbf{g}_i^T(\mathbf{z}-\mathbf{c})\le0,
+\qquad
+\mathbf{g}_i\in\partial\psi_i(\mathbf{c})
+$$
+
+来切掉不可能含有 feasible optimum（可行最优点）的一半。
+
+所以 ellipsoid method 可以同时处理：
+
+```text
+objective cut:
+  center is feasible, use objective subgradient
+
+constraint cut:
+  center violates a constraint, use constraint subgradient
+```
+
+#### 80/20 Intuition（80/20 直觉）
+
+Ellipsoidal algorithm 的核心不是要你手算更新公式，而是理解：
+
+```text
+Convexity gives valid cuts.
+Ellipsoids keep a compact uncertainty region.
+Each cut removes a region that cannot contain the optimum.
+Each enclosing ellipsoid is smaller.
+Repeated cuts converge toward the global optimum.
+```
+
+和前面 quasi-convex bisection 的思想类似：
+
+```text
+Do not only ask:
+  what is the gradient step?
+
+Ask:
+  what region can still contain the optimum?
+```
+
+一句话：
+
+```text
+Ellipsoid method is geometry-driven optimisation:
+use gradients/subgradients as certificates to cut away impossible regions.
+```
+
+#### Historical Status and Exam Perspective（历史地位与考试角度）
+
+Ellipsoid method 不是最近的新算法。它是 convex optimisation 里很经典的 old algorithm（老算法），主要价值偏 theory / foundations（理论基础），不是现代工程里最常用的高效 solver。
+
+它出名的历史原因是：
+
+```text
+ellipsoid method was used to prove that linear programming is polynomial-time solvable.
+```
+
+更精确地说，通常把这个里程碑归到 Khachiyan 1979 对 linear programming（线性规划）多项式时间可解的证明。Roy 口头提到 1984，可能是在简化这段历史；1984 更常和 Karmarkar's interior-point method（内点法）联系在一起。对本课来说，不需要背优化史细节，但要知道：
+
+```text
+ellipsoid method is historically important because it gave a polynomial-time guarantee.
+```
+
+#### What Does Polynomial Time Mean?（什么是多项式时间）
+
+Polynomial time（多项式时间）是计算复杂性里的概念。它不是说程序一定很快，而是说：
+
+```text
+as the problem size grows,
+the worst-case running time is bounded by a polynomial function of the input size.
+```
+
+比如 input size 记作 $N$。如果一个算法最坏情况下需要：
+
+$$
+O(N),\quad O(N^2),\quad O(N^3),\quad O(N^{10})
+$$
+
+这些都叫 polynomial time。因为运行时间像 $N$ 的某个固定次方增长。
+
+相反，如果最坏情况是：
+
+$$
+O(2^N),\quad O(3^N),\quad O(N!)
+$$
+
+这些通常叫 exponential / factorial time。它们随着 $N$ 变大增长得非常快。
+
+一个直观比较：
+
+| Problem size $N$ | $N^3$ | $2^N$ |
+|---:|---:|---:|
+| 10 | 1,000 | 1,024 |
+| 20 | 8,000 | 1,048,576 |
+| 50 | 125,000 | $1.13\times10^{15}$ |
+
+所以 polynomial time 的意义是：
+
+```text
+the algorithm scales in a controlled way in the worst case.
+```
+
+但注意两点：
+
+1. **Polynomial time does not mean fast in practice.**  
+   $O(N^{10})$ 也是 polynomial time，但可能完全不好用。
+
+2. **Not polynomial-time proof does not mean useless.**  
+   Simplex method（单纯形法）在最坏情况下不是 polynomial-time guarantee，但工程上长期非常好用。
+
+所以 Roy 说 ellipsoid method 重要，是指它给了 LP 一个 theoretical guarantee（理论保证）：
+
+```text
+linear programming can be solved in polynomial time.
+```
+
+这在理论上很重大，因为它说明 LP 不是那种最坏情况会爆炸到不可控的 optimization class。  
+但这不等于 ellipsoid method 是实际求 LP 时最快、最常用的方法。
+
+现代工程中，真正常用来解 LP / QP / SOCP / SDP / LMI 的通常是：
+
+```text
+simplex method
+interior-point methods
+active-set methods
+first-order / proximal methods
+ADMM
+commercial solvers: Gurobi, MOSEK, CPLEX
+modeling tools: CVX, CVXPY, YALMIP
+```
+
+所以 Roy 讲 ellipsoid method，大概率不是让你以后手写它作为主要求解器，而是为了建立这几个思想：
+
+| Roy 想传达的思想 | 中文理解 |
+|---|---|
+| convexity gives valid cuts | 凸性让我们能安全切掉不可能含有最优点的区域 |
+| gradient/subgradient as certificate | 梯度/次梯度不只是 descent direction，也能作为排除区域的证据 |
+| optimisation as shrinking uncertainty region | 优化可以理解为不断缩小“最优点可能在哪里”的区域 |
+| cutting-plane idea | 很多算法不是沿梯度走，而是用 halfspace 切 feasible/optimal region |
+| polynomial-time guarantee | 算法复杂度也可以被严格证明 |
+
+**Will this be an exam question?（是否可能作为考题？）**
+
+参考 Roy 给的 `Convex_Opt_exercises.pdf`，exercise 说明里已经说这些题：
+
+```text
+generally relevant, but harder than the ENEL445 examination
+```
+
+而 convex exercise 里和 ellipsoid 相关的题主要是：
+
+```text
+minimum-volume ellipsoid containing another ellipsoid and finite points
+```
+
+它要求用 SDP / LMI / S-procedure formulation 来表达，不是要求完整手推 ellipsoid method 的迭代公式。
+
+所以我的考试风险判断是：
+
+| 内容 | 考试可能性 | 备注 |
+|---|---:|---|
+| 解释 ellipsoid / halfspace / gradient cut 的几何直觉 | High | Roy 课堂讲得很具体，适合短答题 |
+| 给出 ellipsoid method 的 4-step summary | Medium-High | 可能问 “describe the idea” |
+| 判断 minimizer 在 cut 的哪一侧 | Medium | 可用 subgradient inequality 解释 |
+| 记住完整 $P_{k+1}$ 更新公式并手算 | Low-Medium | exercise 难度高于考试；更像 coding / theory extension |
+| 证明 LP polynomial time | Low | 应知道历史意义，不太可能要求证明 |
+| minimum-volume ellipsoid as SDP/LMI | Medium for advanced exercise, lower for exam | 可能作为理解 SDP/LMI 建模的延伸 |
+
+**考试版最小记忆：**
+
+```text
+Ellipsoid method keeps an ellipsoid containing the optimum.
+At the centre, evaluate objective/constraints.
+A gradient, subgradient, or violated constraint gives a cutting hyperplane.
+Discard the side that cannot contain the optimum.
+Wrap the remaining region in a smaller ellipsoid.
+Repeat until the uncertainty region is small enough.
+```
+
+对 ENEL445 来说，最重要的不是背公式，而是能说清楚：
+
+```text
+Convexity turns local gradient/subgradient information into global geometric exclusion.
+```
 
 ## Cones and PSD Cone（锥与正半定锥）
 
