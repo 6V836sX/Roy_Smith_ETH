@@ -1,0 +1,319 @@
+---
+title: "ENEL445 Exam Question Map"
+subtitle: "Confirmed 2026 Structure and Past-Paper Evidence"
+format:
+  pdf:
+    pdf-engine: xelatex
+    toc: true
+    toc-depth: 2
+    number-sections: true
+    colorlinks: true
+lang: zh
+documentclass: ctexart
+geometry: margin=0.8in
+---
+
+# ENEL445 Exam Question Map
+
+This map combines the confirmed 2026 exam information with local past exam/test files and the prepared topic guides.
+
+## Confirmed 2026 Structure
+
+- 2 hours.
+- One A4 double-sided cheat sheet.
+- Calculator allowed.
+- Two questions, 20 marks each.
+- Q1: Roy Smith material.
+- Q2: Term 2 mixed material, including power systems, game theory, and linear matrix inequalities.
+- More mathematical than last year's exam: expect more calculations and fewer pure explanation questions.
+
+## 2026 Training Priority
+
+### Q1 Roy Smith, 20 marks
+
+Train these in calculation/formulation mode:
+
+1. Least squares:
+   - normal equations;
+   - estimator variance / confidence interval intuition;
+   - ridge / LASSO / Elastic Net;
+   - validation and metric choice.
+
+2. Convex optimisation:
+   - hyperplane, halfspace, cone, convex cone;
+   - convex function and quasi-convex function;
+   - sublevel set / feasibility / bisection idea;
+   - simple convexity recognition.
+
+3. Cone/LMI/SDP:
+   - PSD cone;
+   - second-order cone;
+   - Schur complement;
+   - converting quadratic or norm constraints into LMI form.
+
+4. Control/MPC:
+   - Lyapunov inequality;
+   - congruence transformation;
+   - MPC formulation;
+   - explicit MPC KKT active-constraint logic.
+
+### Q2 Term 2 Mixed, 20 marks
+
+Train these in calculation/formulation mode:
+
+1. Power systems:
+   - economic dispatch and marginal/incremental cost;
+   - AC OPF vs DC OPF;
+   - SC-OPF;
+   - DC state estimation as linear LS;
+   - AC state estimation as nonlinear LS;
+   - reference bus / angle;
+   - computational scaling style questions.
+
+2. Game theory:
+   - Nash equilibrium definition;
+   - payoff matrix best responses;
+   - dominant/dominated strategies;
+   - prisoner’s dilemma;
+   - maximin / maximax / minimax;
+   - Cournot vs Stackelberg recognition.
+
+3. LMI:
+   - identify whether a matrix inequality is linear in variables;
+   - Schur complement conversions;
+   - PSD condition;
+   - simple quadratic constraint to LMI;
+   - norm bound to LMI.
+
+4. Term 1 support:
+   - gradient of `x^T A x`;
+   - Taylor expansion;
+   - KKT conditions;
+   - positive semidefinite Hessian;
+   - exact line search / quadratic optimisation basics.
+
+## Deprioritised Unless Explicitly Mentioned
+
+Old papers contain many algorithm-heavy questions. Given the confirmed 2026 scope, these should be lower priority:
+
+- Nelder-Mead details;
+- Shubert / DIRECT details;
+- GA and PSO details;
+- Hungarian algorithm;
+- transportation problems;
+- branch-and-bound details;
+- Van der Corput sequence.
+
+Do not spend final-day time on these until Roy, power systems, game theory, LMI, LS, and KKT are working.
+
+## Past Exam Pattern
+
+### 2024 Exam
+
+Visible structure:
+
+- Q1: gradient-free optimisation.
+  - situations for gradient-free methods;
+  - Nelder-Mead operation sketch;
+  - convergence metrics;
+  - pattern search;
+  - Shubert / DIRECT;
+  - genetic algorithm.
+
+- Q2: gradient-free / discrete / general optimisation.
+  - LP standard form;
+  - Hungarian algorithm;
+  - branch-and-bound relaxation;
+  - Pareto front;
+  - Gaussian noise log-likelihood to least squares.
+
+- Q3: unconstrained optimisation and least squares.
+  - Van der Corput sequence;
+  - Newton step derivation;
+  - quasi-Newton secant condition;
+  - ridge regression closed-form solution.
+
+- Q4: power systems optimisation.
+  - computational expense estimate for AC OPF;
+  - algorithm choice for AC OPF;
+  - SC-OPF vs regular OPF;
+  - practical security constraints;
+  - nonlinear least-squares state estimation formulation.
+
+### 2025 Exam
+
+Visible structure:
+
+- Q1: gradient-free methods.
+  - gradient-free suitability;
+  - Nelder-Mead contraction;
+  - pattern search;
+  - Lipschitz / Shubert;
+  - DIRECT;
+  - elitism in GA;
+  - PSO symbol interpretation and update sketch.
+
+- Q2: discrete / heuristic / game theory.
+  - LP standard form;
+  - Hungarian algorithm;
+  - balanced transportation;
+  - simulated annealing;
+  - depth-first vs breadth-first branch-and-bound;
+  - Nash equilibrium;
+  - expensive black-box evaluation strategy.
+
+- Q3: unconstrained optimisation.
+  - Van der Corput sequence;
+  - gradient/Hessian of a quadratic model;
+  - local optimality;
+  - boundedness when the quadratic coefficient sign changes.
+
+- Q4: power systems optimisation.
+  - AC OPF computational difficulty and mitigations;
+  - SC-OPF concept and practical difficulty;
+  - linear least-squares state estimation using DC approximation;
+  - nonlinear least-squares state/parameter estimation.
+
+### 2025 Term Test
+
+Visible structure:
+
+- Q1: basics.
+  - derivative of `x^T A x`;
+  - infinity norm;
+  - Taylor expansion;
+  - positive semidefinite matrices and Hessian.
+
+- Q2: unconstrained optimisation.
+  - directional gradient;
+  - first-order necessary optimality;
+  - quadratic gradient;
+  - exact line search;
+  - optimal step size.
+
+- Q3: nonlinear least squares.
+  - range-based location;
+  - gradient of distance;
+  - Jacobian;
+  - NLS formulation.
+
+- Q4: constrained optimisation.
+  - Lagrangian;
+  - KKT;
+  - dual problem;
+  - duality gap;
+  - slackness;
+  - combinatorial issue in KKT and SQP.
+
+- Q5: optimisation-based control.
+  - dynamic programming;
+  - MPC formulation;
+  - horizon length;
+  - whether an MPC problem can be made quadratic;
+  - epsilon-greedy exploration.
+
+## High-Yield Question Types for 2026
+
+### Must Train
+
+These match the confirmed 2026 structure and connect multiple course blocks:
+
+1. Formulate least-squares / nonlinear least-squares problems.
+2. Convert quadratic, norm, or PSD constraints into LMI form.
+3. Derive gradient, Hessian, Taylor, Newton, ridge regression.
+4. Write Lagrangian and KKT conditions.
+5. Explain AC OPF, DC OPF, SC-OPF, and state estimation.
+6. Formulate DC and AC power-system state estimation.
+7. Explain Nash equilibrium and identify it in a payoff matrix.
+8. Formulate MPC from dynamics, cost, horizon, and constraints.
+9. Recognise and manipulate PSD / Schur complement conditions.
+
+### Should Train
+
+1. LP/QP standard form.
+2. Exact line search for a quadratic.
+3. Quasi-Newton secant condition.
+4. Dominant/dominated strategy and prisoner’s dilemma.
+5. Maximin / maximax / minimax.
+6. Computational scaling estimate for OPF.
+7. Lyapunov inequality and congruence transformation recognition.
+
+### Lower Priority Recognition
+
+1. Gradient-free algorithms from old papers.
+2. Ellipsoid-method update formulas.
+3. Deep dynamic-game/LQ-game theory.
+4. Long proofs of minimax theorem.
+5. Hungarian algorithm, transportation, branch-and-bound details.
+6. Van der Corput sequence.
+
+## Likely Use of the Three Prepared Study Packs
+
+### Roy Smith Block
+
+Most likely useful for:
+
+- least squares and regularisation;
+- convexity and formulation language;
+- LMI/Schur complement recognition;
+- MPC and KKT intuition;
+- explaining why structure matters, not only gradient descent.
+
+Exam mode:
+
+- formula derivation;
+- formulation;
+- conceptual explanation;
+- small KKT/MPC active-constraint reasoning.
+
+### Game Theory
+
+Most likely useful for:
+
+- short conceptual subquestion;
+- Nash equilibrium definition;
+- payoff matrix best responses;
+- dominant/dominated strategies;
+- prisoner’s dilemma;
+- maximax/maximin/minimax.
+
+Exam mode:
+
+- 1-4 marks, likely short answer or small payoff matrix.
+
+### Power Systems
+
+Most likely useful for:
+
+- full Q4-style question;
+- AC OPF computational difficulty;
+- DC OPF approximation;
+- SC-OPF;
+- state estimation as LS/NLS formulation.
+
+Exam mode:
+
+- definitions;
+- formulation;
+- computational scaling;
+- choosing/justifying algorithm;
+- writing measurement vector and model vector.
+
+## Two-Day Strategic Conclusion
+
+Do not spend the final two days rereading long guides. The highest-value loop is:
+
+1. read a template;
+2. do a small problem without notes;
+3. compare to exam-ready answer;
+4. update cheat sheet;
+5. repeat.
+
+For every topic, force yourself to answer in one of these forms:
+
+- definition;
+- formulation;
+- derivation;
+- algorithm steps;
+- short compare/contrast;
+- small calculation.

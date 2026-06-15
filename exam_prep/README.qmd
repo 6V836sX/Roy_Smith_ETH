@@ -1,0 +1,144 @@
+---
+title: "ENEL445 Exam Prep Hub"
+subtitle: "Two-Day Exam Preparation Map"
+format:
+  pdf:
+    pdf-engine: xelatex
+    toc: true
+    toc-depth: 2
+    number-sections: true
+    colorlinks: true
+lang: zh
+documentclass: ctexart
+geometry: margin=0.8in
+---
+
+# ENEL445 Exam Prep Hub
+
+This folder is the central exam-prep entry point across the three prepared study packs:
+
+- Roy Smith optimisation block: `../Roy_Smith_ETH`
+- Game theory: `../GameTheory`
+- Power systems optimisation: `../Week_7_Power_Systems_Optimisation`
+
+It also connects to the actual exam/test evidence:
+
+- Past exams: `../PastExams`
+- Past tests: `../PastTests`
+
+Do not copy all raw files into this folder. Use this hub as the map, then jump to the right source file.
+
+## Confirmed 2026 Exam Reality
+
+Based on the exam information you provided:
+
+- Exam duration: 2 hours.
+- Cheat sheet: one A4 double-sided page, same as for the test.
+- Calculator allowed.
+- Format: two questions worth 20 marks each, 40 marks total.
+- Q1: set by Prof. Roy Smith, on Roy's material.
+- Q2: set by the Term 2 lecturer, mixed Term 2 material, with some Term 1 knowledge required.
+- Q2 includes power systems, game theory, and linear matrix inequalities.
+- The exam is more mathematical than last year's exam: expect more calculations and fewer pure explanation questions.
+
+Past exams are still useful for style and templates, but their old four-question structure is not the 2026 structure.
+
+## Training Consequence
+
+Train as two 20-mark papers:
+
+| Exam question | Main source | Training mode |
+|---|---|---|
+| Q1 Roy Smith | `../Roy_Smith_ETH` | least squares, regularisation, convexity, cones, LMI/Schur complement, MPC/KKT |
+| Q2 Term 2 mixed | `../Week_7_Power_Systems_Optimisation`, `../GameTheory`, Roy LMI sections, Term 1 basics | power-system LS/OPF, payoff matrix/game theory, LMI conversions, KKT/math basics |
+
+Because the exam is more mathematical, do not spend most time memorising prose. Spend most time doing:
+
+- write the optimisation problem;
+- define variables and matrices;
+- derive gradients, KKT conditions, and closed forms;
+- transform constraints into standard or LMI form;
+- convert quadratic/SOC constraints using Schur complement;
+- solve small payoff-matrix/game questions;
+- formulate DC/AC power-system least-squares problems.
+
+## Past Exam Use
+
+Older past exams show useful question styles, but their coverage should be downweighted where it is not in the confirmed 2026 scope.
+
+Use old papers mainly for:
+
+1. mathematical derivations;
+2. least-squares formulations;
+3. KKT and constrained optimisation basics;
+4. power systems Q4-style questions;
+5. one-line game theory questions.
+
+Downweight old algorithm-heavy sections such as Nelder-Mead, DIRECT, GA, PSO, Hungarian, transportation, and branch-and-bound unless your lecturer explicitly said they remain examinable.
+
+## Core Study Files
+
+| Topic block | Start here | Then use |
+|---|---|---|
+| Roy Smith: LS, convex, LMI, MPC | `../Roy_Smith_ETH/final_notes/roy_smith_optimisation_learning_guide.pdf` | `../Roy_Smith_ETH/exam_context.md` |
+| Game theory | `../GameTheory/final_notes/game_theory_learning_guide.pdf` | `../GameTheory/final_notes/game_theory_exam_cheatsheet.pdf` |
+| Power systems | `../Week_7_Power_Systems_Optimisation/final_notes/power_systems_optimisation_learning_guide.pdf` | `../Week_7_Power_Systems_Optimisation/final_notes/power_systems_optimisation_exam_cheatsheet.pdf` |
+| Power EE background | `../Week_7_Power_Systems_Optimisation/final_notes/appendix_power_systems_ee_background.pdf` | Use only if notation blocks you. |
+| Linear/KKT basics | `../Week_7_Power_Systems_Optimisation/final_notes/appendix_linear_affine_basics.pdf` | Use for formulation/KKT repair. |
+| Past exams | `../PastExams/ENEL445_24S1_exam_master_16052024.pdf` and `../PastExams/ENEL445_optimisation_2025_exam_v2 (1).pdf` | Use for timing and question style. |
+| Past tests | `../PastTests/ENEL445_optimisation_2025_test_blank.pdf` and `../PastTests/Term Test 2026.pdf` | Use for foundations and MPC/KKT style. |
+
+## Two-Day Priority
+
+If time is short, do not read everything linearly. Train by question type:
+
+1. Formulation questions:
+   - least squares;
+   - nonlinear least squares;
+   - MPC;
+   - power-system state estimation;
+   - LP standard form.
+
+2. Derivation questions:
+   - gradient of quadratic form;
+   - Taylor expansion;
+   - Newton step;
+   - ridge regression closed form;
+   - KKT conditions.
+
+3. Short explanation questions:
+   - AC OPF vs DC OPF;
+   - SC-OPF;
+   - Nash equilibrium;
+   - dominant strategy;
+   - why LMI constraints are convex;
+   - why Schur complement is useful.
+
+4. Small calculation questions:
+   - exact line search for a quadratic;
+   - simple LP/QP standard form;
+   - power-system LS matrix setup;
+   - payoff matrix best responses;
+   - Schur complement / LMI conversion.
+
+## Files in This Hub
+
+- `two_day_training_plan.qmd`: concrete 2-day schedule.
+- `practice_ladder.qmd`: practice from basic level to exam level.
+- `exam_question_map.qmd`: what past exams suggest is likely.
+
+## Future Prompt Pattern
+
+Use this when asking Codex for training:
+
+```text
+Use exam_prep/README.qmd as the hub. Train me on [topic] from basic level to exam level.
+First teach the concept, then give 3 progressive questions, then mark my answer.
+```
+
+For a timed drill:
+
+```text
+Use exam_prep/exam_question_map.qmd. Give me a 20-minute mini exam on [topic].
+After I answer, grade strictly and show the shortest exam-ready solution.
+```

@@ -1,0 +1,158 @@
+---
+title: "ENEL445 2026 Two-Question Mock Drill"
+subtitle: "Two Hours, Two Questions, 40 Marks"
+format:
+  pdf:
+    pdf-engine: xelatex
+    toc: true
+    toc-depth: 2
+    number-sections: true
+    colorlinks: true
+lang: zh
+documentclass: ctexart
+geometry: margin=0.8in
+---
+
+# ENEL445 2026 Two-Question Mock Drill
+
+Use this as a 2-hour mock exam. Cheat sheet and calculator allowed.
+
+Do not look at notes while attempting. After finishing, ask Codex to mark it strictly.
+
+## Q1. Roy Smith Material [20 marks]
+
+### Q1(a) Least squares and regularisation [5 marks]
+
+Consider the regularised least-squares problem
+
+```math
+\min_\theta \quad
+\frac{1}{2}\|y-\Phi\theta\|_2^2
++\frac{\lambda}{2}\|\theta\|_2^2,
+\qquad \lambda>0.
+```
+
+1. Derive the normal equation for the optimal `theta`.
+2. Briefly state why adding `lambda I` can make the estimate more stable.
+
+### Q1(b) Metric choice and bias/variance [3 marks]
+
+Roy argued that the metric should match the purpose of the modelling task.
+
+Give one case where reducing variance is more important than reducing bias, and one case where bias of a particular variable may matter more than MSE.
+
+### Q1(c) Schur complement / LMI [5 marks]
+
+Let `Q` be positive definite. Convert the quadratic constraint
+
+```math
+x^TQx + b^Tx + c \le 0
+```
+
+into an LMI using the Schur complement. State clearly what block matrix you use and what assumption is required.
+
+### Q1(d) MPC formulation [4 marks]
+
+For the discrete-time system
+
+```math
+x_{k+1}=Ax_k+Bu_k,
+```
+
+write a finite-horizon MPC problem with:
+
+- quadratic tracking cost;
+- input effort penalty;
+- input bounds;
+- horizon length `N`.
+
+You do not need to solve it.
+
+### Q1(e) Convexity concept [3 marks]
+
+Explain the difference between:
+
+1. a convex set;
+2. a convex cone;
+3. a PSD cone.
+
+Keep the answer mathematical, not purely verbal.
+
+## Q2. Term 2 Mixed: Power Systems, Game Theory, LMI [20 marks]
+
+### Q2(a) Power systems: AC OPF vs DC OPF [4 marks]
+
+Explain why AC OPF is computationally difficult for a large power system. Give two mitigation strategies.
+
+### Q2(b) DC state estimation [5 marks]
+
+For a three-bus system, suppose the active power-flow measurements are:
+
+```math
+z =
+\begin{bmatrix}
+P_{12}\\
+P_{13}\\
+P_{32}
+\end{bmatrix},
+\qquad
+P_{ij}=B_{ij}(\theta_i-\theta_j).
+```
+
+Set `theta_1=0` as the reference angle. Formulate the linear least-squares problem for estimating `theta_2, theta_3`.
+
+You must define the decision variable and the measurement matrix.
+
+### Q2(c) AC nonlinear state estimation [4 marks]
+
+Using
+
+```math
+P_{ij}=V_iV_jB_{ij}\sin(\theta_i-\theta_j),
+```
+
+write a nonlinear least-squares formulation for estimating unknown voltage magnitudes and angles from noisy flow measurements.
+
+Do not solve it.
+
+### Q2(d) Game theory [4 marks]
+
+Two players choose `A` or `B`. The payoff matrix is:
+
+|              | Player 2: A | Player 2: B |
+|---|---:|---:|
+| Player 1: A | (2, 2) | (0, 3) |
+| Player 1: B | (3, 0) | (1, 1) |
+
+1. Identify each player's best responses.
+2. Find the Nash equilibrium or equilibria.
+3. Is the Nash equilibrium socially optimal?
+
+### Q2(e) LMI recognition [3 marks]
+
+Consider
+
+```math
+\begin{bmatrix}
+\gamma I & A(x)\\
+A(x)^T & \gamma I
+\end{bmatrix} \succ 0.
+```
+
+Assume `A(x)` is affine in `x`.
+
+1. Explain why this is an LMI in `x` and `gamma`.
+2. State the norm bound it represents.
+
+## Marking Yourself
+
+After attempting, classify every lost mark:
+
+- formula forgotten;
+- variable not defined;
+- wrong sign convention;
+- matrix dimension unclear;
+- too verbal / not mathematical enough;
+- could not start.
+
+Then repair only the repeated error types.

@@ -1,0 +1,308 @@
+---
+title: "Two-Day ENEL445 Training Plan"
+subtitle: "Q1 Roy Smith + Q2 Term 2 Mixed"
+format:
+  pdf:
+    pdf-engine: xelatex
+    toc: true
+    toc-depth: 2
+    number-sections: true
+    colorlinks: true
+lang: zh
+documentclass: ctexart
+geometry: margin=0.8in
+---
+
+# Two-Day ENEL445 Training Plan
+
+Assumption: you have 2 days before the exam and need to move from basic recall to exam execution.
+
+Target: by the end, you should be able to answer two 20-mark questions:
+
+- Q1 Roy Smith material.
+- Q2 Term 2 mixed: power systems, game theory, LMI, plus Term 1 mathematical support.
+
+The confirmed exam is more mathematical than last year's exam, so this plan prioritises calculations, derivations, and formulations over long explanation reading.
+
+## Day 1: Build the Spine
+
+### Block 1: Confirmed Exam Pattern and Cheat Sheet Triage, 45 min
+
+Goal: know what you are training for.
+
+Tasks:
+
+1. Read `exam_prep/exam_question_map.qmd`.
+2. Open your cheat sheet and mark missing templates:
+   - Roy least squares / ridge / regularisation;
+   - Lagrangian/KKT;
+   - quadratic gradient/Newton/ridge;
+   - LS/NLS formulation;
+   - AC OPF/DC OPF/SC-OPF;
+   - MPC formulation;
+   - Schur complement / LMI conversion;
+   - Nash equilibrium.
+
+Output:
+
+- one handwritten list of weak templates.
+
+### Block 2: Core Math Repair, 2 hours
+
+Train these until you can write them without notes:
+
+1. `d/dx (x^T A x) = (A + A^T)x`.
+2. Taylor expansion:
+   `f(x) approx f(c) + grad f(c)^T(x-c) + 1/2 (x-c)^T H(c)(x-c)`.
+3. Newton step:
+   `x_k = x_{k-1} - H^{-1} grad f`.
+4. Ridge:
+   `min 1/2(y-Ax)^T(y-Ax) + lambda/2 x^T x`
+   gives `(A^T A + lambda I)x = A^T y`.
+5. KKT:
+   - primal feasibility;
+   - dual feasibility;
+   - stationarity;
+   - complementarity.
+
+Source:
+
+- `../Roy_Smith_ETH/final_notes/roy_smith_optimisation_learning_guide.pdf`
+- `../Week_7_Power_Systems_Optimisation/final_notes/appendix_linear_affine_basics.pdf`
+- `../PastTests/ENEL445_optimisation_2025_test_blank.pdf`
+
+Drill:
+
+- write each derivation once from memory.
+- then check against notes.
+
+### Block 3: Q1 Roy Smith Calculation Spine, 2 hours
+
+Goal: make Roy material usable under exam conditions.
+
+Train:
+
+1. least squares:
+   - normal equations;
+   - ridge closed form;
+   - what regularisation changes in the estimator;
+   - estimator variance / confidence interval intuition.
+
+2. convex/LMI:
+   - recognise hyperplane/halfspace/cone/PSD cone;
+   - convert simple quadratic constraint to LMI;
+   - convert norm bound to LMI using Schur complement;
+   - identify "linear in variables" inside a matrix inequality.
+
+3. MPC/KKT:
+   - formulate MPC from dynamics, cost, horizon, bounds;
+   - write Lagrangian with `g(x)<=0`;
+   - KKT active/inactive bound logic.
+
+Source:
+
+- `../Roy_Smith_ETH/final_notes/roy_smith_optimisation_learning_guide.pdf`
+- `../Roy_Smith_ETH/exam_context.md`
+
+Drill:
+
+- Make one worked example each for ridge, Schur complement, and MPC formulation.
+
+### Block 4: Least Squares and Formulation, 1 hour
+
+Goal: formulate, not over-solve.
+
+Train:
+
+1. linear LS:
+   `min_x ||y - Phi x||_2^2`.
+2. nonlinear LS:
+   `min_z sum_i (measurement_i - model_i(z))^2`.
+3. weighted LS:
+   `min_x (y-h(x))^T R^{-1}(y-h(x))`.
+4. range-based LS and power-system state estimation.
+
+Key exam habit:
+
+Always define:
+
+- decision variable;
+- measurement vector;
+- model/prediction vector;
+- objective;
+- known constants;
+- whether problem is linear or nonlinear.
+
+Source:
+
+- Roy guide LS sections.
+- Power guide state estimation sections.
+- 2024/2025 Q4 power-system LS questions.
+
+### Block 5: Q2 Power Systems and LMI Training, 2 hours
+
+This is high value because the confirmed Q2 includes power systems and LMI.
+
+Must answer:
+
+1. Why AC OPF is hard:
+   - nonlinear AC power flow;
+   - non-convexity;
+   - many variables/constraints;
+   - real-time requirement;
+   - security/contingency expansion.
+
+2. Mitigations:
+   - DC OPF approximation;
+   - decomposition;
+   - contingency screening;
+   - linearisation;
+   - warm starts;
+   - faster solvers / simplified models.
+
+3. SC-OPF:
+   - regular OPF optimises base case;
+   - SC-OPF also enforces constraints under contingencies;
+   - hard because constraints multiply across contingencies.
+
+4. State estimation:
+   - DC linear LS with angle states;
+   - AC nonlinear LS with voltage magnitudes and angles;
+   - reference bus angle.
+
+Source:
+
+- `../Week_7_Power_Systems_Optimisation/final_notes/power_systems_optimisation_exam_cheatsheet.pdf`
+- `../Week_7_Power_Systems_Optimisation/final_notes/power_systems_optimisation_learning_guide.pdf`
+- Roy guide LMI / Schur complement sections.
+
+### Block 6: Game Theory Fast Drill, 45 min
+
+Likely a subpart, but easy marks.
+
+Must know:
+
+- Nash equilibrium definition;
+- best response method;
+- dominant/dominated strategy;
+- prisoner’s dilemma;
+- maximin vs maximax;
+- zero-sum game meaning.
+
+Source:
+
+- `../GameTheory/final_notes/game_theory_exam_cheatsheet.pdf`
+- `../GameTheory/final_notes/game_theory_learning_guide.pdf`
+
+### Block 7: Timed Mini Exam, 60 min
+
+Do without notes first:
+
+1. Derive ridge solution.
+2. Convert a simple quadratic constraint to an LMI.
+3. Formulate a DC power-system state estimation LS problem.
+4. Formulate an AC nonlinear LS state estimation problem.
+5. Define Nash equilibrium and identify it in a 2x2 payoff matrix.
+
+Afterwards:
+
+- compare with notes;
+- update cheat sheet only with missing templates.
+
+## Day 2: Exam Execution
+
+### Block 1: Two-Question Simulation, 2 hours
+
+Do not simulate the old four-question paper literally. Build a two-question drill:
+
+Q1 Roy, 20 marks:
+
+- one least-squares / regularisation derivation;
+- one convex/LMI/Schur complement conversion;
+- one MPC/KKT formulation.
+
+Q2 Term 2 mixed, 20 marks:
+
+- one power systems OPF/state estimation formulation;
+- one game theory payoff/Nash calculation;
+- one LMI or Term 1 KKT/quadratic calculation.
+
+Rules:
+
+- 2 hours only.
+- cheat sheet only.
+- answer every subpart, even if partial.
+- mark questions where you knew the concept but lost notation.
+
+### Block 2: Repair by Error Type, 1.5 hours
+
+Classify mistakes:
+
+| Error type | Fix |
+|---|---|
+| forgot definition | add one-line definition to cheat sheet |
+| could not start formulation | memorise decision variable / measurement / model / objective pattern |
+| algebra mistake | redo derivation slowly once |
+| confused algorithm | write 3-step algorithm summary |
+| too much prose | rewrite as bullet answer with equations |
+
+### Block 3: LMI and Schur Complement Drill, 1.5 hours
+
+Because the confirmed Q2 includes LMI and Roy also covered LMI/SDP, this is a priority.
+
+Train:
+
+- scalar quadratic to LMI;
+- norm bound to LMI;
+- PSD matrix condition in 2x2 case;
+- Schur complement sign convention;
+- recognise whether a matrix inequality is linear in variables.
+
+Output:
+
+- one cheat-sheet box with the Schur complement templates.
+
+### Block 4: Roy Smith High-Yield Repair, 1.5 hours
+
+Focus only on exam-convertible pieces:
+
+- LS / BLUE / regularisation;
+- metric choice: bias vs variance vs MSE;
+- convex set/function definitions;
+- cone, PSD cone, LMI recognition;
+- Schur complement simple conversions;
+- MPC formulation and explicit MPC KKT idea.
+
+Skip unless already comfortable:
+
+- long ellipsoid-method formula details;
+- deep SDP solver theory;
+- long prose sections.
+
+### Block 5: Power Systems + Game Theory Mixed Drill, 1.5 hours
+
+Do one of each:
+
+1. Explain AC OPF difficulty in equation-aware terms.
+2. Formulate DC state estimation as `min ||z-H theta||^2`.
+3. Formulate AC state estimation as `min ||z-h(x)||^2`.
+4. Solve a payoff matrix for Nash equilibrium.
+5. Explain prisoner’s dilemma social optimum vs Nash equilibrium.
+
+### Block 6: Final 45-Minute Cheat Sheet Pass
+
+Your cheat sheet should contain:
+
+1. derivatives and Taylor expansion;
+2. Newton/ridge/KKT templates;
+3. LS/NLS/WLS formulation templates;
+4. LP standard form reminders;
+5. algorithm one-liners;
+6. OPF/DC OPF/SC-OPF/state estimation templates;
+7. MPC formulation template;
+8. Nash equilibrium definition and best-response procedure.
+9. Schur complement / LMI templates.
+
+Final rule:
+
+If a formula is on the cheat sheet but you cannot use it in a problem, it is not useful yet. Do one tiny problem with it.

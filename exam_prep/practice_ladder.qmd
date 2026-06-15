@@ -1,0 +1,305 @@
+---
+title: "Practice Ladder"
+subtitle: "From Basic Level to ENEL445 Exam Level"
+format:
+  pdf:
+    pdf-engine: xelatex
+    toc: true
+    toc-depth: 2
+    number-sections: true
+    colorlinks: true
+lang: zh
+documentclass: ctexart
+geometry: margin=0.8in
+---
+
+# Practice Ladder: Basic to Exam Level
+
+Use this file to train topic by topic. Each ladder has three levels:
+
+- Level 1: concept and notation.
+- Level 2: standard calculation/formulation.
+- Level 3: exam-style mixed question.
+
+## Ladder A: Quadratic Derivatives and Newton
+
+### Level 1
+
+Explain what the gradient and Hessian mean for a scalar function `f(x)`.
+
+Minimum answer:
+
+- gradient = direction/rate of steepest first-order change;
+- Hessian = curvature matrix;
+- positive definite Hessian near a stationary point means local minimum.
+
+### Level 2
+
+Derive:
+
+```text
+f(x) = x^T A x
+grad f = (A + A^T)x
+```
+
+Then specialise to symmetric `A`:
+
+```text
+grad f = 2Ax
+```
+
+### Level 3
+
+Use the second-order Taylor model to derive Newton's update:
+
+```text
+x_k = x_{k-1} - H(x_{k-1})^{-1} grad f(x_{k-1})
+```
+
+Exam trigger:
+
+If asked "show the update is a descent direction", compute:
+
+```text
+grad f^T p = - grad f^T H^{-1} grad f < 0
+```
+
+when `H` is positive definite.
+
+## Ladder B: Least Squares and Regularisation
+
+### Level 1
+
+Identify the parts:
+
+```text
+y = measurement vector
+Phi or A = feature/model matrix
+x or theta = unknown parameters
+y - A x = residual
+```
+
+### Level 2
+
+Derive ordinary LS:
+
+```text
+min_x ||y - A x||_2^2
+A^T A x = A^T y
+```
+
+Derive ridge:
+
+```text
+min_x 1/2||y - A x||_2^2 + lambda/2 ||x||_2^2
+(A^T A + lambda I)x = A^T y
+```
+
+### Level 3
+
+Formulate a nonlinear LS problem:
+
+```text
+min_z sum_i (m_i - h_i(z))^2
+```
+
+Exam habit:
+
+Define `z`, measurement vector `m`, model vector `h(z)`, and state whether it is linear or nonlinear.
+
+## Ladder C: KKT
+
+### Level 1
+
+For constraints:
+
+```text
+g_i(x) <= 0
+h_j(x) = 0
+```
+
+write:
+
+```text
+L = f(x) + sum_i lambda_i g_i(x) + sum_j nu_j h_j(x)
+lambda_i >= 0
+```
+
+### Level 2
+
+Write the four KKT conditions:
+
+1. stationarity: `grad_x L = 0`;
+2. primal feasibility: constraints satisfied;
+3. dual feasibility: `lambda_i >= 0`;
+4. complementarity: `lambda_i g_i(x) = 0`.
+
+### Level 3
+
+Given bounds:
+
+```text
+u_lb <= u <= u_ub
+```
+
+rewrite as:
+
+```text
+u - u_ub <= 0
+u_lb - u <= 0
+```
+
+Then write the Lagrangian and solve active/inactive cases.
+
+## Ladder D: Power Systems State Estimation
+
+### Level 1
+
+Know the states:
+
+- DC approximation: voltage angles, with one reference angle fixed.
+- AC model: voltage magnitudes and voltage angles, with one reference angle fixed.
+
+### Level 2
+
+DC measurement model:
+
+```text
+P_ij = B_ij(theta_i - theta_j)
+```
+
+Build:
+
+```text
+z = H theta + noise
+min_theta ||z - H theta||_2^2
+```
+
+### Level 3
+
+AC nonlinear model:
+
+```text
+P_ij = V_i V_j B_ij sin(theta_i - theta_j)
+Q_ij = V_i(V_i - V_j cos(theta_i - theta_j))B_ij
+```
+
+Build:
+
+```text
+min_x ||z - h(x)||_2^2
+```
+
+where `x` includes unknown voltage magnitudes, angles, and possibly unknown line parameters.
+
+## Ladder E: OPF and SC-OPF
+
+### Level 1
+
+Define:
+
+- OPF = choose generation/control variables to minimise cost subject to network and operating constraints.
+- AC OPF = uses nonlinear AC power-flow equations.
+- DC OPF = linear approximation, faster but less accurate.
+
+### Level 2
+
+Explain why AC OPF is hard:
+
+- nonlinear;
+- non-convex;
+- large-scale;
+- many equality/inequality constraints;
+- real-time operation.
+
+### Level 3
+
+Explain SC-OPF:
+
+- regular OPF checks base case;
+- SC-OPF also checks contingencies such as line/generator outages;
+- hard because each contingency adds another network-constrained problem.
+
+## Ladder F: Game Theory
+
+### Level 1
+
+Define Nash equilibrium:
+
+```text
+No player can improve their own outcome by changing strategy alone,
+given all other players keep their strategies fixed.
+```
+
+### Level 2
+
+Given a payoff matrix:
+
+1. for each column, mark row player's best response;
+2. for each row, mark column player's best response;
+3. overlap = Nash equilibrium.
+
+### Level 3
+
+Explain why Nash equilibrium need not be socially optimal using prisoner's dilemma.
+
+## Ladder G: MPC Formulation
+
+### Level 1
+
+Identify:
+
+- dynamics;
+- state;
+- input;
+- horizon;
+- reference;
+- constraints;
+- cost.
+
+### Level 2
+
+Write:
+
+```text
+min_u ||y-r||_2^2 + ||u||_2^2
+subject to x_{k+1}=Ax_k+Bu_k
+           u_lb <= u_k <= u_ub
+```
+
+### Level 3
+
+Explain whether it can be a quadratic optimisation problem:
+
+- linear dynamics;
+- quadratic cost;
+- linear constraints;
+- therefore can be written as QP after stacking future inputs/states.
+
+## Ladder H: Algorithm Short Answers
+
+Train these as 2-4 sentence answers:
+
+1. Gradient-free methods: useful when gradients unavailable, noisy, discontinuous, expensive, or black-box.
+2. Nelder-Mead: simplex operations such as reflection, expansion, contraction, shrink.
+3. Pattern search: poll around current point using positive spanning directions; opportunistic polling accepts first improvement.
+4. Shubert/DIRECT: use Lipschitz/global partitioning; DIRECT avoids needing exact Lipschitz constant.
+5. GA: selection, crossover, mutation; elitism keeps best individuals.
+6. PSO: particles update velocity using inertia, personal best, and global/social best.
+7. Simulated annealing: accepts worse moves with probability that decreases under cooling schedule.
+8. Branch-and-bound: solve relaxations to bound; branch on discrete choices; prune impossible/worse nodes.
+9. Hungarian algorithm: row/column reductions and zero-cover logic for assignment.
+
+## How to Use This Ladder with Codex
+
+Ask:
+
+```text
+Use exam_prep/practice_ladder.qmd. Start Ladder [A-H], Level 1. Ask me one question at a time and grade strictly.
+```
+
+Or:
+
+```text
+Use exam_prep/practice_ladder.qmd and exam_prep/exam_question_map.qmd. Give me a mixed 30-minute drill.
+```
