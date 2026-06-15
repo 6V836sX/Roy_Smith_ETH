@@ -1,0 +1,595 @@
+---
+format:
+  pdf:
+    pdf-engine: xelatex
+    toc: false
+    number-sections: false
+    colorlinks: false
+lang: zh
+documentclass: ctexart
+geometry: "a4paper,landscape,margin=0.22in"
+fontsize: 7pt
+header-includes:
+  - \usepackage{multicol}
+  - \usepackage{amsmath,amssymb}
+  - \usepackage{enumitem}
+  - \usepackage{titlesec}
+  - \usepackage{booktabs}
+  - \setlength{\parindent}{0pt}
+  - \setlength{\parskip}{0pt}
+  - \setlength{\columnsep}{0.16in}
+  - \setlist{nosep,leftmargin=*,topsep=0pt,partopsep=0pt,parsep=0pt,itemsep=0pt}
+  - \titlespacing*{\section}{0pt}{2pt}{1pt}
+  - \titlespacing*{\subsection}{0pt}{1pt}{0pt}
+  - \titleformat{\section}{\bfseries\small}{}{0pt}{}
+  - \titleformat{\subsection}{\bfseries\footnotesize}{}{0pt}{}
+  - \AtBeginDocument{\fontsize{5.9}{6.45}\selectfont}
+  - \setlength{\abovedisplayskip}{1pt}
+  - \setlength{\belowdisplayskip}{1pt}
+  - \setlength{\abovedisplayshortskip}{1pt}
+  - \setlength{\belowdisplayshortskip}{1pt}
+---
+
+\begin{multicols*}{4}
+
+\textbf{ENEL445 Full Exam Cheat Sheet — Q1 Roy Smith + Q2 Power Systems / Game Theory / LMI}
+
+\section*{Exam Scope / Strategy}
+
+2 h, 2 Qs, 20 marks each. Cheat sheet: A4 double-sided, calculator. **More mathematical**: formulas, derivations, formulations > prose.
+
+**Q1 Roy Smith:** LS/statistics/regularisation; convex sets/functions; cones/PSD/SOCP/SDP; Schur/LMI; MPC/KKT.  
+**Q2 Term 2 mixed:** power systems, game theory, LMI + Term 1 math support.
+
+Exam answer pattern: **define variables -> write objective/constraints -> derive/check dimensions -> 1-line interpretation.**
+
+\section*{Core Math Templates}
+
+\subsection*{Matrix Derivatives / Taylor}
+
+For scalar $f(\mathbf x)$:
+$$
+f(\mathbf x)\approx f(\mathbf c)+\nabla f(\mathbf c)^T(\mathbf x-\mathbf c)+\frac12(\mathbf x-\mathbf c)^TH(\mathbf c)(\mathbf x-\mathbf c).
+$$
+
+Quadratic:
+$$
+f(\mathbf x)=\mathbf x^TA\mathbf x,\quad \nabla f=(A+A^T)\mathbf x,\quad A=A^T\Rightarrow \nabla f=2A\mathbf x.
+$$
+
+$$
+f(\mathbf x)=\frac12\mathbf x^TA\mathbf x+\mathbf b^T\mathbf x+c,\quad A=A^T
+\Rightarrow \nabla f=A\mathbf x+\mathbf b,\ H=A.
+$$
+
+PSD/PD:
+$$
+A\succeq0\Leftrightarrow \mathbf z^TA\mathbf z\ge0\ \forall \mathbf z;\quad
+A\succ0\Leftrightarrow \mathbf z^TA\mathbf z>0\ \forall \mathbf z\ne0.
+$$
+Stationary + $H\succ0$ $\Rightarrow$ strict local min. Convex twice differentiable: $H(x)\succeq0$.
+
+Newton:
+$$
+\mathbf x_{k+1}=\mathbf x_k-H(\mathbf x_k)^{-1}\nabla f(\mathbf x_k),\quad
+\mathbf p=-H^{-1}\nabla f.
+$$
+If $H\succ0$: $\nabla f^T\mathbf p=-\nabla f^TH^{-1}\nabla f<0$.
+
+Exact line search for quadratic $f=\frac12x^TAx+b^Tx$ along $p$:
+$$
+\phi(\mu)=f(c+\mu p),\quad
+\mu^*=-\frac{p^T(Ac+b)}{p^TAp}.
+$$
+
+\subsection*{Lagrangian / KKT}
+
+For $\min f(x)$ s.t. $g_i(x)\le0,\ h_j(x)=0$:
+$$
+L=f+\sum_i\lambda_i g_i+\sum_j\nu_jh_j,\quad \lambda_i\ge0.
+$$
+KKT: stationarity $\nabla_xL=0$; primal feasible; dual feasible $\lambda_i\ge0$; complementarity $\lambda_i g_i(x)=0$.  
+Bounds: $u\le u_{\max}\Rightarrow u-u_{\max}\le0$; $u\ge u_{\min}\Rightarrow u_{\min}-u\le0$.
+
+Convex + regularity $\Rightarrow$ KKT necessary and sufficient. Nonconvex: usually local/necessary only.
+
+\section*{Q1 Roy: Least Squares}
+
+\subsection*{LS Formulation}
+
+Model:
+$$
+y=\Phi\theta+\epsilon,\quad r=y-\Phi\theta,\quad
+\min_\theta\|y-\Phi\theta\|_2^2.
+$$
+Normal equations:
+$$
+\Phi^T\Phi\hat\theta=\Phi^Ty,\quad
+\hat\theta=(\Phi^T\Phi)^{-1}\Phi^Ty
+$$
+if full column rank. Residual orthogonality:
+$$
+\Phi^T(y-\Phi\hat\theta)=0.
+$$
+Projection: $\hat y=\Phi\hat\theta=P_\Phi y$, $r\perp \operatorname{col}(\Phi)$.
+
+Watch dimensions: $\Phi:N\times d$, $\theta:d\times1$, $\Phi^T\Phi:d\times d$.
+
+\subsection*{Unbiasedness / Covariance / CI}
+
+Assume fixed $\Phi$, full rank, $E[\epsilon]=0$:
+$$
+\hat\theta=\theta_0+(\Phi^T\Phi)^{-1}\Phi^T\epsilon
+\Rightarrow E[\hat\theta]=\theta_0.
+$$
+If $\operatorname{Cov}(\epsilon)=\sigma^2I$:
+$$
+\operatorname{Cov}(\hat\theta)=\sigma^2(\Phi^T\Phi)^{-1}.
+$$
+Coefficient SE: $\operatorname{se}(\hat\theta_j)=\hat\sigma\sqrt{[(\Phi^T\Phi)^{-1}]_{jj}}$.  
+CI: $\hat\theta_j\pm t_{\alpha/2,N-d}\operatorname{se}(\hat\theta_j)$.
+
+CI smaller $\Leftrightarrow$ estimator more stable / lower variance.
+
+\subsection*{BLUE / Weighted LS}
+
+General noise covariance $R$:
+$$
+\hat\theta_{\rm BLUE}=(\Phi^TR^{-1}\Phi)^{-1}\Phi^TR^{-1}y,
+\quad \operatorname{Cov}=(\Phi^TR^{-1}\Phi)^{-1}.
+$$
+BLUE minimises **variance among unbiased linear estimators**, not MSE over biased estimators.
+
+Inverse-variance weights for independent unbiased estimates:
+$$
+\hat\theta_w=\sum_iw_i\hat\theta_i,\quad
+\sum_iw_i=1,\quad
+w_i=\frac{1/\sigma_i^2}{\sum_j1/\sigma_j^2}.
+$$
+
+\subsection*{Bias / Variance / MSE / Metric}
+
+$$
+\operatorname{MSE}(\hat\theta)=E[(\hat\theta-\theta)^2]
+=\operatorname{Bias}^2+\operatorname{Var}.
+$$
+Prediction/safety/control: prefer lower variance/stable estimates. Scientific parameter interpretation: bias of a particular coefficient may matter more than total MSE. Metric follows purpose.
+
+\subsection*{Regularisation}
+
+Ridge:
+$$
+\min_\theta \frac12\|y-\Phi\theta\|_2^2+\frac{\lambda}{2}\|\theta\|_2^2
+\Rightarrow
+(\Phi^T\Phi+\lambda I)\hat\theta=\Phi^Ty.
+$$
+Stability: $\lambda I$ lifts small singular/eigenvalues, improves conditioning, lowers variance, adds bias.
+
+Tikhonov:
+$$
+\min_\theta\|y-\Phi\theta\|^2+\|R\theta\|^2
+\Rightarrow(\Phi^T\Phi+R^TR)\theta=\Phi^Ty.
+$$
+$R$ useful if structured; arbitrary $R$ creates too many hyperparameters.
+
+LASSO: $\|y-\Phi\theta\|^2+\lambda\|\theta\|_1$; sparse, variable selection, no closed form generally.  
+Elastic Net: $\lambda_1\|\theta\|_1+\lambda_2\|\theta\|_2^2$; sparse + handles correlated predictors.
+
+Rule: Ridge many weak signals; LASSO few useful signals; Elastic Net correlated/varying signals. Use validation/CV for $\lambda$.
+
+Engineering order: better $\Phi$ first (variables, measurements, experiment design), regularisation second.
+
+\section*{Q1 Roy: Convex Geometry}
+
+Convex set:
+$$
+x,y\in C,\ \alpha\in[0,1]\Rightarrow \alpha x+(1-\alpha)y\in C.
+$$
+Cone:
+$$
+x\in C,\ \gamma\ge0\Rightarrow\gamma x\in C.
+$$
+Convex cone:
+$$
+x_i\in C,\ \gamma_i\ge0\Rightarrow \sum_i\gamma_ix_i\in C.
+$$
+
+Hyperplane: $\{x\mid a^Tx=b\}$; halfspace $\{x\mid a^Tx\le b\}$. $a$ is normal. One equality removes one degree of freedom.  
+Polyhedron: $\{x\mid Ax\le b,\ Cx=d\}$. Test feasible side by substituting a point.
+
+Norm ball: $\{x\mid\|x-x_c\|\le r\}$. Norm cone/SOC:
+$$
+\mathcal Q^{n+1}=\{(t,x)\mid \|x\|_2\le t\}.
+$$
+Ellipsoid:
+$$
+\{x\mid(x-x_c)^TP^{-1}(x-x_c)\le1\},\ P\succ0.
+$$
+
+Convex function:
+$$
+f(\alpha x+(1-\alpha)y)\le\alpha f(x)+(1-\alpha)f(y),
+$$
+domain must be convex. Strict convex: unique minimiser if exists. Norms are convex.
+
+Quasi-convex:
+$$
+S_\alpha=\{x\mid f(x)\le\alpha\}\ \text{convex for all }\alpha.
+$$
+Bisection on value $\alpha$: feasible $\Rightarrow$ lower upper bound; infeasible $\Rightarrow$ raise lower bound. Armijo searches step size $t$, not value.
+
+Ellipsoid method: keep ellipsoid containing optimum; gradient/subgradient/violated constraint gives halfspace cut; wrap kept half with smaller ellipsoid. Theory/LP polynomial-time proof; not practical first-choice solver.
+
+\section*{Q1/Q2: Cone, SDP, LMI, Schur}
+
+Cone language:
+$$
+Ax\le b\Leftrightarrow b-Ax\in\mathbb R_+^m.
+$$
+LMI:
+$$
+F(x)=F_0+\sum_i x_iF_i\succeq0
+$$
+is linear/affine in variables and constrained to PSD cone $S_+^n$.
+
+PSD cone:
+$$
+S_+^n=\{X=X^T\mid X\succeq0\}.
+$$
+For $2\times2$:
+$$
+\begin{bmatrix}a&b\\b&c\end{bmatrix}\succeq0
+\Leftrightarrow a\ge0,\ c\ge0,\ ac-b^2\ge0.
+$$
+
+Schur complement:
+$$
+\begin{bmatrix}Q&S\\S^T&R\end{bmatrix}\succ0,\ R\succ0
+\Leftrightarrow Q-SR^{-1}S^T\succ0.
+$$
+Also with signs:
+$$
+\begin{bmatrix}Q&S\\S^T&R\end{bmatrix}\preceq0,\ R\prec0
+\Leftrightarrow Q-SR^{-1}S^T\preceq0.
+$$
+
+Quadratic constraint to LMI, $Q\succ0$:
+$$
+x^TQx+b^Tx+c\le0
+\Leftrightarrow
+\begin{bmatrix}
+c+b^Tx & x^T\\
+x & -Q^{-1}
+\end{bmatrix}\preceq0.
+$$
+
+SOC/norm to LMI:
+$$
+\|Ax+b\|_2\le c^Tx+d,\ t=c^Tx+d
+$$
+requires $t\ge0$ and
+$$
+\begin{bmatrix}
+tI & Ax+b\\
+(Ax+b)^T & t
+\end{bmatrix}\succeq0.
+$$
+
+Spectral norm:
+$$
+\|A(x)\|_2<\gamma
+\Leftrightarrow
+\begin{bmatrix}\gamma I&A(x)\\A(x)^T&\gamma I\end{bmatrix}\succ0.
+$$
+Why LMI? every matrix entry affine in $(x,\gamma)$.
+
+Epigraph trick:
+$$
+\min f(x)\quad\Leftrightarrow\quad \min t\ \text{s.t. } f(x)\le t.
+$$
+This turns nonlinear objective into constraint plus linear cost.
+
+\subsection*{Lyapunov / Control LMI}
+
+Discrete stability: $x_{k+1}=Ax_k$ stable if $\exists P\succ0$:
+$$
+A^TPA-P\prec0.
+$$
+Schur form:
+$$
+\begin{bmatrix}-P&A^T\\A&-P^{-1}\end{bmatrix}\prec0.
+$$
+Congruence transform preserves definiteness: $M\prec0$, nonsingular $T$ $\Rightarrow T^TMT\prec0$.
+
+State feedback $u=Kx$, closed loop $A+BK$. Use variable substitution (e.g. $Y=P^{-1}$, $L=KY$) to make inequalities linear in variables.
+
+\section*{Q1 Roy: MPC}
+
+Dynamics:
+$$
+x_{k+1}=Ax_k+Bu_k+Fw_k.
+$$
+Finite horizon:
+$$
+\min_{\{x_i,u_i\}}\sum_{i=0}^{N-1}
+\left((x_i-r_i)^TQ(x_i-r_i)+u_i^TRu_i\right)+x_N^TQ_f x_N
+$$
+s.t. dynamics, $u_{\min}\le u_i\le u_{\max}$, state constraints, terminal constraints.
+
+Meaning: $A$ natural dynamics; $B$ input effect; $Q$ state/tracking weight; $R$ control effort. $Q$ high/R low = aggressive; $R$ high = smooth/conservative.
+
+MPC loop: measure/estimate $x_k$ -> optimise future trajectory -> apply first $u_k$ -> repeat. Linear dynamics + quadratic cost + linear bounds $\Rightarrow$ QP after stacking.
+
+Explicit MPC one-step:
+$$
+J=x_{k+1}^TQx_{k+1}+u_k^TRu_k,\quad x_{k+1}=Ax_k+Bu_k.
+$$
+Substitute:
+$$
+J=x_k^TA^TQAx_k+2x_k^TA^QB u_k+u_k^T(B^TQB+R)u_k.
+$$
+Let scalar input $H=B^TQB+R>0$, $g=B^TQA$. Interior:
+$$
+2gx_k+2Hu_k=0\Rightarrow u_k^*=-H^{-1}gx_k
+$$
+then saturate by bounds:
+$$
+u^*(x)=\min\{u_{\max},\max\{u_{\min},-H^{-1}gx\}\}.
+$$
+Piecewise affine controller; active constraints define regions.
+
+\columnbreak
+
+\section*{Q2 Power Systems}
+
+\subsection*{Economic Dispatch / Pricing}
+
+ED:
+$$
+\min_{P_{G_i}}\sum_i C_i(P_{G_i}),\quad
+\sum_iP_{G_i}=P_D,\quad P_i^{\min}\le P_{G_i}\le P_i^{\max}.
+$$
+No active limits/no losses:
+$$
+\frac{dC_i}{dP_{G_i}}=\lambda.
+$$
+With losses:
+$$
+P_D+P_L(P_G)-\sum_iP_{G_i}=0,\quad
+L_i=\frac1{1-\partial P_L/\partial P_{G_i}},
+$$
+optimal:
+$$
+L_iIC_i(P_{G_i})=\lambda.
+$$
+
+Uniform price: all accepted generators paid marginal clearing price. Pay-as-bid: each paid own bid; more strategic bidding.
+
+\subsection*{OPF Types}
+
+ED: generation cost + total balance, ignores network.  
+DC OPF: linear active-power flows and line limits; fast real-time approximation.  
+AC OPF: full $P,Q,V,\theta$ nonlinear AC equations; accurate but large/nonconvex.  
+SC-OPF: base case + contingencies (line/gen outage), much larger.
+
+AC OPF hard: many vars/constraints; $\sin,\cos$; nonlinear/nonconvex equalities; real-time; SC constraints multiply cases.  
+Mitigate: DC OPF, linearisation, piecewise loss approximation, warm start, interior-point, decomposition, contingency screening, AC feasibility check after DC OPF.
+
+Interior-point barrier:
+$$
+\min f(x)\quad g_i(x)\le0,\ h(x)=0
+\Rightarrow
+\min f(x)-\mu\sum_i\log(-g_i(x))\quad h(x)=0.
+$$
+
+Scaling:
+$$
+t_2/t_1\approx(N_2/N_1)^3,\quad
+t_{AC}\approx5t_{DC}(N_{AC}/N_{DC})^3.
+$$
+
+\subsection*{DC Power Flow / DC OPF}
+
+Assumptions: $V_i\approx1$ p.u.; ignore $Q$; small angles; lossless/negligible resistance.
+$$
+\sin(\theta_i-\theta_j)\approx\theta_i-\theta_j,\quad
+P_{ij}=B_{ij}(\theta_i-\theta_j).
+$$
+DC OPF is DC **approximation** of AC grid, not DC electrical grid.
+
+\subsection*{State Estimation}
+
+General:
+$$
+z=h(x)+e,\quad
+\min_x(z-h(x))^TR^{-1}(z-h(x)).
+$$
+Equal variances: $\min_x\|z-h(x)\|_2^2$. Linear $h(x)=Hx$:
+$$
+\hat x=(H^TH)^{-1}H^Tz,\quad
+\hat x_W=(H^TR^{-1}H)^{-1}H^TR^{-1}z.
+$$
+Need reference angle because only angle differences observable.
+
+DC SE template: measurements
+$$
+z=[P_{12}^m,P_{13}^m,P_{32}^m]^T,\quad P_{ij}=B_{ij}(\theta_i-\theta_j).
+$$
+Set $\theta_1=0$, $x=[\theta_2,\theta_3]^T$:
+$$
+H=\begin{bmatrix}
+-B_{12}&0\\
+0&-B_{13}\\
+-B_{32}&B_{32}
+\end{bmatrix},\quad
+\min_x\|z-Hx\|_2^2.
+$$
+
+AC NLS:
+$$
+P_{ij}=V_iV_jB_{ij}\sin(\theta_i-\theta_j),
+$$
+$$
+Q_{ij}=V_i(V_i-V_j\cos(\theta_i-\theta_j))B_{ij}.
+$$
+Choose state, e.g. $x=[V_1,V_2,V_3,\theta_2,\theta_3]^T$ with $\theta_1=0$; stack measurements $z$ and model $h(x)$:
+$$
+\min_x\|z-h(x)\|_2^2
+$$
+or weighted. If unknown parameter e.g. $B_{32}$, include it in $x$.
+
+Per unit: $P_{\rm pu}=P_{\rm actual}/S_{\rm base}$.
+
+\section*{Q2 Game Theory}
+
+Game theory: multiple players, each controls own strategy and payoff; result is equilibrium, not necessarily global optimum.
+
+Payoff matrix method:
+1. check whether entries are reward (larger better) or cost/sentence (smaller better);
+2. for each column mark row player's best response;
+3. for each row mark column player's best response;
+4. overlap = Nash equilibrium.
+
+Nash equilibrium:
+$$
+s^*=(s_1^*,...,s_n^*)\quad
+u_i(s_i^*,s_{-i}^*)\ge u_i(s_i,s_{-i}^*)\ \forall s_i.
+$$
+No player can improve by unilateral deviation. NE $\ne$ social optimum.
+
+Dominant strategy: best regardless of opponent. Dominated: worse than another strategy for all opponent actions.
+
+Prisoner's dilemma: dominant defect for both; NE $(D,D)$; social optimum $(C,C)$; individual rationality can be collectively inefficient.
+
+Maximax: choose best possible payoff (optimistic).  
+Maximin: choose best worst-case payoff (conservative).  
+Minimax: minimise maximum loss/regret (robust).
+
+Zero-sum: $u_1=-u_2$. Simultaneous: Cournot. Sequential: Stackelberg. Dynamic: multiple stages/time.
+
+Best response example:
+$$
+U_1=12x_1-x_1^2-x_1x_2,\quad
+\frac{\partial U_1}{\partial x_1}=12-2x_1-x_2=0
+$$
+$$
+BR_1(x_2)=6-\frac{x_2}{2},\quad
+BR_2(x_1)=6-\frac{x_1}{2}.
+$$
+Solve simultaneous equations for Nash.
+
+\section*{Fast Classification / Common Traps}
+
+LP: linear objective, linear constraints.  
+QP: quadratic objective, linear constraints. OLS is QP; constrained LS no normal-equation closed form.  
+QCQP: quadratic objective + quadratic constraints.  
+SOCP: norm cone constraints $\|Ax+b\|\le c^Tx+d$.  
+SDP/LMI: affine matrix constrained PSD.
+
+Convex optimisation standard:
+$$
+\min f_0(x),\quad f_i(x)\le0,\quad Ax=b
+$$
+with convex $f_i$, affine equality. Nonlinear equality generally nonconvex.
+
+LP standard form reminders: convert max to min by negating; $x$ free $\Rightarrow x=x^+-x^-$, $x^\pm\ge0$; $\le$ add slack; $\ge$ subtract surplus.
+
+Formulation checklist: decision variables? known data? objective? constraints? dimensions? linear/nonlinear/convex? solve or only formulate?
+
+Common mistakes:
+- use $\Phi\Phi^T$ instead of $\Phi^T\Phi$;
+- forget reference bus angle in power SE;
+- call DC OPF a DC grid;
+- say AC OPF hard only because large; also nonlinear/nonconvex;
+- forget $t\ge0$ in norm/SOC;
+- mix KKT sign conventions;
+- treat Nash as social optimum;
+- Schur complement with wrong sign/definite block.
+
+\section*{Extra Calculation Templates}
+
+\subsection*{Quadratic ED}
+If $C_i(P_i)=a_iP_i^2+b_iP_i+c_i$ and no active limits/losses:
+$$
+2a_iP_i+b_i=\lambda
+\Rightarrow
+P_i=\frac{\lambda-b_i}{2a_i},\quad
+\sum_iP_i=P_D.
+$$
+If computed $P_i$ violates limits, fix it at bound and redispatch remaining demand.
+
+\subsection*{Generic OPF Forms}
+DC OPF:
+$$
+\min_{P_G,\theta}\sum_iC_i(P_{G_i})
+$$
+$$
+\text{s.t. } P_G-P_D=B_{\rm bus}\theta,\quad
+|B_{ij}(\theta_i-\theta_j)|\le F_{ij}^{\max},\quad
+P_i^{\min}\le P_{G_i}\le P_i^{\max}.
+$$
+AC OPF:
+$$
+\min_{P_G,Q_G,V,\theta}\sum_iC_i(P_{G_i})
+$$
+s.t. nonlinear AC power balance, flow equations, voltage bounds, gen $P/Q$ bounds, line limits. Nonconvex due to AC equality constraints.
+
+SC-OPF:
+$$
+\text{base-case constraints}+\text{constraints for each contingency }c\in\mathcal C.
+$$
+
+\subsection*{Schur Mini-Checks}
+Ellipsoid membership:
+$$
+(x-c)^TP^{-1}(x-c)\le1
+\Leftrightarrow
+\begin{bmatrix}
+1&(x-c)^T\\
+x-c&P
+\end{bmatrix}\succeq0,\ P\succ0.
+$$
+Scalar quadratic $ax^2+2bx+c\le0$, $a>0$:
+$$
+\begin{bmatrix}
+c+2bx & x\\
+x & -1/a
+\end{bmatrix}\preceq0.
+$$
+Block diagonal LMIs:
+$$
+F_i(x)\succeq0\ \forall i
+\Leftrightarrow
+\operatorname{diag}(F_1(x),...,F_m(x))\succeq0.
+$$
+
+\subsection*{LMI Linearity Test}
+Allowed entries: $3x_1-2x_2+\gamma+5$.  
+Not LMI if entries contain $x_1x_2$, $x^2$, $1/x$, $\sin x$, or decision variable inverse.  
+Products with fixed matrices are OK: $A_0+x_1A_1+x_2A_2$.
+
+\subsection*{Payoff Matrix Fast Marking}
+Reward matrix: mark max. Cost/sentence matrix: mark min.  
+For each column mark row player's BR; for each row mark column player's BR; double-marked cell = NE. Multiple double marks possible. No pure NE possible.
+
+\subsection*{Term 1 Support}
+Infinity norm:
+$$
+\|x\|_\infty=\max_i|x_i|.
+$$
+Directional derivative:
+$$
+x=c+\mu p,\quad
+f(c+\mu p)\approx f(c)+\mu\nabla f(c)^Tp.
+$$
+At local min, arbitrary $p$ gives $\nabla f(c)^Tp=0\ \forall p\Rightarrow\nabla f(c)=0$.
+
+Slackness: inequality inactive $\Rightarrow g_i(x)<0,\lambda_i=0$; active $\Rightarrow g_i(x)=0,\lambda_i$ may be positive. SQP handles active-set combinatorics by solving successive QP approximations.
+
+\subsection*{Exam Triage}
+If asked "formulate": do not solve; define $x,z,h,H,R$, objective and constraints.  
+If asked "show": write algebra step-by-step.  
+If asked "explain": give 2-4 precise bullets plus formula if possible.  
+If stuck: write dimensions and standard template for partial credit.
+
+\end{multicols*}
