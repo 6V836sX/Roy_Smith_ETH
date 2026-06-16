@@ -179,7 +179,7 @@ Visible structure:
 Visible structure:
 
 - Q1: basics.
-  - derivative of `x^T A x`;
+  - derivative of $x^T A x$;
   - infinity norm;
   - Taylor expansion;
   - positive semidefinite matrices and Hessian.

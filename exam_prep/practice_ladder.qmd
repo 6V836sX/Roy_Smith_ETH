@@ -10,7 +10,7 @@ format:
     colorlinks: true
 lang: zh
 documentclass: ctexart
-geometry: margin=0.8in
+geometry: a4paper,margin=0.8in
 ---
 
 # Practice Ladder: Basic to Exam Level
@@ -25,7 +25,7 @@ Use this file to train topic by topic. Each ladder has three levels:
 
 ### Level 1
 
-Explain what the gradient and Hessian mean for a scalar function `f(x)`.
+Explain what the gradient and Hessian mean for a scalar function $f(x)$.
 
 Minimum answer:
 
@@ -37,34 +37,35 @@ Minimum answer:
 
 Derive:
 
-```text
-f(x) = x^T A x
-grad f = (A + A^T)x
-```
+$$
+f(x)=x^TAx,
+\qquad
+\nabla f=(A+A^T)x.
+$$
 
-Then specialise to symmetric `A`:
+Then specialise to symmetric $A$:
 
-```text
-grad f = 2Ax
-```
+$$
+\nabla f=2Ax.
+$$
 
 ### Level 3
 
 Use the second-order Taylor model to derive Newton's update:
 
-```text
-x_k = x_{k-1} - H(x_{k-1})^{-1} grad f(x_{k-1})
-```
+$$
+x_k=x_{k-1}-H(x_{k-1})^{-1}\nabla f(x_{k-1}).
+$$
 
 Exam trigger:
 
 If asked "show the update is a descent direction", compute:
 
-```text
-grad f^T p = - grad f^T H^{-1} grad f < 0
-```
+$$
+\nabla f^Tp=-\nabla f^TH^{-1}\nabla f<0.
+$$
 
-when `H` is positive definite.
+when $H$ is positive definite.
 
 ## Ladder B: Least Squares and Regularisation
 
@@ -72,40 +73,45 @@ when `H` is positive definite.
 
 Identify the parts:
 
-```text
-y = measurement vector
-Phi or A = feature/model matrix
-x or theta = unknown parameters
-y - A x = residual
-```
+$$
+y=\text{measurement vector},\quad
+\Phi\text{ or }A=\text{feature/model matrix},
+$$
+$$
+x\text{ or }\theta=\text{unknown parameters},\quad
+y-Ax=\text{residual}.
+$$
 
 ### Level 2
 
 Derive ordinary LS:
 
-```text
-min_x ||y - A x||_2^2
-A^T A x = A^T y
-```
+$$
+\min_x\|y-Ax\|_2^2,
+\qquad
+A^TAx=A^Ty.
+$$
 
 Derive ridge:
 
-```text
-min_x 1/2||y - A x||_2^2 + lambda/2 ||x||_2^2
-(A^T A + lambda I)x = A^T y
-```
+$$
+\min_x \frac12\|y-Ax\|_2^2+\frac{\lambda}{2}\|x\|_2^2,
+$$
+$$
+(A^TA+\lambda I)x=A^Ty.
+$$
 
 ### Level 3
 
 Formulate a nonlinear LS problem:
 
-```text
-min_z sum_i (m_i - h_i(z))^2
-```
+$$
+\min_z\sum_i(m_i-h_i(z))^2.
+$$
 
 Exam habit:
 
-Define `z`, measurement vector `m`, model vector `h(z)`, and state whether it is linear or nonlinear.
+Define $z$, measurement vector $m$, model vector $h(z)$, and state whether it is linear or nonlinear.
 
 ## Ladder C: KKT
 
@@ -113,41 +119,42 @@ Define `z`, measurement vector `m`, model vector `h(z)`, and state whether it is
 
 For constraints:
 
-```text
-g_i(x) <= 0
-h_j(x) = 0
-```
+$$
+g_i(x)\le0,\qquad h_j(x)=0.
+$$
 
 write:
 
-```text
-L = f(x) + sum_i lambda_i g_i(x) + sum_j nu_j h_j(x)
-lambda_i >= 0
-```
+$$
+L=f(x)+\sum_i\lambda_i g_i(x)+\sum_j\nu_jh_j(x),
+\qquad
+\lambda_i\ge0.
+$$
 
 ### Level 2
 
 Write the four KKT conditions:
 
-1. stationarity: `grad_x L = 0`;
+1. stationarity: $\nabla_xL=0$;
 2. primal feasibility: constraints satisfied;
-3. dual feasibility: `lambda_i >= 0`;
-4. complementarity: `lambda_i g_i(x) = 0`.
+3. dual feasibility: $\lambda_i\ge0$;
+4. complementarity: $\lambda_i g_i(x)=0$.
 
 ### Level 3
 
 Given bounds:
 
-```text
-u_lb <= u <= u_ub
-```
+$$
+u_{\text{lb}}\le u\le u_{\text{ub}}.
+$$
 
 rewrite as:
 
-```text
-u - u_ub <= 0
-u_lb - u <= 0
-```
+$$
+u-u_{\text{ub}}\le0,
+\qquad
+u_{\text{lb}}-u\le0.
+$$
 
 Then write the Lagrangian and solve active/inactive cases.
 
@@ -164,33 +171,36 @@ Know the states:
 
 DC measurement model:
 
-```text
-P_ij = B_ij(theta_i - theta_j)
-```
+$$
+P_{ij}=B_{ij}(\theta_i-\theta_j).
+$$
 
 Build:
 
-```text
-z = H theta + noise
-min_theta ||z - H theta||_2^2
-```
+$$
+z=H\theta+\text{noise},
+\qquad
+\min_\theta\|z-H\theta\|_2^2.
+$$
 
 ### Level 3
 
 AC nonlinear model:
 
-```text
-P_ij = V_i V_j B_ij sin(theta_i - theta_j)
-Q_ij = V_i(V_i - V_j cos(theta_i - theta_j))B_ij
-```
+$$
+P_{ij}=V_iV_jB_{ij}\sin(\theta_i-\theta_j),
+$$
+$$
+Q_{ij}=V_i(V_i-V_j\cos(\theta_i-\theta_j))B_{ij}.
+$$
 
 Build:
 
-```text
-min_x ||z - h(x)||_2^2
-```
+$$
+\min_x\|z-h(x)\|_2^2.
+$$
 
-where `x` includes unknown voltage magnitudes, angles, and possibly unknown line parameters.
+where $x$ includes unknown voltage magnitudes, angles, and possibly unknown line parameters.
 
 ## Ladder E: OPF and SC-OPF
 
@@ -226,10 +236,7 @@ Explain SC-OPF:
 
 Define Nash equilibrium:
 
-```text
-No player can improve their own outcome by changing strategy alone,
-given all other players keep their strategies fixed.
-```
+> No player can improve their own outcome by changing strategy alone, given all other players keep their strategies fixed.
 
 ### Level 2
 
@@ -261,11 +268,15 @@ Identify:
 
 Write:
 
-```text
-min_u ||y-r||_2^2 + ||u||_2^2
-subject to x_{k+1}=Ax_k+Bu_k
-           u_lb <= u_k <= u_ub
-```
+$$
+\min_u\|y-r\|_2^2+\|u\|_2^2
+$$
+subject to
+$$
+x_{k+1}=Ax_k+Bu_k,
+\qquad
+u_{\text{lb}}\le u_k\le u_{\text{ub}}.
+$$
 
 ### Level 3
 

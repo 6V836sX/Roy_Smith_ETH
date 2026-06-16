@@ -10,7 +10,7 @@ format:
     colorlinks: true
 lang: zh
 documentclass: ctexart
-geometry: margin=0.8in
+geometry: a4paper,margin=0.8in
 ---
 
 # Two-Day ENEL445 Training Plan
@@ -51,14 +51,27 @@ Output:
 
 Train these until you can write them without notes:
 
-1. `d/dx (x^T A x) = (A + A^T)x`.
+1. Quadratic derivative:
+   $$
+   \frac{d}{dx}(x^TAx)=(A+A^T)x.
+   $$
 2. Taylor expansion:
-   `f(x) approx f(c) + grad f(c)^T(x-c) + 1/2 (x-c)^T H(c)(x-c)`.
+   $$
+   f(x)\approx f(c)+\nabla f(c)^T(x-c)
+   +\frac12(x-c)^TH(c)(x-c).
+   $$
 3. Newton step:
-   `x_k = x_{k-1} - H^{-1} grad f`.
+   $$
+   x_k=x_{k-1}-H^{-1}\nabla f.
+   $$
 4. Ridge:
-   `min 1/2(y-Ax)^T(y-Ax) + lambda/2 x^T x`
-   gives `(A^T A + lambda I)x = A^T y`.
+   $$
+   \min_x\frac12(y-Ax)^T(y-Ax)+\frac{\lambda}{2}x^Tx
+   $$
+   gives
+   $$
+   (A^TA+\lambda I)x=A^Ty.
+   $$
 5. KKT:
    - primal feasibility;
    - dual feasibility;
@@ -96,7 +109,7 @@ Train:
 
 3. MPC/KKT:
    - formulate MPC from dynamics, cost, horizon, bounds;
-   - write Lagrangian with `g(x)<=0`;
+   - write Lagrangian with $g(x)\le0$;
    - KKT active/inactive bound logic.
 
 Source:
@@ -115,11 +128,17 @@ Goal: formulate, not over-solve.
 Train:
 
 1. linear LS:
-   `min_x ||y - Phi x||_2^2`.
+   $$
+   \min_x\|y-\Phi x\|_2^2.
+   $$
 2. nonlinear LS:
-   `min_z sum_i (measurement_i - model_i(z))^2`.
+   $$
+   \min_z\sum_i(\text{measurement}_i-\text{model}_i(z))^2.
+   $$
 3. weighted LS:
-   `min_x (y-h(x))^T R^{-1}(y-h(x))`.
+   $$
+   \min_x (y-h(x))^TR^{-1}(y-h(x)).
+   $$
 4. range-based LS and power-system state estimation.
 
 Key exam habit:
@@ -284,8 +303,8 @@ Skip unless already comfortable:
 Do one of each:
 
 1. Explain AC OPF difficulty in equation-aware terms.
-2. Formulate DC state estimation as `min ||z-H theta||^2`.
-3. Formulate AC state estimation as `min ||z-h(x)||^2`.
+2. Formulate DC state estimation as $\min_\theta\|z-H\theta\|^2$.
+3. Formulate AC state estimation as $\min_x\|z-h(x)\|^2$.
 4. Solve a payoff matrix for Nash equilibrium.
 5. Explain prisoner’s dilemma social optimum vs Nash equilibrium.
 

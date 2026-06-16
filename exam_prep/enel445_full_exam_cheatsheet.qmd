@@ -23,7 +23,7 @@ header-includes:
   - \titlespacing*{\subsection}{0pt}{1pt}{0pt}
   - \titleformat{\section}{\bfseries\small}{}{0pt}{}
   - \titleformat{\subsection}{\bfseries\footnotesize}{}{0pt}{}
-  - \AtBeginDocument{\fontsize{5.9}{6.45}\selectfont}
+  - \AtBeginDocument{\fontsize{5.75}{6.25}\selectfont}
   - \setlength{\abovedisplayskip}{1pt}
   - \setlength{\belowdisplayskip}{1pt}
   - \setlength{\abovedisplayshortskip}{1pt}
@@ -133,7 +133,7 @@ CI smaller $\Leftrightarrow$ estimator more stable / lower variance.
 
 \subsection*{BLUE / Weighted LS}
 
-General noise covariance $R$:
+General noise covariance $E[\epsilon\epsilon^T]=R$:
 $$
 \hat\theta_{\rm BLUE}=(\Phi^TR^{-1}\Phi)^{-1}\Phi^TR^{-1}y,
 \quad \operatorname{Cov}=(\Phi^TR^{-1}\Phi)^{-1}.
@@ -150,8 +150,25 @@ $$
 \subsection*{Bias / Variance / MSE / Metric}
 
 $$
-\operatorname{MSE}(\hat\theta)=E[(\hat\theta-\theta)^2]
-=\operatorname{Bias}^2+\operatorname{Var}.
+\operatorname{Bias}(\hat\theta)=E[\hat\theta]-\theta,\quad
+\operatorname{Var}(\hat\theta)=E[(\hat\theta-E[\hat\theta])^2],
+$$
+$$
+\operatorname{MSE}(\hat\theta)=E[(\hat\theta-\theta)^2].
+$$
+Derivation:
+$$
+\hat\theta-\theta
+=\big(\hat\theta-E[\hat\theta]\big)+\big(E[\hat\theta]-\theta\big).
+$$
+$$
+\operatorname{MSE}
+=E[(\hat\theta-E[\hat\theta])^2]
++2(E[\hat\theta]-\theta)E[\hat\theta-E[\hat\theta]]
++(E[\hat\theta]-\theta)^2
+$$
+$$
+=\operatorname{Var}(\hat\theta)+\operatorname{Bias}(\hat\theta)^2.
 $$
 Prediction/safety/control: prefer lower variance/stable estimates. Scientific parameter interpretation: bias of a particular coefficient may matter more than total MSE. Metric follows purpose.
 
@@ -216,7 +233,12 @@ Quasi-convex:
 $$
 S_\alpha=\{x\mid f(x)\le\alpha\}\ \text{convex for all }\alpha.
 $$
-Bisection on value $\alpha$: feasible $\Rightarrow$ lower upper bound; infeasible $\Rightarrow$ raise lower bound. Armijo searches step size $t$, not value.
+Bisection searches value $\alpha$: feasible $\Rightarrow$ lower upper bound; infeasible $\Rightarrow$ raise lower bound. Armijo/backtracking searches step size $t$ along descent direction $d$:
+$$
+x^+=x+td,\quad
+f(x+td)\le f(x)+ct\nabla f(x)^Td,\quad 0<c<1.
+$$
+Start $t=1$; if fail, $t\leftarrow\beta t$ ($0<\beta<1$). Bisection = global/value/feasibility; Armijo = local/step/gradient.
 
 Ellipsoid method: keep ellipsoid containing optimum; gradient/subgradient/violated constraint gives halfspace cut; wrap kept half with smaller ellipsoid. Theory/LP polynomial-time proof; not practical first-choice solver.
 
