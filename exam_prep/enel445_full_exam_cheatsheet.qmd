@@ -17,20 +17,22 @@ header-includes:
   - \usepackage{booktabs}
   - \setlength{\parindent}{0pt}
   - \setlength{\parskip}{0pt}
-  - \setlength{\columnsep}{0.16in}
+  - \setlength{\columnsep}{0.12in}
   - \setlist{nosep,leftmargin=*,topsep=0pt,partopsep=0pt,parsep=0pt,itemsep=0pt}
   - \titlespacing*{\section}{0pt}{2pt}{1pt}
   - \titlespacing*{\subsection}{0pt}{1pt}{0pt}
   - \titleformat{\section}{\bfseries\small}{}{0pt}{}
   - \titleformat{\subsection}{\bfseries\footnotesize}{}{0pt}{}
-  - \AtBeginDocument{\fontsize{5.75}{6.25}\selectfont}
+  - \AtBeginDocument{\fontsize{5.25}{5.75}\selectfont}
   - \setlength{\abovedisplayskip}{1pt}
   - \setlength{\belowdisplayskip}{1pt}
   - \setlength{\abovedisplayshortskip}{1pt}
   - \setlength{\belowdisplayshortskip}{1pt}
 ---
 
-\begin{multicols*}{4}
+```{=latex}
+\begin{multicols}{4}
+```
 
 \textbf{ENEL445 Full Exam Cheat Sheet — Q1 Roy Smith + Q2 Power Systems / Game Theory / LMI}
 
@@ -263,6 +265,7 @@ $$
 \begin{bmatrix}a&b\\b&c\end{bmatrix}\succeq0
 \Leftrightarrow a\ge0,\ c\ge0,\ ac-b^2\ge0.
 $$
+Example: $\begin{bmatrix}2&x\\x&8\end{bmatrix}\succeq0\Rightarrow16-x^2\ge0\Rightarrow |x|\le4$.
 
 Schur complement:
 $$
@@ -274,8 +277,9 @@ $$
 \begin{bmatrix}Q&S\\S^T&R\end{bmatrix}\preceq0,\ R\prec0
 \Leftrightarrow Q-SR^{-1}S^T\preceq0.
 $$
+Block expansion: $[u^T,v^T]\begin{bmatrix}Q&S\\S^T&R\end{bmatrix}\begin{bmatrix}u\\v\end{bmatrix}=u^TQu+2u^TSv+v^TRv$.
 
-Quadratic constraint to LMI, $Q\succ0$:
+Quadratic constraint to LMI, need $Q\succ0$ not just $Q\succeq0$:
 $$
 x^TQx+b^Tx+c\le0
 \Leftrightarrow
@@ -303,7 +307,7 @@ $$
 \Leftrightarrow
 \begin{bmatrix}\gamma I&A(x)\\A(x)^T&\gamma I\end{bmatrix}\succ0.
 $$
-Why LMI? every matrix entry affine in $(x,\gamma)$.
+Hidden condition $\gamma>0$. Why LMI? every matrix entry affine in $(x,\gamma)$.
 
 Epigraph trick:
 $$
@@ -333,34 +337,31 @@ x_{k+1}=Ax_k+Bu_k+Fw_k.
 $$
 Finite horizon:
 $$
-\min_{\{x_i,u_i\}}\sum_{i=0}^{N-1}
-\left((x_i-r_i)^TQ(x_i-r_i)+u_i^TRu_i\right)+x_N^TQ_f x_N
+\begin{aligned}
+\min_{\{x_i,u_i\}} \quad
+& \sum_{i=0}^{N-1}\left[(x_i-r_i)^TQ(x_i-r_i)+u_i^TRu_i\right]
++(x_N-r_N)^TQ_f(x_N-r_N)\\
+\text{s.t.}\quad
+& x_{i+1}=Ax_i+Bu_i,\ i=0,\dots,N-1,\quad x_0=x_k,\\
+& u_{\min}\le u_i\le u_{\max},\quad x_i\in\mathcal X,\quad x_N\in\mathcal X_f.
+\end{aligned}
 $$
-s.t. dynamics, $u_{\min}\le u_i\le u_{\max}$, state constraints, terminal constraints.
 
-Meaning: $A$ natural dynamics; $B$ input effect; $Q$ state/tracking weight; $R$ control effort. $Q$ high/R low = aggressive; $R$ high = smooth/conservative.
+Meaning: $x_k$ state vector; $u_k$ control input; $N$ prediction horizon; $r_i$ reference/target trajectory. $A$ natural dynamics; $B$ input effect; $Q$ tracking/state weight; $R$ control-effort weight. High $Q$/low $R$ = aggressive; high $R$ = smooth/conservative.
 
-MPC loop: measure/estimate $x_k$ -> optimise future trajectory -> apply first $u_k$ -> repeat. Linear dynamics + quadratic cost + linear bounds $\Rightarrow$ QP after stacking.
+MPC loop: measure/estimate $x_k$ -> optimise future trajectory -> apply first $u_k$ -> repeat. Linear dynamics + quadratic cost + linear bounds $\Rightarrow$ QP after stacking:
+$z=[x_0^T,\dots,x_N^T,u_0^T,\dots,u_{N-1}^T]^T$, $J=\frac12z^THz+f^Tz+\text{const}$, $Gz\le h,\ Ez=e$. $H$ from $Q,R,Q_f$; $f$ from reference. Nonlinear dynamics/cost/constraints or integer vars break standard QP.
 
 Explicit MPC one-step:
 $$
 J=x_{k+1}^TQx_{k+1}+u_k^TRu_k,\quad x_{k+1}=Ax_k+Bu_k.
 $$
-Substitute:
-$$
-J=x_k^TA^TQAx_k+2x_k^TA^QB u_k+u_k^T(B^TQB+R)u_k.
-$$
+Substitute: $J=x_k^TA^TQAx_k+2x_k^TA^TQBu_k+u_k^T(B^TQB+R)u_k$.  
 Let scalar input $H=B^TQB+R>0$, $g=B^TQA$. Interior:
-$$
-2gx_k+2Hu_k=0\Rightarrow u_k^*=-H^{-1}gx_k
-$$
-then saturate by bounds:
-$$
-u^*(x)=\min\{u_{\max},\max\{u_{\min},-H^{-1}gx\}\}.
-$$
+$2gx_k+2Hu_k=0\Rightarrow u_k^*=-H^{-1}gx_k$.  
+Bounds:
+$u^*(x)=\min\{u_{\max},\max\{u_{\min},-H^{-1}gx\}\}$.
 Piecewise affine controller; active constraints define regions.
-
-\columnbreak
 
 \section*{Q2 Power Systems}
 
@@ -387,21 +388,30 @@ $$
 
 Uniform price: all accepted generators paid marginal clearing price. Pay-as-bid: each paid own bid; more strategic bidding.
 
+ED KKT with bounds: $L=C+\lambda(P_D-\sum_iP_i)+\sum_i\mu_i^-(P_i^{\min}-P_i)+\sum_i\mu_i^+(P_i-P_i^{\max})$.  
+Stationarity: $C_i'(P_i)-\lambda-\mu_i^-+\mu_i^+=0$; complementarity: $\mu_i^-(P_i^{\min}-P_i)=0$, $\mu_i^+(P_i-P_i^{\max})=0$.
+
+LMP intuition: no congestion/loss $\Rightarrow$ same marginal price everywhere. Congestion/losses make bus prices differ; shadow prices on line limits enter local marginal cost.
+
 \subsection*{OPF Types}
 
+OPF = Optimal Power Flow: choose generation/control variables to minimise cost subject to power-flow equations and operating limits.  
 ED: generation cost + total balance, ignores network.  
 DC OPF: linear active-power flows and line limits; fast real-time approximation.  
 AC OPF: full $P,Q,V,\theta$ nonlinear AC equations; accurate but large/nonconvex.  
-SC-OPF: base case + contingencies (line/gen outage), much larger.
+SC-OPF: base case + contingencies (outage/disturbance cases: line/gen/transformer outage), much larger.
 
 AC OPF hard: many vars/constraints; $\sin,\cos$; nonlinear/nonconvex equalities; real-time; SC constraints multiply cases.  
 Mitigate: DC OPF, linearisation, piecewise loss approximation, warm start, interior-point, decomposition, contingency screening, AC feasibility check after DC OPF.
 
 Interior-point barrier:
 $$
-\min f(x)\quad g_i(x)\le0,\ h(x)=0
-\Rightarrow
-\min f(x)-\mu\sum_i\log(-g_i(x))\quad h(x)=0.
+\begin{gathered}
+\min f(x)\ \text{s.t. }g_i(x)\le0,\ h(x)=0\\
+\Rightarrow\ 
+\min \left[f(x)-\mu\sum_i\log(-g_i(x))\right]
+\ \text{s.t. }h(x)=0.
+\end{gathered}
 $$
 
 Scaling:
@@ -467,15 +477,12 @@ Per unit: $P_{\rm pu}=P_{\rm actual}/S_{\rm base}$.
 Game theory: multiple players, each controls own strategy and payoff; result is equilibrium, not necessarily global optimum.
 
 Payoff matrix method:
-1. check whether entries are reward (larger better) or cost/sentence (smaller better);
-2. for each column mark row player's best response;
-3. for each row mark column player's best response;
-4. overlap = Nash equilibrium.
+Reward matrix: larger is better; cost/sentence matrix: smaller is better. For each column mark row player's BR; for each row mark column player's BR; overlap = Nash equilibrium. NE is strategy profile, payoff is separate.
 
 Nash equilibrium:
 $$
 s^*=(s_1^*,...,s_n^*)\quad
-u_i(s_i^*,s_{-i}^*)\ge u_i(s_i,s_{-i}^*)\ \forall s_i.
+u_i(s_i^*,s_{-i}^*)\ge u_i(s_i,s_{-i}^*)\ \forall s_i,\forall i.
 $$
 No player can improve by unilateral deviation. NE $\ne$ social optimum.
 
@@ -499,6 +506,9 @@ BR_1(x_2)=6-\frac{x_2}{2},\quad
 BR_2(x_1)=6-\frac{x_1}{2}.
 $$
 Solve simultaneous equations for Nash.
+
+Mixed strategy $2\times2$: make opponent indifferent. If row payoff is $\begin{bmatrix}a&b\\c&d\end{bmatrix}$ and column plays top-column prob $q$, solve
+$qa+(1-q)b=qc+(1-q)d$. Do analogous equation for column player.
 
 \section*{Fast Classification / Common Traps}
 
@@ -608,10 +618,23 @@ At local min, arbitrary $p$ gives $\nabla f(c)^Tp=0\ \forall p\Rightarrow\nabla 
 
 Slackness: inequality inactive $\Rightarrow g_i(x)<0,\lambda_i=0$; active $\Rightarrow g_i(x)=0,\lambda_i$ may be positive. SQP handles active-set combinatorics by solving successive QP approximations.
 
+\subsection*{High-Value Extras}
+Continuous-time Lyapunov stability: $\dot x=Ax$ stable if $\exists P\succ0$ with $A^TP+PA\prec0$. Lyapunov equation: pick $Q\succ0$, solve $A^TP+PA=-Q$.
+
+Stackelberg game: follower first-order condition $\Rightarrow$ best response $BR_F(s_L)$; substitute into leader payoff; optimise leader variable.
+
+LP geometry: linear objective contour is a line/plane; optimum of bounded LP occurs at a vertex. QP contour is ellipse/parabola; optimum may occur inside feasible polytope, not necessarily vertex.
+
+KKT active-set shortcut: inactive constraint $\Rightarrow\lambda=0$; active bound substitutes variable at limit, then use stationarity to check multiplier sign.
+
+Gradient-free: use when gradients unavailable/unreliable/noisy/discontinuous/expensive, black-box simulations/experiments, or discrete variables. Nelder-Mead: simplex of $n+1$ points, reflection/expansion/contraction/shrink. Pattern search: poll directions, accept improvement else reduce step.
+
 \subsection*{Exam Triage}
 If asked "formulate": do not solve; define $x,z,h,H,R$, objective and constraints.  
 If asked "show": write algebra step-by-step.  
 If asked "explain": give 2-4 precise bullets plus formula if possible.  
 If stuck: write dimensions and standard template for partial credit.
 
-\end{multicols*}
+```{=latex}
+\end{multicols}
+```

@@ -8,7 +8,7 @@ format:
     toc-depth: 2
     number-sections: true
     colorlinks: true
-lang: zh
+lang: En
 documentclass: ctexart
 geometry: margin=0.8in
 ---
@@ -25,12 +25,12 @@ Do not look at notes while attempting. After finishing, ask Codex to mark it str
 
 Consider the regularised least-squares problem
 
-```math
+$$
 \min_\theta \quad
 \frac{1}{2}\|y-\Phi\theta\|_2^2
 +\frac{\lambda}{2}\|\theta\|_2^2,
 \qquad \lambda>0.
-```
+$$
 
 1. Derive the normal equation for the optimal `theta`.
 2. Briefly state why adding `lambda I` can make the estimate more stable.
@@ -45,9 +45,9 @@ Give one case where reducing variance is more important than reducing bias, and 
 
 Let `Q` be positive definite. Convert the quadratic constraint
 
-```math
+$$
 x^TQx + b^Tx + c \le 0
-```
+$$
 
 into an LMI using the Schur complement. State clearly what block matrix you use and what assumption is required.
 
@@ -55,9 +55,9 @@ into an LMI using the Schur complement. State clearly what block matrix you use 
 
 For the discrete-time system
 
-```math
+$$
 x_{k+1}=Ax_k+Bu_k,
-```
+$$
 
 write a finite-horizon MPC problem with:
 
@@ -88,7 +88,7 @@ Explain why AC OPF is computationally difficult for a large power system. Give t
 
 For a three-bus system, suppose the active power-flow measurements are:
 
-```math
+$$
 z =
 \begin{bmatrix}
 P_{12}\\
@@ -97,7 +97,7 @@ P_{32}
 \end{bmatrix},
 \qquad
 P_{ij}=B_{ij}(\theta_i-\theta_j).
-```
+$$
 
 Set `theta_1=0` as the reference angle. Formulate the linear least-squares problem for estimating `theta_2, theta_3`.
 
@@ -107,9 +107,9 @@ You must define the decision variable and the measurement matrix.
 
 Using
 
-```math
+$$
 P_{ij}=V_iV_jB_{ij}\sin(\theta_i-\theta_j),
-```
+$$
 
 write a nonlinear least-squares formulation for estimating unknown voltage magnitudes and angles from noisy flow measurements.
 
@@ -132,12 +132,12 @@ Two players choose `A` or `B`. The payoff matrix is:
 
 Consider
 
-```math
+$$
 \begin{bmatrix}
 \gamma I & A(x)\\
 A(x)^T & \gamma I
 \end{bmatrix} \succ 0.
-```
+$$
 
 Assume `A(x)` is affine in `x`.
 
