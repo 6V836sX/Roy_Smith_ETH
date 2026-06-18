@@ -7,8 +7,8 @@ format:
     colorlinks: false
 lang: en
 documentclass: article
-geometry: "a4paper,landscape,margin=0.22in"
-fontsize: 7pt
+geometry: "a4paper,landscape,left=0.16in,right=0.15in,top=0.18in,bottom=0.18in"
+fontsize: 9pt
 header-includes:
   - \usepackage{multicol}
   - \usepackage{amsmath,amssymb}
@@ -26,13 +26,13 @@ header-includes:
   - \newcommand{\Pp}[1]{\textcolor{KeyPurple}{\textbf{#1}}}
   - \setlength{\parindent}{0pt}
   - \setlength{\parskip}{0pt}
-  - \setlength{\columnsep}{0.12in}
+  - \setlength{\columnsep}{0.085in}
   - \setlist{nosep,leftmargin=*,topsep=0pt,partopsep=0pt,parsep=0pt,itemsep=0pt}
   - \titlespacing*{\section}{0pt}{2pt}{1pt}
   - \titlespacing*{\subsection}{0pt}{1pt}{0pt}
   - \titleformat{\section}{\bfseries\small\color{KeyBlue}}{}{0pt}{}
   - \titleformat{\subsection}{\bfseries\footnotesize\color{KeyTeal}}{}{0pt}{}
-  - \AtBeginDocument{\fontsize{5.25}{5.75}\selectfont}
+  - \AtBeginDocument{\fontsize{5.85}{6.22}\selectfont}
   - \setlength{\abovedisplayskip}{1pt}
   - \setlength{\belowdisplayskip}{1pt}
   - \setlength{\abovedisplayshortskip}{1pt}
@@ -54,7 +54,7 @@ $$
 f(\mathbf x)\approx f(\mathbf c)+\nabla f(\mathbf c)^T(\mathbf x-\mathbf c)+\frac12(\mathbf x-\mathbf c)^TH(\mathbf c)(\mathbf x-\mathbf c).
 $$
 
-Quadratic:
+\Pp{Quadratic}:
 $$
 f(\mathbf x)=\mathbf x^TA\mathbf x,\quad \nabla f=(A+A^T)\mathbf x,\quad A=A^T\Rightarrow \nabla f=2A\mathbf x.
 $$
@@ -64,24 +64,27 @@ f(\mathbf x)=\frac12\mathbf x^TA\mathbf x+\mathbf b^T\mathbf x+c,\quad A=A^T
 \Rightarrow \nabla f=A\mathbf x+\mathbf b,\ H=A.
 $$
 
-PSD/PD:
+\Pp{PSD/PD}:
 $$
 A\succeq0\Leftrightarrow \mathbf z^TA\mathbf z\ge0\ \forall \mathbf z;\quad
 A\succ0\Leftrightarrow \mathbf z^TA\mathbf z>0\ \forall \mathbf z\ne0.
 $$
 Stationary + $H\succ0$ $\Rightarrow$ strict local min. Convex twice differentiable: $H(x)\succeq0$.
 
-Newton:
+\Pp{Newton}:
 $$
 \mathbf x_{k+1}=\mathbf x_k-H(\mathbf x_k)^{-1}\nabla f(\mathbf x_k),\quad
-\mathbf p=-H^{-1}\nabla f.
+\mathbf p_k=-H(\mathbf x_k)^{-1}\nabla f(\mathbf x_k).
 $$
-If $H\succ0$: $\nabla f^T\mathbf p=-\nabla f^TH^{-1}\nabla f<0$.
+If $H(\mathbf x_k)\succ0$: $\nabla f(\mathbf x_k)^T\mathbf p_k<0$ unless $\nabla f(\mathbf x_k)=0$.
 
 Exact line search for quadratic $f=\frac12x^TAx+b^Tx$ along $p$:
 $$
-\phi(\mu)=f(c+\mu p),\quad
-\mu^*=-\frac{p^T(Ac+b)}{p^TAp}.
+\begin{aligned}
+\phi(\mu)&=f(c+\mu p),\\
+\phi'(\mu)&=p^T(Ac+b)+\mu p^TAp=0,\\
+\mu^*&=-\frac{p^T(Ac+b)}{p^TAp}.
+\end{aligned}
 $$
 
 \subsection*{Lagrangian / KKT}
@@ -90,63 +93,78 @@ For $\min f(x)$ s.t. $g_i(x)\le0,\ h_j(x)=0$:
 $$
 L=f+\sum_i\lambda_i g_i+\sum_j\nu_jh_j,\quad \lambda_i\ge0.
 $$
-\K{KKT}: stationarity $\nabla_xL=0$; primal feasible; dual feasible $\lambda_i\ge0$; complementarity $\lambda_i g_i(x)=0$.  
+\Pp{KKT}: stationarity $\nabla_xL=0$; primal feasible $g_i(x)\le0,h_j(x)=0$; dual feasible $\lambda_i\ge0$; complementarity $\lambda_i g_i(x)=0$.  
 \W{Bounds sign}: $u\le u_{\max}\Rightarrow u-u_{\max}\le0$; $u\ge u_{\min}\Rightarrow u_{\min}-u\le0$.
 
-Convex + regularity $\Rightarrow$ KKT necessary and sufficient. Nonconvex: usually local/necessary only.
+Convex + regularity $\Rightarrow$ KKT iff global optimum. Nonconvex: KKT usually only local necessary/candidate.
 
 \section*{Q1 Roy: Least Squares}
 
 \subsection*{LS Formulation}
 
-Model:
+\Pp{Model}:
 $$
 y=\Phi\theta+\epsilon,\quad r=y-\Phi\theta,\quad
 \min_\theta\|y-\Phi\theta\|_2^2.
 $$
-Normal equations:
+\Pp{Normal equations}:
 $$
-\Phi^T\Phi\hat\theta=\Phi^Ty,\quad
+\begin{aligned}
+J&=(y-\Phi\theta)^T(y-\Phi\theta)\\
+&=y^Ty-2\theta^T\Phi^Ty+\theta^T\Phi^T\Phi\theta,\\
+\nabla_\theta J&=-2\Phi^Ty+2\Phi^T\Phi\theta=0
+\Rightarrow \Phi^T\Phi\hat\theta=\Phi^Ty,\quad
 \hat\theta=(\Phi^T\Phi)^{-1}\Phi^Ty
+\end{aligned}
 $$
 if full column rank. Residual orthogonality:
 $$
 \Phi^T(y-\Phi\hat\theta)=0.
 $$
-Projection: $\hat y=\Phi\hat\theta=P_\Phi y$, $r\perp \operatorname{col}(\Phi)$.
+\Pp{Projection}: $\hat y=\Phi\hat\theta=P_\Phi y$, $r\perp \operatorname{col}(\Phi)$.
 
-Watch dimensions: $\Phi:N\times d$, $\theta:d\times1$, $\Phi^T\Phi:d\times d$.
+\Pp{Watch dimensions}: $\Phi:N\times d$, $\theta:d\times1$, $\Phi^T\Phi:d\times d$.
 
 \subsection*{Unbiasedness / Covariance / CI}
 
 Assume fixed $\Phi$, full rank, $E[\epsilon]=0$:
 $$
-\hat\theta=\theta_0+(\Phi^T\Phi)^{-1}\Phi^T\epsilon
+\hat\theta=(\Phi^T\Phi)^{-1}\Phi^T(\Phi\theta_0+\epsilon)
+=\theta_0+(\Phi^T\Phi)^{-1}\Phi^T\epsilon
 \Rightarrow E[\hat\theta]=\theta_0.
 $$
 If $\operatorname{Cov}(\epsilon)=\sigma^2I$:
 $$
-\operatorname{Cov}(\hat\theta)=\sigma^2(\Phi^T\Phi)^{-1}.
+\hat\theta-\theta_0=A\epsilon,\quad A=(\Phi^T\Phi)^{-1}\Phi^T,
+\quad \operatorname{Cov}(A\epsilon)=A\operatorname{Cov}(\epsilon)A^T
+=\sigma^2(\Phi^T\Phi)^{-1}.
 $$
-Coefficient SE: $\operatorname{se}(\hat\theta_j)=\hat\sigma\sqrt{[(\Phi^T\Phi)^{-1}]_{jj}}$.  
-CI: $\hat\theta_j\pm t_{\alpha/2,N-d}\operatorname{se}(\hat\theta_j)$.
+Ill-conditioned $\Phi^T\Phi$ $\Rightarrow$ large variance/unstable coefficients.  
+\Pp{Coefficient SE}: $\operatorname{se}(\hat\theta_j)=\hat\sigma\sqrt{[(\Phi^T\Phi)^{-1}]_{jj}}$.  
+\Pp{CI}: $\hat\theta_j\pm t_{\alpha/2,N-d}\operatorname{se}(\hat\theta_j)$.
 
 CI smaller $\Leftrightarrow$ estimator more stable / lower variance.
 
 \subsection*{BLUE / Weighted LS}
 
-General noise covariance $E[\epsilon\epsilon^T]=R$:
+General noise covariance $R=\operatorname{Cov}(\epsilon)=E[\epsilon\epsilon^T]$:
 $$
 \hat\theta_{\rm BLUE}=(\Phi^TR^{-1}\Phi)^{-1}\Phi^TR^{-1}y,
-\quad \operatorname{Cov}=(\Phi^TR^{-1}\Phi)^{-1}.
+\quad \operatorname{Cov}(\hat\theta_{\rm BLUE})=(\Phi^TR^{-1}\Phi)^{-1}.
 $$
 BLUE minimises **variance among unbiased linear estimators**, not MSE over biased estimators.
 
-Inverse-variance weights for independent unbiased estimates:
+\Pp{Inverse-variance weights for independent unbiased estimates}:
 $$
-\hat\theta_w=\sum_iw_i\hat\theta_i,\quad
-\sum_iw_i=1,\quad
+\hat\theta_w=\sum_iw_i\hat\theta_i,\quad \sum_iw_i=1,\quad
+\min_w\operatorname{Var}(\hat\theta_w)=\min_w\sum_iw_i^2\sigma_i^2
+$$
+$$
+\begin{aligned}
+\mathcal L&=\sum_iw_i^2\sigma_i^2+\lambda(\sum_iw_i-1)\\
+2w_i\sigma_i^2+\lambda&=0\Rightarrow w_i\propto1/\sigma_i^2,\quad
 w_i=\frac{1/\sigma_i^2}{\sum_j1/\sigma_j^2}.
+\end{aligned}
 $$
 
 \subsection*{Bias / Variance / MSE / Metric}
@@ -158,7 +176,7 @@ $$
 $$
 \operatorname{MSE}(\hat\theta)=E[(\hat\theta-\theta)^2].
 $$
-Derivation:
+\Pp{Derivation}:
 $$
 \hat\theta-\theta
 =\big(\hat\theta-E[\hat\theta]\big)+\big(E[\hat\theta]-\theta\big).
@@ -169,117 +187,136 @@ $$
 +2(E[\hat\theta]-\theta)E[\hat\theta-E[\hat\theta]]
 +(E[\hat\theta]-\theta)^2
 $$
+since $E[\hat\theta-E[\hat\theta]]=E[\hat\theta]-E[\hat\theta]=0$.
 $$
 =\operatorname{Var}(\hat\theta)+\operatorname{Bias}(\hat\theta)^2.
 $$
-Prediction/safety/control: prefer lower variance/stable estimates. Scientific parameter interpretation: bias of a particular coefficient may matter more than total MSE. Metric follows purpose.
+\Pp{Prediction/safety/control}: prefer lower variance/stable estimates. Scientific parameter interpretation: bias of a particular coefficient may matter more than total MSE. Metric follows purpose.
 
 \subsection*{Regularisation}
 
-\K{Ridge}:
+\Pp{Ridge}:
 $$
+\begin{aligned}
 \min_\theta \frac12\|y-\Phi\theta\|_2^2+\frac{\lambda}{2}\|\theta\|_2^2
-\Rightarrow
-(\Phi^T\Phi+\lambda I)\hat\theta=\Phi^Ty.
+&\Rightarrow \nabla J=-\Phi^Ty+\Phi^T\Phi\theta+\lambda\theta=0,\\
+&\Rightarrow(\Phi^T\Phi+\lambda I)\hat\theta=\Phi^Ty.
+\end{aligned}
 $$
-Stability: $\lambda I$ lifts small singular/eigenvalues, improves conditioning, lowers variance, adds bias.
+\Pp{Stability}: $\lambda I$ lifts small singular/eigenvalues, improves conditioning, lowers variance, adds bias.
 
-Tikhonov:
+\Pp{Tikhonov}:
 $$
 \min_\theta\|y-\Phi\theta\|^2+\|R\theta\|^2
 \Rightarrow(\Phi^T\Phi+R^TR)\theta=\Phi^Ty.
 $$
-$R$ useful if structured; arbitrary $R$ creates too many hyperparameters.
+$R$ useful if structured; arbitrary $R$ creates too many hyperparameters.R should encode prior structure / known smoothness / meaningful parameter penalties.
 
-\K{LASSO}: $\|y-\Phi\theta\|^2+\lambda\|\theta\|_1$; sparse, variable selection, no closed form generally.  
-\K{Elastic Net}: $\lambda_1\|\theta\|_1+\lambda_2\|\theta\|_2^2$; sparse + handles correlated predictors.
+\Pp{LASSO}: $\|y-\Phi\theta\|^2+\lambda\|\theta\|_1$; sparse, variable selection, no closed form generally.  
+\Pp{Elastic Net}: $\lambda_1\|\theta\|_1+\lambda_2\|\theta\|_2^2$; sparse + handles correlated predictors.
 
-Rule: Ridge many weak signals; LASSO few useful signals; Elastic Net correlated/varying signals. Use validation/CV for $\lambda$.
+\Pp{Rule}: Ridge many weak signals; LASSO few useful signals; Elastic Net correlated/varying signals. Use validation/CV for $\lambda$.
 
-Engineering order: better $\Phi$ first (variables, measurements, experiment design), regularisation second.
+\Pp{Engineering order}: better $\Phi$ first (variables, measurements, experiment design), regularisation second.
 
 \section*{Q1 Roy: Convex Geometry}
 
-Convex set:
+\Pp{Convex set}:
 $$
 x,y\in C,\ \alpha\in[0,1]\Rightarrow \alpha x+(1-\alpha)y\in C.
 $$
-Cone:
+\Pp{Cone}:
 $$
 x\in C,\ \gamma\ge0\Rightarrow\gamma x\in C.
 $$
-Convex cone:
+\Pp{Convex cone}:
 $$
 x_i\in C,\ \gamma_i\ge0\Rightarrow \sum_i\gamma_ix_i\in C.
 $$
 
-Hyperplane: $\{x\mid a^Tx=b\}$; halfspace $\{x\mid a^Tx\le b\}$. $a$ is normal. One equality removes one degree of freedom.  
-Polyhedron: $\{x\mid Ax\le b,\ Cx=d\}$. Test feasible side by substituting a point.
+\Pp{Hyperplane}: $\{x\mid a^Tx=b\}$; halfspace $\{x\mid a^Tx\le b\}$. $a$ is normal. One equality removes one degree of freedom.  
+\Pp{Polyhedron}: $\{x\mid Ax\le b,\ Cx=d\}$. Test feasible side by substituting a point.
 
-Norm ball: $\{x\mid\|x-x_c\|\le r\}$. Norm cone/SOC:
+\Pp{Norm ball}: $\{x\mid\|x-x_c\|\le r\}$. Norm cone/SOC:
 $$
 \mathcal Q^{n+1}=\{(t,x)\mid \|x\|_2\le t\}.
 $$
-Ellipsoid:
+\Pp{Ellipsoid}:
 $$
 \{x\mid(x-x_c)^TP^{-1}(x-x_c)\le1\},\ P\succ0.
 $$
 
-Convex function:
+\Pp{Convex function}:
 $$
+x,y\in\operatorname{dom}f,\ \alpha\in[0,1]\Rightarrow
 f(\alpha x+(1-\alpha)y)\le\alpha f(x)+(1-\alpha)f(y),
 $$
-domain must be convex. Strict convex: unique minimiser if exists. Norms are convex.
+$\operatorname{dom}f$ must be convex. Strict convex: unique minimiser if exists. Norms are convex.
 
-Quasi-convex:
+\Pp{Quasi-convex}:
 $$
-S_\alpha=\{x\mid f(x)\le\alpha\}\ \text{convex for all }\alpha.
+S_\alpha=\{x\mid f(x)\le\alpha\}\ \text{sublevel set, convex for all }\alpha.
 $$
-Bisection searches value $\alpha$: feasible $\Rightarrow$ lower upper bound; infeasible $\Rightarrow$ raise lower bound. Armijo/backtracking searches step size $t$ along descent direction $d$:
+Bisection searches value $\alpha$ by bracketing: feasible $\Rightarrow$ lower upper bound; infeasible $\Rightarrow$ raise lower bound. Keep squeezing $[L,U]$ until tight.
+
+\Pp{Line search}: Armijo/backtracking searches step size $t$ along descent direction $d$:
 $$
 x^+=x+td,\quad
 f(x+td)\le f(x)+ct\nabla f(x)^Td,\quad 0<c<1.
 $$
 Start $t=1$; if fail, $t\leftarrow\beta t$ ($0<\beta<1$). Bisection = global/value/feasibility; Armijo = local/step/gradient.
 
-Ellipsoid method: keep ellipsoid containing optimum; gradient/subgradient/violated constraint gives halfspace cut; wrap kept half with smaller ellipsoid. Theory/LP polynomial-time proof; not practical first-choice solver.
+\Pp{Ellipsoid method}: keep ellipsoid containing optimum; gradient/subgradient/violated constraint gives halfspace cut; wrap kept half with smaller ellipsoid. Theory/LP polynomial-time proof; not practical first-choice solver.
 
 \section*{Q1/Q2: Cone, SDP, LMI, Schur}
 
-Cone language:
+\Pp{Cone language}:
 $$
 Ax\le b\Leftrightarrow b-Ax\in\mathbb R_+^m.
 $$
-LMI:
-$$
-F(x)=F_0+\sum_i x_iF_i\succeq0
-$$
-is linear/affine in variables and constrained to PSD cone $S_+^n$.
+$\mathbb R_+^m=\{z\in\mathbb R^m\mid z_i\ge0\ \forall i\}$.
 
-PSD cone:
+\Pp{PSD cone}:
 $$
 S_+^n=\{X=X^T\mid X\succeq0\}.
 $$
-For $2\times2$:
+\Pp{LMI}: affine symmetric matrix constrained to PSD cone:
+$$
+F(x)=F_0+\sum_i x_iF_i\succeq0\quad(\Leftrightarrow F(x)\in S_+^n).
+$$
+\Pp{For $2\times2$}:
 $$
 \begin{bmatrix}a&b\\b&c\end{bmatrix}\succeq0
 \Leftrightarrow a\ge0,\ c\ge0,\ ac-b^2\ge0.
 $$
-Example: $\begin{bmatrix}2&x\\x&8\end{bmatrix}\succeq0\Rightarrow16-x^2\ge0\Rightarrow |x|\le4$.
+\Pp{Example}: $\begin{bmatrix}2&x\\x&8\end{bmatrix}\succeq0\Rightarrow16-x^2\ge0\Rightarrow |x|\le4$.
 
-Schur complement:
+\Pp{Schur complement theorem}:
 $$
 \begin{bmatrix}Q&S\\S^T&R\end{bmatrix}\succ0,\ R\succ0
 \Leftrightarrow Q-SR^{-1}S^T\succ0.
 $$
-Also with signs:
+\Pp{Use}: with $R\succ0$, test big block matrix PD by testing the smaller Schur matrix $Q-SR^{-1}S^T$.
+\Pp{Why}: test quadratic form, then complete square in $v$:
+$$
+\begin{aligned}
+[u^T,v^T]\begin{bmatrix}Q&S\\S^T&R\end{bmatrix}\begin{bmatrix}u\\v\end{bmatrix}
+&=u^TQu+2u^TSv+v^TRv\\
+u^TQu+2u^TSv+v^TRv
+&=(v+R^{-1}S^Tu)^TR(v+R^{-1}S^Tu)\\
+&\quad+u^T(Q-SR^{-1}S^T)u.
+\end{aligned}
+$$
+Since $R\succ0$, first square term $\ge0$; PD depends on the leftover Schur term.
+\Pp{Also with signs}:
 $$
 \begin{bmatrix}Q&S\\S^T&R\end{bmatrix}\preceq0,\ R\prec0
 \Leftrightarrow Q-SR^{-1}S^T\preceq0.
 $$
-Block expansion: $[u^T,v^T]\begin{bmatrix}Q&S\\S^T&R\end{bmatrix}\begin{bmatrix}u\\v\end{bmatrix}=u^TQu+2u^TSv+v^TRv$.
 
-Quadratic constraint to LMI, need $Q\succ0$ not just $Q\succeq0$:
+\Pp{Purpose}: convert suitable quadratic/inverse constraints into affine PSD constraints, so convex SDP/LMI solvers can handle them.
+
+\Pp{Quadratic constraint to LMI}, need $Q\succ0$ not just $Q\succeq0$:
 $$
 x^TQx+b^Tx+c\le0
 \Leftrightarrow
@@ -288,8 +325,9 @@ c+b^Tx & x^T\\
 x & -Q^{-1}
 \end{bmatrix}\preceq0.
 $$
+\Pp{Check}: Schur on $-Q^{-1}\prec0$ gives $c+b^Tx+x^TQx\le0$.
 
-\K{SOC/norm to LMI}:
+\Pp{SOC/norm to LMI}:
 $$
 \|Ax+b\|_2\le c^Tx+d,\ t=c^Tx+d
 $$
@@ -300,16 +338,17 @@ tI & Ax+b\\
 (Ax+b)^T & t
 \end{bmatrix}\succeq0.
 $$
+\Pp{Schur}: $t-(Ax+b)^T(tI)^{-1}(Ax+b)\ge0\Rightarrow t^2\ge\|Ax+b\|^2$.
 
-\K{Spectral norm}:
+\Pp{Spectral norm}:
 $$
 \|A(x)\|_2<\gamma
 \Leftrightarrow
 \begin{bmatrix}\gamma I&A(x)\\A(x)^T&\gamma I\end{bmatrix}\succ0.
 $$
-\W{Hidden condition} $\gamma>0$. \T{Why LMI?} every matrix entry affine in $(x,\gamma)$.
+\W{Hidden condition} $\gamma>0$. Schur: $\gamma I-\gamma^{-1}AA^T\succ0\Leftrightarrow \gamma^2I-AA^T\succ0$. \T{Why LMI?} every entry affine in $(x,\gamma)$.
 
-Epigraph trick:
+\Pp{Epigraph trick}:
 $$
 \min f(x)\quad\Leftrightarrow\quad \min t\ \text{s.t. } f(x)\le t.
 $$
@@ -317,94 +356,91 @@ This turns nonlinear objective into constraint plus linear cost.
 
 \subsection*{Lyapunov / Control LMI}
 
-Discrete stability: $x_{k+1}=Ax_k$ stable if $\exists P\succ0$:
-$$
-A^TPA-P\prec0.
-$$
-Schur form:
+\Pp{Discrete stability}: $x_{k+1}=Ax_k$ stable if $\exists P\succ0$ with $A^TPA-P\prec0$. Schur form:
 $$
 \begin{bmatrix}-P&A^T\\A&-P^{-1}\end{bmatrix}\prec0.
 $$
-Congruence transform preserves definiteness: $M\prec0$, nonsingular $T$ $\Rightarrow T^TMT\prec0$.
-
-State feedback $u=Kx$, closed loop $A+BK$. Use variable substitution (e.g. $Y=P^{-1}$, $L=KY$) to make inequalities linear in variables.
+Schur on $-P^{-1}$ gives $-P+A^TPA\prec0$. Congruence transform preserves definiteness: $M\prec0$, nonsingular $T$ $\Rightarrow T^TMT\prec0$. State feedback $u=Kx$, closed loop $A+BK$; substitute $Y=P^{-1}$, $L=KY$ to make LMIs linear.
+Example scalar $x_{k+1}=ax_k$: choose $P=1$, $a^2P-P<0\Rightarrow a^2-1<0\Rightarrow |a|<1$.
 
 \section*{Q1 Roy: MPC}
 
-Dynamics:
-$$
-x_{k+1}=Ax_k+Bu_k+Fw_k.
-$$
-Finite horizon:
+\Pp{Dynamics}: $x_{k+1}=Ax_k+Bu_k+Fw_k$. Finite horizon:
 $$
 \begin{aligned}
 \min_{\{x_i,u_i\}} \quad
-& \sum_{i=0}^{N-1}\left[(x_i-r_i)^TQ(x_i-r_i)+u_i^TRu_i\right]
-+(x_N-r_N)^TQ_f(x_N-r_N)\\
-\text{s.t.}\quad
-& x_{i+1}=Ax_i+Bu_i,\ i=0,\dots,N-1,\quad x_0=x_k,\\
-& u_{\min}\le u_i\le u_{\max},\quad x_i\in\mathcal X,\quad x_N\in\mathcal X_f.
+& \sum_{i=0}^{N-1}(x_i-r_i)^TQ(x_i-r_i)\\
+&+\sum_{i=0}^{N-1}u_i^TRu_i+(x_N-r_N)^TQ_f(x_N-r_N)\\
+\text{s.t.}\quad &x_{i+1}=Ax_i+Bu_i,\quad x_0=x_k,\\
+&u_{\min}\le u_i\le u_{\max},\quad x_i\in\mathcal X,\quad x_N\in\mathcal X_f.
 \end{aligned}
 $$
 
-Meaning: $x_k$ state vector; $u_k$ control input; $N$ prediction horizon; $r_i$ reference/target trajectory. $A$ natural dynamics; $B$ input effect; $Q$ tracking/state weight; $R$ control-effort weight. High $Q$/low $R$ = aggressive; high $R$ = smooth/conservative.
+\Pp{Meaning}: $x_k$ state vector; $u_k$ control input; $N$ prediction horizon; $r_i$ reference/target trajectory. $A$ natural dynamics; $B$ input effect; $Q$ tracking/state weight; $R$ control-effort weight. High $Q$/low $R$ = aggressive; high $R$ = smooth/conservative.
 
-MPC loop: measure/estimate $x_k$ -> optimise future trajectory -> apply first $u_k$ -> repeat. Linear dynamics + quadratic cost + linear bounds $\Rightarrow$ QP after stacking:
+\Pp{MPC loop}: measure/estimate $x_k$ -> optimise future trajectory -> apply first $u_k$ -> repeat. Linear dynamics + quadratic cost + linear bounds $\Rightarrow$ QP after stacking:
 $z=[x_0^T,\dots,x_N^T,u_0^T,\dots,u_{N-1}^T]^T$, $J=\frac12z^THz+f^Tz+\text{const}$, $Gz\le h,\ Ez=e$. $H$ from $Q,R,Q_f$; $f$ from reference. Nonlinear dynamics/cost/constraints or integer vars break standard QP.
 
-Explicit MPC one-step:
+\Pp{Explicit MPC one-step}:
 $$
 J=x_{k+1}^TQx_{k+1}+u_k^TRu_k,\quad x_{k+1}=Ax_k+Bu_k.
 $$
-Substitute: $J=x_k^TA^TQAx_k+2x_k^TA^TQBu_k+u_k^T(B^TQB+R)u_k$.  
+\Pp{Substitute}: $J=x_k^TA^TQAx_k+2x_k^TA^TQBu_k+u_k^T(B^TQB+R)u_k$.  
 Let scalar input $H=B^TQB+R>0$, $g=B^TQA$. Interior:
 $2gx_k+2Hu_k=0\Rightarrow u_k^*=-H^{-1}gx_k$.  
-Bounds:
+With bounds $u-u_{\max}\le0$, $u_{\min}-u\le0$:
+$L=J+\lambda_u(u-u_{\max})+\lambda_l(u_{\min}-u)$,
+$2gx_k+2Hu+\lambda_u-\lambda_l=0$.
+\Pp{Bounds}:
 $u^*(x)=\min\{u_{\max},\max\{u_{\min},-H^{-1}gx\}\}$.
-Regions: $u^*=u_{\max}$ if $gx_k\le-Hu_{\max}$; $u^*=-H^{-1}gx_k$ if $-Hu_{\max}\le gx_k\le-Hu_{\min}$; $u^*=u_{\min}$ if $gx_k\ge-Hu_{\min}$.
+\Pp{Regions}: $u^*=u_{\max}$ if $gx_k\le-Hu_{\max}$; $u^*=-H^{-1}gx_k$ if $-Hu_{\max}\le gx_k\le-Hu_{\min}$; $u^*=u_{\min}$ if $gx_k\ge-Hu_{\min}$.
 
 \section*{Q2 Power Systems}
 
 \subsection*{Economic Dispatch / Pricing}
 
-ED:
+\Pp{ED}:
 $$
 \min_{P_{G_i}}\sum_i C_i(P_{G_i}),\quad
 \sum_iP_{G_i}=P_D,\quad P_i^{\min}\le P_{G_i}\le P_i^{\max}.
 $$
-No active limits/no losses:
+\Pp{No active limits/no losses}:
 $$
-\frac{dC_i}{dP_{G_i}}=\lambda.
+\begin{aligned}
+L&=\sum_iC_i(P_i)+\lambda(P_D-\sum_iP_i),\\
+\partial L/\partial P_i&=C_i'(P_i)-\lambda=0
+\Rightarrow C_i'(P_i)=\lambda.
+\end{aligned}
 $$
-With losses:
+\Pp{With losses}:
 $$
 P_D+P_L(P_G)-\sum_iP_{G_i}=0,\quad
 L_i=\frac1{1-\partial P_L/\partial P_{G_i}},
 $$
-optimal:
+\Pp{optimal}:
 $$
 L_iIC_i(P_{G_i})=\lambda.
 $$
 
-Uniform price: all accepted generators paid marginal clearing price. Pay-as-bid: each paid own bid; more strategic bidding.
+\Pp{Uniform price}: all accepted generators paid marginal clearing price. Pay-as-bid: each paid own bid; more strategic bidding.
 
-ED KKT with bounds: $L=C+\lambda(P_D-\sum_iP_i)+\sum_i\mu_i^-(P_i^{\min}-P_i)+\sum_i\mu_i^+(P_i-P_i^{\max})$.  
-Stationarity: $C_i'(P_i)-\lambda-\mu_i^-+\mu_i^+=0$; complementarity: $\mu_i^-(P_i^{\min}-P_i)=0$, $\mu_i^+(P_i-P_i^{\max})=0$.
+\Pp{ED KKT with bounds}: $L=C+\lambda(P_D-\sum_iP_i)+\sum_i\mu_i^-(P_i^{\min}-P_i)+\sum_i\mu_i^+(P_i-P_i^{\max})$.  
+\Pp{Stationarity}: $C_i'(P_i)-\lambda-\mu_i^-+\mu_i^+=0$; complementarity: $\mu_i^-(P_i^{\min}-P_i)=0$, $\mu_i^+(P_i-P_i^{\max})=0$.
 
-LMP intuition: no congestion/loss $\Rightarrow$ same marginal price everywhere. Congestion/losses make bus prices differ; shadow prices on line limits enter local marginal cost.
+\Pp{LMP intuition}: no congestion/loss $\Rightarrow$ same marginal price everywhere. Congestion/losses make bus prices differ; shadow prices on line limits enter local marginal cost.
 
 \subsection*{OPF Types}
 
-\K{OPF} = Optimal Power Flow: choose generation/control variables to minimise cost subject to power-flow equations and operating limits.  
-\K{ED}: generation cost + total balance, ignores network.  
-\K{DC OPF}: linear active-power flows and line limits; fast real-time approximation.  
-\K{AC OPF}: full $P,Q,V,\theta$ nonlinear AC equations; accurate but large/nonconvex.  
-\K{SC-OPF}: base case + \W{contingencies} (outage/disturbance cases: line/gen/transformer outage), much larger.
+\Pp{OPF} = Optimal Power Flow: choose generation/control variables to minimise cost subject to power-flow equations and operating limits.  
+\Pp{ED}: generation cost + total balance, ignores network.  
+\Pp{DC OPF}: linear active-power flows and line limits; fast real-time approximation.  
+\Pp{AC OPF}: full $P,Q,V,\theta$ nonlinear AC equations; accurate but large/nonconvex.  
+\Pp{SC-OPF}: base case + \W{contingencies} (outage/disturbance cases: line/gen/transformer outage), much larger.
 
-AC OPF hard: many vars/constraints; $\sin,\cos$; nonlinear/nonconvex equalities; real-time; SC constraints multiply cases.  
-Mitigate: DC OPF, linearisation, piecewise loss approximation, warm start, interior-point, decomposition, contingency screening, AC feasibility check after DC OPF.
+\Pp{AC OPF hard}: many vars/constraints; $\sin,\cos$; nonlinear/nonconvex equalities; real-time; SC constraints multiply cases.  
+\Pp{Mitigate}: DC OPF, linearisation, piecewise loss approximation, warm start, interior-point, decomposition, contingency screening, AC feasibility check after DC OPF.
 
-Interior-point barrier:
+\Pp{Interior-point barrier}:
 $$
 \begin{gathered}
 \min f(x)\ \text{s.t. }g_i(x)\le0,\ h(x)=0\\
@@ -414,16 +450,16 @@ $$
 \end{gathered}
 $$
 
-Scaling:
+\Pp{Scaling}:
 $$
 t_2/t_1\approx(N_2/N_1)^3,\quad
 t_{AC}\approx5t_{DC}(N_{AC}/N_{DC})^3.
 $$
-Example: $N_{AC}=2N_{DC}\Rightarrow t_{AC}\approx40t_{DC}$.
+\Pp{Example}: $N_{AC}=2N_{DC}\Rightarrow t_{AC}\approx40t_{DC}$.
 
 \subsection*{DC Power Flow / DC OPF}
 
-Assumptions: $V_i\approx1$ p.u.; ignore $Q$; small angles; lossless/negligible resistance.
+\Pp{Assumptions}: $V_i\approx1$ p.u.; ignore $Q$; small angles; lossless/negligible resistance.
 $$
 \sin(\theta_i-\theta_j)\approx\theta_i-\theta_j,\quad
 P_{ij}=B_{ij}(\theta_i-\theta_j).
@@ -432,19 +468,19 @@ DC OPF is DC **approximation** of AC grid, not DC electrical grid.
 
 \subsection*{State Estimation}
 
-General:
+\Pp{General}:
 $$
 z=h(x)+e,\quad
 \min_x(z-h(x))^TR^{-1}(z-h(x)).
 $$
-Equal variances: $\min_x\|z-h(x)\|_2^2$. Linear $h(x)=Hx$:
+\Pp{Equal variances}: $\min_x\|z-h(x)\|_2^2$. Linear $h(x)=Hx$:
 $$
 \hat x=(H^TH)^{-1}H^Tz,\quad
 \hat x_W=(H^TR^{-1}H)^{-1}H^TR^{-1}z.
 $$
 Need reference angle because only angle differences observable.
 
-DC SE template: measurements
+\Pp{DC SE template}: measurements
 $$
 z=[P_{12}^m,P_{13}^m,P_{32}^m]^T,\quad P_{ij}=B_{ij}(\theta_i-\theta_j).
 $$
@@ -458,7 +494,7 @@ H=\begin{bmatrix}
 \min_x\|z-Hx\|_2^2.
 $$
 
-AC NLS:
+\Pp{AC NLS}:
 $$
 P_{ij}=V_iV_jB_{ij}\sin(\theta_i-\theta_j),
 $$
@@ -470,34 +506,34 @@ $$
 \min_x\|z-h(x)\|_2^2
 $$
 Use the weighted version if variances differ. If a parameter is unknown, e.g. $B_{32}$, include it in $x$.
-Example: $z=[P_{12}^m,Q_{12}^m,P_{13}^m,Q_{13}^m,V_1^m]^T$ and $h(x)=[P_{12}(x),Q_{12}(x),P_{13}(x),Q_{13}(x),V_1]^T$.
+\Pp{Example}: $z=[P_{12}^m,Q_{12}^m,P_{13}^m,Q_{13}^m,V_1^m]^T$ and $h(x)=[P_{12}(x),Q_{12}(x),P_{13}(x),Q_{13}(x),V_1]^T$.
 
-Per unit: $P_{\rm pu}=P_{\rm actual}/S_{\rm base}$.
+\Pp{Per unit}: $P_{\rm pu}=P_{\rm actual}/S_{\rm base}$.
 
 \section*{Q2 Game Theory}
 
-\K{Game theory}: each player chooses a strategy to maximise their own payoff; the outcome is an equilibrium, not necessarily the global/social optimum.
+\Pp{Game theory}: each player chooses a strategy to maximise their own payoff; the outcome is an equilibrium, not necessarily the global/social optimum.
 
-\K{Payoff matrix}: reward matrix $\Rightarrow$ larger is better; cost/sentence matrix $\Rightarrow$ smaller is better. For each column find row player's BR; for each row find column player's BR; double-marked cell = \K{Nash equilibrium}. \W{NE is strategy profile}; payoff is separate.
+\Pp{Payoff matrix}: reward matrix $\Rightarrow$ larger is better; cost/sentence matrix $\Rightarrow$ smaller is better. For each column find row player's BR; for each row find column player's BR; double-marked cell = \K{Nash equilibrium}. \W{NE is strategy profile}; payoff is separate.
 
-\K{Nash equilibrium}:
+\Pp{Nash equilibrium}:
 $$
 s^*=(s_1^*,...,s_n^*)\quad
 u_i(s_i^*,s_{-i}^*)\ge u_i(s_i,s_{-i}^*)\ \forall s_i,\forall i.
 $$
 No player can improve payoff by unilateral deviation while others keep their strategies fixed. NE $\ne$ social optimum.
 
-Dominant strategy: best response regardless of opponent action. Dominated strategy: worse than another strategy for every opponent action.
+\Pp{Dominant strategy}: best response regardless of opponent action. Dominated strategy: worse than another strategy for every opponent action.
 
 Prisoner's dilemma: both players have dominant defect; NE $(D,D)$; social optimum $(C,C)$; individual rationality can be collectively inefficient.
 
-Maximax: choose best possible payoff (optimistic).  
-Maximin: choose best worst-case payoff (conservative).  
-Minimax: minimise maximum loss/regret (robust).
+\Pp{Maximax}: choose best possible payoff (optimistic).  
+\Pp{Maximin}: choose best worst-case payoff (conservative).  
+\Pp{Minimax}: minimise maximum loss/regret (robust).
 
-Zero-sum: $u_1=-u_2$. Simultaneous game: Cournot. Sequential game: Stackelberg. Dynamic game: multiple stages/time.
+\Pp{Zero-sum}: $u_1=-u_2$. Simultaneous game: Cournot. Sequential game: Stackelberg. Dynamic game: multiple stages/time.
 
-\K{Cournot worked example}: two firms choose quantities $x_1,x_2$ simultaneously:
+\Pp{Cournot worked example}: two firms choose quantities $x_1,x_2$ simultaneously:
 $$
 U_1=12x_1-x_1^2-x_1x_2,\quad
 \frac{\partial U_1}{\partial x_1}=12-2x_1-x_2=0
@@ -506,39 +542,41 @@ $$
 BR_1(x_2)=6-\frac{x_2}{2},\quad
 BR_2(x_1)=6-\frac{x_1}{2}.
 $$
-Solve BRs simultaneously: $x_1=x_2=4$.
+\Pp{Solve BRs}: $x_1=6-x_2/2$, $x_2=6-x_1/2$
+$\Rightarrow 2x_1+x_2=12$, $x_1+2x_2=12\Rightarrow x_1=x_2=4$.
 
-\K{Stackelberg worked example}: leader chooses $x_1$ first; follower observes and chooses $x_2=BR_2(x_1)=6-x_1/2$. Substitute into leader payoff:
+\Pp{Stackelberg worked example}: leader chooses $x_1$ first; follower observes and chooses $x_2=BR_2(x_1)=6-x_1/2$. Substitute into leader payoff:
 $$
 U_1(x_1,BR_2)=12x_1-x_1^2-x_1(6-x_1/2)=6x_1-\frac12x_1^2
 $$
-FOC: $6-x_1=0\Rightarrow x_1^*=6,\ x_2^*=3$.
+\Pp{FOC}: $6-x_1=0\Rightarrow x_1^*=6,\ x_2^*=3$.
 
-\K{General Cournot/Stackelberg}: if $P(Q)=a-bQ$, $\pi_i=(P-c)q_i$:
+\Pp{General Cournot/Stackelberg}: if $P(Q)=a-bQ$, $\pi_i=(P-c)q_i$:
 Cournot $q_1^*=q_2^*=(a-c)/(3b)$; Stackelberg leader $q_1^*=(a-c)/(2b)$, follower $q_2^*=(a-c)/(4b)$.
 
-\K{Mixed strategy $2\times2$}: make opponent indifferent. If row payoff is $\begin{bmatrix}a&b\\c&d\end{bmatrix}$ and column plays first column with prob. $q$, solve
-$qa+(1-q)b=qc+(1-q)d$. Do the analogous equation for the column player.
+\Pp{Mixed strategy $2\times2$}: make opponent indifferent. If row payoff is $\begin{bmatrix}a&b\\c&d\end{bmatrix}$ and column plays first column with prob. $q$, solve
+$qa+(1-q)b=qc+(1-q)d
+\Rightarrow q=\frac{d-b}{a-b-c+d}$. Do the analogous equation for the column player.
 
 \section*{Fast Classification / Common Traps}
 
-LP: linear objective, linear constraints.  
-QP: quadratic objective, linear constraints. OLS is QP; constrained LS no normal-equation closed form.  
-QCQP: quadratic objective + quadratic constraints.  
-SOCP: norm cone constraints $\|Ax+b\|\le c^Tx+d$.  
-SDP/LMI: affine matrix constrained PSD.
+\Pp{LP}: linear objective, linear constraints.  
+\Pp{QP}: quadratic objective, linear constraints. OLS is QP; constrained LS no normal-equation closed form.  
+\Pp{QCQP}: quadratic objective + quadratic constraints.  
+\Pp{SOCP}: norm cone constraints $\|Ax+b\|\le c^Tx+d$.  
+\Pp{SDP/LMI}: affine matrix constrained PSD.
 
-Convex optimisation standard:
+\Pp{Convex optimisation standard}:
 $$
 \min f_0(x),\quad f_i(x)\le0,\quad Ax=b
 $$
 with convex $f_i$, affine equality. Nonlinear equality generally nonconvex.
 
-LP standard form: max $\to$ min by negating; free $x=x^+-x^-$, $x^\pm\ge0$; $\le$ add slack; $\ge$ subtract surplus.
+\Pp{LP standard form}: max $\to$ min by negating; free $x=x^+-x^-$, $x^\pm\ge0$; $\le$ add slack; $\ge$ subtract surplus.
 
 \section*{Roy Copy Templates}
 
-\K{OLS unbiased}:
+\Pp{OLS unbiased}:
 $y=\Phi\theta_0+\epsilon$, $E[\epsilon]=0$,
 $$
 \hat\theta=(\Phi^T\Phi)^{-1}\Phi^Ty
@@ -546,7 +584,7 @@ $$
 \Rightarrow E[\hat\theta]=\theta_0.
 $$
 
-\K{Ridge derivation}:
+\Pp{Ridge derivation}:
 $$
 J=\frac12\|y-\Phi\theta\|^2+\frac\lambda2\theta^T\theta,\quad
 \nabla J=-\Phi^Ty+\Phi^T\Phi\theta+\lambda\theta.
@@ -554,15 +592,15 @@ $$
 Set $\nabla J=0$:
 $(\Phi^T\Phi+\lambda I)\hat\theta=\Phi^Ty$.
 
-\K{BLUE $\to$ OLS}: if $R=\sigma^2I$,
+\Pp{BLUE $\to$ OLS}: if $R=\sigma^2I$,
 $(\Phi^TR^{-1}\Phi)^{-1}\Phi^TR^{-1}y=(\Phi^T\Phi)^{-1}\Phi^Ty$.
 
-\K{Inverse-variance weights}: minimise $\sum_iw_i^2\sigma_i^2$ s.t. $\sum_iw_i=1$.
+\Pp{Inverse-variance weights}: minimise $\sum_iw_i^2\sigma_i^2$ s.t. $\sum_iw_i=1$.
 $L=\sum_iw_i^2\sigma_i^2+\lambda(\sum_iw_i-1)$,
 $2w_i\sigma_i^2+\lambda=0\Rightarrow
 w_i=(1/\sigma_i^2)/\sum_j(1/\sigma_j^2)$.
 
-\K{Gauss-Newton nonlinear LS}:
+\Pp{Gauss-Newton nonlinear LS}:
 $$
 H(\theta_k+\delta)\approx H(\theta_k)+J_k\delta,\quad
 r_k=y-H(\theta_k),
@@ -573,9 +611,9 @@ J_k^TJ_k\delta=J_k^Tr_k,\quad
 \theta_{k+1}=\theta_k+\delta.
 $$
 
-\K{Regularisation sentence}: BLUE minimises variance only among unbiased linear estimators; ridge may be biased but can reduce MSE. Ridge shrinks; LASSO selects variables; ElasticNet combines sparsity and collinearity stability; CV selects $\lambda$.
+\Pp{Regularisation sentence}: BLUE minimises variance only among unbiased linear estimators; ridge may be biased but can reduce MSE. Ridge shrinks; LASSO selects variables; ElasticNet combines sparsity and collinearity stability; CV selects $\lambda$.
 
-\K{Stats exercise numeric OLS}: $X=\begin{bmatrix}2&1\\0&-1\\-1&2\end{bmatrix}$, $y=[1,3,1]^T$, $\sigma_v^2=2$:
+\Pp{Stats exercise numeric OLS}: $X=\begin{bmatrix}2&1\\0&-1\\-1&2\end{bmatrix}$, $y=[1,3,1]^T$, $\sigma_v^2=2$:
 $\hat\theta=(X^TX)^{-1}X^Ty=[1/5,0]^T$,
 $\operatorname{cov}(\hat\theta)=2(X^TX)^{-1}=\begin{bmatrix}2/5&0\\0&1/3\end{bmatrix}$.
 
@@ -589,64 +627,67 @@ $$
 P_i=\frac{\lambda-b_i}{2a_i},\quad
 \sum_iP_i=P_D.
 $$
+Then $\sum_i(\lambda-b_i)/(2a_i)=P_D$ solves $\lambda$.
 If computed $P_i$ violates limits, fix it at the bound and redispatch remaining demand.
 
 \subsection*{Generic OPF Forms}
-DC OPF:
+\Pp{DC OPF}:
 $$
 \min_{P_G,\theta}\sum_iC_i(P_{G_i})
 $$
 $$
 \text{s.t. } P_G-P_D=B_{\rm bus}\theta,\quad
-|B_{ij}(\theta_i-\theta_j)|\le F_{ij}^{\max},\quad
+|B_{ij}(\theta_i-\theta_j)|\le F_{ij}^{\max},
+$$
+$$
 P_i^{\min}\le P_{G_i}\le P_i^{\max}.
 $$
-AC OPF:
+\Pp{AC OPF}:
 $$
 \min_{P_G,Q_G,V,\theta}\sum_iC_i(P_{G_i})
 $$
 s.t. nonlinear AC power balance, flow equations, voltage bounds, gen $P/Q$ bounds, line limits. Nonconvex due to AC equality constraints.
 
-SC-OPF:
+\Pp{SC-OPF}:
 $$
 \text{base-case constraints}+\text{constraints for each contingency }c\in\mathcal C.
 $$
 
 \subsection*{Exercise Copy Examples}
-\K{Convex proof}: for $C=\{x\mid Ax\le b\}$, if $x_1,x_2\in C$,
+\Pp{Convex proof}: for $C=\{x\mid Ax\le b\}$, if $x_1,x_2\in C$,
 $A(\lambda x_1+(1-\lambda)x_2)=\lambda Ax_1+(1-\lambda)Ax_2\le b$.
-Intersection: if $x,y\in\cap_iC_i$, then $\lambda x+(1-\lambda)y\in C_i$ for all $i$, hence in $\cap_iC_i$.
-Sum: $S_1+S_2=\{u+v:u\in S_1,v\in S_2\}$; $\lambda(u_1+v_1)+(1-\lambda)(u_2+v_2)=[\lambda u_1+(1-\lambda)u_2]+[\lambda v_1+(1-\lambda)v_2]$.
-Nonnegative combination: $f,g$ convex, $\alpha,\beta\ge0\Rightarrow \alpha f+\beta g$ convex.
+\Pp{Intersection}: if $x,y\in\cap_iC_i$, then $\lambda x+(1-\lambda)y\in C_i$ for all $i$, hence in $\cap_iC_i$.
+\Pp{Sum}: $S_1+S_2=\{u+v:u\in S_1,v\in S_2\}$; $\lambda(u_1+v_1)+(1-\lambda)(u_2+v_2)=[\lambda u_1+(1-\lambda)u_2]+[\lambda v_1+(1-\lambda)v_2]$.
+\Pp{Nonnegative combination}: $f,g$ convex, $\alpha,\beta\ge0\Rightarrow \alpha f+\beta g$ convex.
 
-\K{Norm cone convex}: $\Theta=\{(r,x):\|x\|\le r\}$. If $(r_i,x_i)\in\Theta$,
+\Pp{Norm cone convex}: $\Theta=\{(r,x):\|x\|\le r\}$. If $(r_i,x_i)\in\Theta$,
 $\|\lambda x_1+(1-\lambda)x_2\|\le\lambda\|x_1\|+(1-\lambda)\|x_2\|\le\lambda r_1+(1-\lambda)r_2$.
 
-\K{$\ell_\infty$ LP}: $\min_x\|Ax-b\|_\infty\iff
+\Pp{$\ell_\infty$ LP}: $\min_x\|Ax-b\|_\infty\iff
 \min_{x,t}t\ \text{s.t. }-t\mathbf1\le Ax-b\le t\mathbf1$.
 
-\K{$\ell_1$ LP}: $\min_x\|Ax-b\|_1\iff
+\Pp{$\ell_1$ LP}: $\min_x\|Ax-b\|_1\iff
 \min_{x,\lambda}\mathbf1^T\lambda\ \text{s.t. }-\lambda\le Ax-b\le\lambda$.
 
-\K{Exercise variants}: $\min\|Ax-b\|_1$ s.t. $\|Ax-b\|_\infty\le1$:
+\Pp{Exercise variants}: $\min\|Ax-b\|_1$ s.t. $\|Ax-b\|_\infty\le1$:
 $\min\mathbf1^T\lambda$ s.t. $-\lambda\le Ax-b\le\lambda$, $-\mathbf1\le Ax-b\le\mathbf1$.
 $\min\|x\|_1$ s.t. $\|Ax-b\|_\infty\le1$:
 $\min\mathbf1^T\lambda$ s.t. $-\lambda\le x\le\lambda$, $-\mathbf1\le Ax-b\le\mathbf1$.
 
-\K{$\ell_1+\ell_\infty$ LP}: $\min\|Ax-b\|_1+\|x\|_\infty\iff
+\Pp{$\ell_1+\ell_\infty$ LP}: $\min\|Ax-b\|_1+\|x\|_\infty\iff
 \min_{\lambda,t}\mathbf1^T\lambda+t$ s.t. $-\lambda\le Ax-b\le\lambda$, $-t\mathbf1\le x\le t\mathbf1$.
 
-\K{Polynomial LS}: $y_i\approx a_0+a_1x_i+\cdots+a_kx_i^k$:
+\Pp{Polynomial LS}: $y_i\approx a_0+a_1x_i+\cdots+a_kx_i^k$:
 $\hat\theta=(X^TX)^{-1}X^TY$, $\theta=[a_0,\ldots,a_k]^T$,
 $X_{i,:}=[1,x_i,\ldots,x_i^k]$.
-Rank trap: $X^TX$ singular if $X$ lacks full column rank, e.g. not enough/distinct $x_i$.
+\Pp{Rank trap}: $X^TX$ singular if $X$ lacks full column rank, e.g. not enough/distinct $x_i$.
 
-\K{Conic-section LS}: set $f=1$ in
+\Pp{Conic-section LS}: set $f=1$ in
 $ax^2+bxy+cy^2+dx+ey+f=0$:
 $Y=-\mathbf1$, $X_{i,:}=[x_i^2,x_iy_i,y_i^2,x_i,y_i]$,
 $\hat\theta=(X^TX)^{-1}X^TY$. Classify: $b^2-4ac<0$ ellipse, $=0$ parabola, $>0$ hyperbola.
 
-\K{Ellipsoid LMI}:
+\Pp{Ellipsoid LMI}:
 $$
 (x-c)^TP^{-1}(x-c)\le1
 \Leftrightarrow
@@ -662,17 +703,28 @@ c+2bx & x\\
 x & -1/a
 \end{bmatrix}\preceq0.
 $$
-\K{Block diagonal LMI}: $F_i(x)\succeq0\ \forall i\iff
+\Pp{Block diagonal LMI}: $F_i(x)\succeq0\ \forall i\iff
 \operatorname{diag}(F_1(x),...,F_m(x))\succeq0$.
 
-\K{LMI linearity}: allowed entry $3x_1-2x_2+\gamma+5$; not LMI if entries contain $x_1x_2,x^2,1/x,\sin x$, or decision-variable inverse.
+\Pp{LMI linearity}: allowed entry $3x_1-2x_2+\gamma+5$; not LMI if entries contain $x_1x_2,x^2,1/x,\sin x$, or decision-variable inverse.
 
-\K{Continuous Lyapunov}: $\dot x=Ax$ stable if $\exists P\succ0$ with $A^TP+PA\prec0$. Pick $Q\succ0$, solve $A^TP+PA=-Q$.
+\Pp{Continuous Lyapunov}: $\dot x=Ax$ stable if $\exists P\succ0$ with $A^TP+PA\prec0$. Pick $Q\succ0$, solve $A^TP+PA=-Q$.
 
-\K{BLUE exercise skeleton}: $\hat\theta=Z^TY$, $Y=\Phi\theta+\epsilon$, $E\epsilon=0$, $E\epsilon\epsilon^T=R$.
-Unbiased: $E\hat\theta=Z^T\Phi\theta=\theta\Rightarrow Z^T\Phi=I$.
-Covariance: $\operatorname{cov}(\hat\theta)=Z^TRZ$.
-BLUE: $\hat\theta=(\Phi^TR^{-1}\Phi)^{-1}\Phi^TR^{-1}Y$, $\operatorname{cov}=(\Phi^TR^{-1}\Phi)^{-1}$.
+\Pp{BLUE exercise skeleton}: $\hat\theta=Z^TY$, $Y=\Phi\theta+\epsilon$, $E\epsilon=0$, $E\epsilon\epsilon^T=R$.
+\Pp{Unbiased}: $E\hat\theta=Z^T\Phi\theta=\theta\Rightarrow Z^T\Phi=I$.
+\Pp{Covariance}: $\operatorname{cov}(\hat\theta)=Z^TRZ$.
+\Pp{BLUE}: $\hat\theta=(\Phi^TR^{-1}\Phi)^{-1}\Phi^TR^{-1}Y$, $\operatorname{cov}=(\Phi^TR^{-1}\Phi)^{-1}$.
+
+\Pp{Active bound KKT}: for scalar $u_{\min}\le u\le u_{\max}$, write $g_u=u-u_{\max}\le0$, $g_l=u_{\min}-u\le0$.
+\Pp{If upper active}: $u=u_{\max}$, $\lambda_l=0$, check $\lambda_u\ge0$ from stationarity.
+\Pp{If lower active}: $u=u_{\min}$, $\lambda_u=0$, check $\lambda_l\ge0$.
+
+\Pp{2-bus DC OPF mini}: line $i-j$ with $P_{ij}=B_{ij}(\theta_i-\theta_j)$.
+Constraint $|P_{ij}|\le F^{\max}$ becomes $-F^{\max}\le B_{ij}(\theta_i-\theta_j)\le F^{\max}$.
+\Pp{Slack/reference}: set one angle, e.g. $\theta_1=0$.
+
+\Pp{QP classification}: objective $\frac12x^THx+f^Tx$, $H\succeq0$, constraints $Gx\le h,\ Ax=b$.
+\Pp{Unconstrained optimum}: $Hx+f=0$. If $H\succ0$, unique $x^*=-H^{-1}f$.
 
 ```{=latex}
 \end{multicols}
